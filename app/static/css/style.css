@@ -1,10 +1,19 @@
+:root {
+    --darkBG: #292c35;
+    --lightBG : #F8FFDB;
+    --lightText : #EEEEEE;
+    --darkText : #373A40;
+    --lightNavbar : #D9EDBF;
+    --darkNavbar : #647D87;
+    --buttonColor : #D4F6FF
+}
 body {
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: row;
-    background-color: whitesmoke;
-    color: gray;
+    background-color: var(--lightBG);
+    color: var(--darkText);
 }
 #left{
     width: 20%;
@@ -16,7 +25,7 @@ body {
 }
 .navbar {
     position: fixed;
-    background: lightblue;
+    background: var(--lightNavbar);
     height: 100%;
     width: 20%;
     display: flex;
@@ -46,6 +55,12 @@ body {
     justify-content: space-between;
     padding: 20px;
 }
+.search input {
+   padding: 10px;
+    border: 2px var(--buttonColor) solid;
+    border-radius: 16px;
+    width: 500px;
+}
 .user{
     display: flex;
     align-items: center;
@@ -57,12 +72,13 @@ body {
 }
 
 
-/*Dark theme*/
-body.dark {background-color: #292c35;}
 
-body.dark h1, body.dark a {color: #fff;}
+/*Dark theme*/
+body.dark {background-color: var(--darkBG);}
+
+body.dark h1, body.dark a {color: var(--lightText);}
 body.dark .navbar{
-    background: darkslategray;
+    background: var(--darkNavbar);
 }
 .checkbox {
   opacity: 0;
@@ -82,12 +98,12 @@ body.dark .navbar{
   align-items: center;
 }
 
-.fa-moon {color: #f1c40f;}
+.fa-moon {color: var(--buttonColor);}
 
-.fa-sun {color: #f39c12;}
+.fa-sun {color: var(--buttonColor);}
 
 .checkbox-label .ball {
-  background-color: #fff;
+  background-color: var(--lightBG);
   width: 22px;
   height: 22px;
   position: absolute;
