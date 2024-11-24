@@ -1,0 +1,23 @@
+{%extends 'layout/base.html'%}
+{%block content%}
+{% if products %}
+<div class="row m-auto container">
+    {% for p in products %}
+    <div class="col-md-4 col-12 p-2">
+        <div class="card">
+            <img class="card-img-top" src={{p.image}} alt="{{p.name}}">
+            <div class="card-body">
+                <h4 class="card-title">{{p.name}}</h4>
+                <p class="card-text">{{p.description}}</p>
+                <p class="card-text">{{p.price}}</p>
+                <a href="#" class="btn btn-outline-primary">Xem chi tiết</a>
+                <a href="#" class="btn btn-primary">Thêm giỏ hàng</a>
+            </div>
+        </div>
+    </div>
+    {% endfor%}
+</div>
+{% else %}
+<div class="alert alert-info mt-1">KHÔNG có sản phẩm nào.</div>
+{% endif %}
+{%endblock%}
