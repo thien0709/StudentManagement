@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect
-import dao
+from manage_student.dao import auth
 from manage_student import app,login
 from flask_login import login_user, logout_user
 
@@ -14,10 +14,12 @@ def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
-        u = dao.auth_user(username=username, password=password)
+        u = auth.auth_user(username=username, password=password)
         if u:
             login_user(u)
             return redirect('/')
+        else:
+            return render_template('login.html', error='Invalid username or password')
 
     return render_template('login.html')
 
@@ -30,7 +32,7 @@ def logout_process():
 
 @login.user_loader
 def load_user(user_id):
-    return dao.get_user_by_id(user_id)
+    return auth.get_user_by_id(user_id)
 
 
 if __name__ == '__main__':
