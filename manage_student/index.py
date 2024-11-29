@@ -1,6 +1,6 @@
 from flask import render_template,request
 import dao
-from app import app
+from manage_student import app
 
 
 @app.route("/")
