@@ -12,8 +12,12 @@
             </label>
         </div>
         <div class="avatar">
+            {% if username %}
+            <a href="/"> <img src="./static/img/avatar.png" alt=""></a>
+            <a href="/logout">Logout</a>
+            {% else %}
             <a href="/login"> <img src="./static/img/avatar.png" alt=""></a>
-
+            {% endif %}
         </div>
 
     </div>

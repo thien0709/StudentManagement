@@ -48,7 +48,6 @@ class User(db.Model, UserMixin):
     username = Column(String(50), unique=True)
     password = Column(String(50))
     user_role = Column(Enum(UserRole))
-    # notifications = relationship("Notification", backref="user", lazy=True)
     profile = relationship("Profile", backref="user", lazy=True)
 
 
@@ -60,18 +59,8 @@ class Staff(db.Model):
 class Teacher(db.Model):
     id = Column(Integer, ForeignKey(User.id), primary_key=True, unique=True, nullable=False)
     title = Column(Enum(Title))
-
     class_teach = relationship("Class", backref="teacher", lazy=True)
     user = relationship("User", backref="teacher", lazy=True)
-
-
-class Notification(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    subject = Column(String(200))
-    content = Column(Text)
-    created_at = Column(DateTime, default=datetime.now())
-    # user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-
 
 class Subject(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -88,7 +77,6 @@ class Class(db.Model):
     amount = Column(Integer, default=0)
     year = Column(Integer, default=datetime.now().year)
     teacher_id = Column(Integer, ForeignKey(Teacher.id))
-
     students = relationship("Students_Classes", backref="class", lazy=True)
 
 

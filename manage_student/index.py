@@ -1,11 +1,13 @@
 from flask import render_template, request, redirect
 from manage_student.dao import auth
-from manage_student import app,login
-from flask_login import login_user, logout_user
+from manage_student import app, login, admin,models
+from flask_login import login_user, logout_user, current_user
 
 
 @app.route("/")
 def index():
+    if current_user.is_authenticated:
+        return render_template("index.html", username=current_user.username)
     return render_template("index.html")
 
 
@@ -17,7 +19,10 @@ def login_process():
         u = auth.auth_user(username=username, password=password)
         if u:
             login_user(u)
-            return redirect('/')
+            if u.user_role == models.UserRole.ADMIN:
+                return redirect('/admin')
+            else:
+                return redirect('/')
         else:
             return render_template('login.html', error='Invalid username or password')
 
