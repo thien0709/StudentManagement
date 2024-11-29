@@ -91,24 +91,24 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         return f"Đã xảy ra lỗi: {str(e)}"
 
 
-# # Hàm lưu điểm trung bình vào cơ sở dữ liệu
-# def save_average_score(student_id, average_score):
-#     try:
-#         # Tìm bản ghi Score của học sinh theo student_id
-#         score_record = Score.query.filter_by(student_id=student_id).first()
-#
-#         if score_record:
-#             # Cập nhật điểm trung bình nếu đã có bản ghi
-#             score_record.average_score = average_score
-#             db.session.commit()
-#         else:
-#             # Nếu không có bản ghi nào, tạo mới
-#             new_score = Score(student_id=student_id, average_score=average_score)
-#             db.session.add(new_score)
-#             db.session.commit()
-#
-#         return "Lưu điểm trung bình thành công"
-#
-#     except Exception as e:
-#         db.session.rollback()  # Hủy bỏ giao dịch nếu có lỗi
-#         return f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}"
+# Hàm lưu điểm trung bình vào cơ sở dữ liệu
+def save_average_score(student_id, average_score):
+    try:
+        # Tìm bản ghi Score của học sinh theo student_id
+        score_record = Score.query.filter_by(student_id=student_id).first()
+
+        if score_record:
+            # Cập nhật điểm trung bình nếu đã có bản ghi
+            score_record.average_score = average_score
+            db.session.commit()
+        else:
+            # Nếu không có bản ghi nào, tạo mới
+            new_score = Score(student_id=student_id, average_score=average_score)
+            db.session.add(new_score)
+            db.session.commit()
+
+        return "Lưu điểm trung bình thành công"
+
+    except Exception as e:
+        db.session.rollback()  # Hủy bỏ giao dịch nếu có lỗi
+        return f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}"
