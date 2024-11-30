@@ -14,20 +14,13 @@ class UserRole(enum.Enum):
     TEACHER = 2
     ADMIN = 3
 
-
-class Title(enum.Enum):
-    BACHELOR = 1
-    MASTER = 2
-    DOCTOR = 3
-
-
 class GRADE(enum.Enum):
     K10 = 10
     K11 = 11
     K12 = 12
 
 
-class TYPEEXAM(enum.Enum):
+class TypeExam(enum.Enum):
     EXAM_15P = 1
     EXAM_45P = 2
     EXAM_final = 3
@@ -47,6 +40,7 @@ class User(db.Model, UserMixin):
     id = Column(Integer, ForeignKey(Profile.id), primary_key=True, nullable=False, unique=True)
     username = Column(String(50), unique=True)
     password = Column(String(50))
+    avatar = Column(String(200), default='https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg')
     user_role = Column(Enum(UserRole))
     profile = relationship("Profile", backref="user", lazy=True)
 
@@ -58,7 +52,6 @@ class Staff(db.Model):
 
 class Teacher(db.Model):
     id = Column(Integer, ForeignKey(User.id), primary_key=True, unique=True, nullable=False)
-    title = Column(Enum(Title))
     class_teach = relationship("Class", backref="teacher", lazy=True)
     user = relationship("User", backref="teacher", lazy=True)
 
@@ -79,13 +72,11 @@ class Class(db.Model):
     teacher_id = Column(Integer, ForeignKey(Teacher.id))
     students = relationship("Students_Classes", backref="class", lazy=True)
 
-
 class Student(db.Model):
     id = Column(Integer, ForeignKey(Profile.id), primary_key=True, unique=True)
     grade = Column(Enum(GRADE), default=GRADE.K10)
     classes = relationship("Students_Classes", backref="student", lazy=True)
     profile = relationship("Profile", backref="student", lazy=True)
-
 
 class Students_Classes(db.Model):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -136,7 +127,7 @@ class Exam(db.Model):
 class Score(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     score = Column(Float)
-    type = Column(Enum(TYPEEXAM))
+    type = Column(Enum(TypeExam))
     count = Column(Integer)
     Exam_id = Column(Integer, ForeignKey(Exam.id), nullable=False)
 

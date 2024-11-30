@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 :root {
     --darkBG: #292c35;
     --lightBG : #F8FFDB;
@@ -7,11 +8,16 @@
     --darkNavbar : #647D87;
 }
 body {
+   font-family: "Patrick Hand", cursive;
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: row;
     background-color: var(--lightBG);
+    color: var(--darkText);
+}
+a{
+    text-decoration: none;
     color: var(--darkText);
 }
 #left{
