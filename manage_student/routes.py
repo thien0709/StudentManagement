@@ -21,9 +21,11 @@ def input_scores():
     subject_id = request.args.get("subject_id")
     year_id = request.args.get("year_id")
 
+
     students = []
     if class_id and semester_id and subject_id and year_id:
         students = dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+
 
     return render_template(
         "input_scores.html",

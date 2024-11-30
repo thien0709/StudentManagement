@@ -40,7 +40,7 @@
                 </select>
             </div>
             <div class="col">
-                <label for="subject" class="form-label">Môn:</label>
+                <label for="subject" class="form-label">Môn học:</label>
                 <select id="subject" name="subject_id" class="form-select">
                     <option value="">Chọn môn học</option>
                     {% for subject in subjects %}
@@ -58,48 +58,48 @@
                 </select>
             </div>
         </div>
-        <div class="text-center">
-            <button type="submit" class="btn btn-dark">Tìm kiếm</button>
-        </div>
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
     </form>
-    <br>
-    <!-- Form nhập điểm -->
-    <form id="score-form" method="POST" action="/save-scores">
-        <!-- Các trường ẩn cho subject_id, semester_id, year_id -->
-        <input type="hidden" name="subject_id" value="{{ subject_id }}">
-        <input type="hidden" name="semester_id" value="{{ semester_id }}">
-        <input type="hidden" name="year_id" value="{{ year_id }}">
 
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Họ tên</th>
-                    <th>Điểm 15 phút</th>
-                    <th>Điểm 1 tiết</th>
-                    <th>Điểm cuối kỳ</th>
-                    <th>Điểm trung bình</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student in students %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ student.name }}</td>
-                    <td><input type="number" name="score_15_min[{{ student.id }}]" class="form-control mb-1" step="0.1" min="0" max="10" oninput="calculateAverage(this)"></td>
-                    <td><input type="number" name="score_1_hour[{{ student.id }}]" class="form-control mb-1" step="0.1" min="0" max="10" oninput="calculateAverage(this)"></td>
-                    <td><input type="number" name="final_exam[{{ student.id }}]" class="form-control mb-1" step="0.1" min="0" max="10" oninput="calculateAverage(this)"></td>
-                    <td><input type="text" name="average_score[{{ student.id }}]" class="form-control" readonly></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="text-center">
-            <button type="submit" class="btn btn-success">Lưu điểm</button>
-        </div>
-    </form>
+    <!-- Bảng hiển thị điểm -->
+    {% if students %}
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th scope="col">Tên sinh viên</th>
+                <th scope="col">Điểm 15 phút</th>
+                <th scope="col">Điểm 1 tiết</th>
+                <th scope="col">Điểm thi cuối kỳ</th>
+                <th scope="col">Điểm trung bình</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>
+                    <input type="number" name="score_15_min_{{ student.id }}" value="{{ student.score_15_min }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="score_1_hour_{{ student.id }}" value="{{ student.score_1_hour }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="final_exam_{{ student.id }}" value="{{ student.final_exam }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="average_score_{{ student.id }}" value="{{ student.average_score }}" class="form-control" readonly>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-center">Không có sinh viên nào phù hợp với tiêu chí tìm kiếm.</p>
+    {% endif %}
 </div>
-
+<!-- <div class="text-center">-->
+<!--            <button type="submit" class="btn btn-success">Lưu điểm</button>-->
+<!--        </div>-->
 <script>
     function calculateAverage(inputElement) {
         const row = inputElement.closest('tr');
@@ -130,7 +130,7 @@
             ? (totalScore15Min + totalScore1Hour + finalExamScore * 3) / totalWeight
             : 0;
 
-        averageScoreInput.value = averageScore.toFixed(1);
+        averageScoreInput.value = averageScore.toFixed(2);  // Hiển thị điểm trung bình với 2 chữ số thập phân
     }
 </script>
 </body>

@@ -1,4 +1,5 @@
-from app.models import db, Student, Score, Subject, Semester, Class, Year
+from manage_student import db
+from models import  Student, Score, Subject, Semester, Class, Year
 from sqlalchemy.orm import aliased
 
 
@@ -23,6 +24,7 @@ def get_years():
 
 
 # Hàm lấy học sinh theo các bộ lọc (theo lớp, học kỳ, môn học, năm học)
+
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year=None):
     query = db.session.query(Student)
 
@@ -33,7 +35,7 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
     # Lọc theo học kỳ, môn học và năm học nếu có
     if semester_id or subject_id or year:
         score_alias = aliased(Score)  # Tạo bí danh cho bảng Score
-        query = query.join(score_alias, Student.id == score_alias.student_id)
+        query = query.outerjoin(score_alias, Student.id == score_alias.student_id)
 
         # Lọc theo các tiêu chí
         if semester_id:
@@ -43,7 +45,9 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
         if year:
             query = query.filter(score_alias.year_id == year)
 
+    # Trả về danh sách học sinh
     return query.all()
+
 
 
 def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_exam, subject_id, semester_id, year_id):
