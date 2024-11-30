@@ -3,11 +3,8 @@ from enum import unique
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-# Khởi tạo Flask và SQLAlchemy
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@localhost:3306/school_management'  # Cấu hình MySQL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+from manage_student import db, app
+
 
 # Bảng lớp học
 class Class(db.Model):
@@ -100,7 +97,7 @@ def create_full_sample_data():
 
     # Thêm dữ liệu vào cơ sở dữ liệu
     db.session.add_all([class_1, class_2, subject_math, subject_science, subject_literature, semester_1, semester_2, year_1, year_2] )
-
+    db.session.add_all([student_1, student_2])
     try:
         db.session.commit()
         print("Dữ liệu đã được thêm vào cơ sở dữ liệu.")
