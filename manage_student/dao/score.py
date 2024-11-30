@@ -1,5 +1,5 @@
 from manage_student import db
-from models import  Student, Score, Subject, Semester, Class, Year
+from manage_student.models import  Student, Score, Subject, Semester, Class, Year
 from sqlalchemy.orm import aliased
 
 
