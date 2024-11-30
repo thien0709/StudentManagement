@@ -165,39 +165,39 @@ if __name__ == '__main__':
         # acc3 = User(id=p3.id, username="staff", password=str(hashlib.md5("123".encode("utf-8")).hexdigest()), user_role=UserRole.STAFF)
         # db.session.add_all([acc1, acc2, acc3])
         # db.session.commit()
-        cl101 = Class(grade=GRADE.K10, count=1, amount=10)
-        cl102 = Class(grade=GRADE.K10, count=2, amount=11)
-        cl103 = Class(grade=GRADE.K10, count=3, amount=12)
-        cl111 = Class(grade=GRADE.K11, count=1, amount=7)
-        cl112 = Class(grade=GRADE.K11, count=2, amount=8)
-        cl113 = Class(grade=GRADE.K11, count=3, amount=9)
-        cl121 = Class(grade=GRADE.K12, count=1, amount=1)
-        cl122 = Class(grade=GRADE.K12, count=2, amount=2)
-        cl123 = Class(grade=GRADE.K12, count=3, amount=3)
-        db.session.add_all([cl101, cl102, cl103, cl111, cl112, cl113, cl121, cl122, cl123])
-        db.session.commit()
+        # cl101 = Class(grade=GRADE.K10, count=1, amount=10)
+        # cl102 = Class(grade=GRADE.K10, count=2, amount=11)
+        # cl103 = Class(grade=GRADE.K10, count=3, amount=12)
+        # cl111 = Class(grade=GRADE.K11, count=1, amount=7)
+        # cl112 = Class(grade=GRADE.K11, count=2, amount=8)
+        # cl113 = Class(grade=GRADE.K11, count=3, amount=9)
+        # cl121 = Class(grade=GRADE.K12, count=1, amount=1)
+        # cl122 = Class(grade=GRADE.K12, count=2, amount=2)
+        # cl123 = Class(grade=GRADE.K12, count=3, amount=3)
+        # db.session.add_all([cl101, cl102, cl103, cl111, cl112, cl113, cl121, cl122, cl123])
+        # db.session.commit()
+        # #
+        # subjects = [
+        #     Subject(name='Toán', grade=GRADE.K10),
+        #     Subject(name='Lý', grade=GRADE.K10),
+        #     Subject(name='Hóa', grade=GRADE.K10),
+        #     Subject(name='Sinh', grade=GRADE.K10),
         #
-        subjects = [
-            Subject(name='Toán', grade=GRADE.K10),
-            Subject(name='Lý', grade=GRADE.K10),
-            Subject(name='Hóa', grade=GRADE.K10),
-            Subject(name='Sinh', grade=GRADE.K10),
-
-            Subject(name='Toán', grade=GRADE.K11),
-            Subject(name='Lý', grade=GRADE.K11),
-            Subject(name='Hóa', grade=GRADE.K11),
-            Subject(name='Sinh', grade=GRADE.K11),
-            Subject(name='Văn', grade=GRADE.K11),
-
-            Subject(name='Toán', grade=GRADE.K12),
-            Subject(name='Lý', grade=GRADE.K12),
-            Subject(name='Hóa', grade=GRADE.K12),
-            Subject(name='Sinh', grade=GRADE.K12),
-            Subject(name='Sử', grade=GRADE.K12),
-        ]
-        for subject in subjects:
-            db.session.add(subject)
-        db.session.commit()
+        #     Subject(name='Toán', grade=GRADE.K11),
+        #     Subject(name='Lý', grade=GRADE.K11),
+        #     Subject(name='Hóa', grade=GRADE.K11),
+        #     Subject(name='Sinh', grade=GRADE.K11),
+        #     Subject(name='Văn', grade=GRADE.K11),
+        #
+        #     Subject(name='Toán', grade=GRADE.K12),
+        #     Subject(name='Lý', grade=GRADE.K12),
+        #     Subject(name='Hóa', grade=GRADE.K12),
+        #     Subject(name='Sinh', grade=GRADE.K12),
+        #     Subject(name='Sử', grade=GRADE.K12),
+        # ]
+        # for subject in subjects:
+        #     db.session.add(subject)
+        # db.session.commit()
         #
         # p4 = Profile(name="Giáo Viên toán 10 11 12 A")
         # p5 = Profile(name="Giáo Viên lý 10 11 12 B")
@@ -257,23 +257,23 @@ if __name__ == '__main__':
         #     db.session.add(ts)
         # db.session.commit()
         #
-        # semesters = [
-        #     Semester(semester_name="Học kì 1"),
-        #     Semester(semester_name="Học kì 2"),
-        # ]
-        # for s in semesters:
-        #     db.session.add(s)
-        # db.session.commit()
+        semesters = [
+            Semester(semester_name="Học kì 1"),
+            Semester(semester_name="Học kì 2"),
+        ]
+        for s in semesters:
+            db.session.add(s)
+        db.session.commit()
         #
 
-        # regulations = [
-        #     Regulation(type="student", regulation_name="Tiếp nhận học sinh", min=6, max=18),
-        #     Regulation(type="amount", regulation_name="Sĩ số tối đa", min=0, max=30),
-        #
-        # ]
-        # for r in regulations:
-        #     db.session.add(r)
-        # db.session.commit()
+        regulations = [
+            Regulation(type="student", regulation_name="Tiếp nhận học sinh", min=6, max=18),
+            Regulation(type="amount", regulation_name="Sĩ số tối đa", min=0, max=30),
+
+        ]
+        for r in regulations:
+            db.session.add(r)
+        db.session.commit()
 
         # for i in range(3):
         #     profile = Profile(name="student " + str(i), email="2151013030hung@ou.edu.vn", birthday=datetime.now(),phone=str(1000000000+i),gender=0,address="chossh")
