@@ -59,8 +59,7 @@ class Subject(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50))
     grade = Column(Enum(GRADE))
-    number_of_15p = Column(Integer)
-    number_of_45p = Column(Integer)
+    scores = relationship("Score", backref="subject", lazy=True)
 
 
 class Class(db.Model):
@@ -96,6 +95,10 @@ class Semester(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     semester_name = Column(String(50))
 
+class Year(db.Model):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False, unique=True)
+    scores = relationship('Score', back_populates='year', lazy=True)
 
 class Teaching_plan(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -128,8 +131,10 @@ class Score(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     score = Column(Float)
     type = Column(Enum(TypeExam))
-    count = Column(Integer)
-    Exam_id = Column(Integer, ForeignKey(Exam.id), nullable=False)
+    student_id = Column(Integer, ForeignKey(Student.id), nullable=False)
+    subject_id = Column(Integer, ForeignKey(Subject.id), nullable=False)
+    semester_id = Column(Integer, ForeignKey(Semester.id), nullable=False)
+    year_id = Column(Integer, ForeignKey(Year.id), nullable=False)
 
     __table_args__ = (
         CheckConstraint('score >= 0', name='check_age_min'),

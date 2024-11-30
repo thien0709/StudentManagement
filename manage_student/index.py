@@ -34,33 +34,10 @@ def logout_process():
     logout_user()
     return redirect("/login")
 
-@app.route("/register", methods=['GET', 'POST'])
-def register_process():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-
-        if password != confirm_password:
-            return render_template('register.html', error="Mật khẩu không khớp")
-        existing_user = auth.get_user_by_username(username)
-        if existing_user:
-            return render_template('register.html', error="Tên đăng nhập đã tồn tại")
-
-        success = auth.create_user(username=username, email=email, password=password)
-        if success:
-            return redirect('/login')
-        else:
-            return render_template('register.html', error="Có lỗi xảy ra, vui lòng thử lại sau")
-
-    return render_template('register.html')
 
 @login.user_loader
 def load_user(user_id):
     return auth.get_user_by_id(user_id)
-
-
 
 
 if __name__ == '__main__':
