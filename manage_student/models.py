@@ -73,6 +73,7 @@ class Class(db.Model):
 
 class Student(db.Model):
     id = Column(Integer, ForeignKey(Profile.id), primary_key=True, unique=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
     grade = Column(Enum(GRADE), default=GRADE.K10)
     classes = relationship("Students_Classes", backref="student", lazy=True)
     profile = relationship("Profile", backref="student", lazy=True)

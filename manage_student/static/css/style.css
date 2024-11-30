@@ -6,6 +6,7 @@
     --darkText : #373A40;
     --lightNavbar : #D9EDBF;
     --darkNavbar : #647D87;
+    --buttonColor : #D4F6FF
 }
 body {
    font-family: "Patrick Hand", cursive;
@@ -61,6 +62,9 @@ a{
     padding: 20px;
 }
 .search input {
+   padding: 10px;
+    border: 2px var(--buttonColor) solid;
+    border-radius: 16px;
    padding: 12px;
     width: 500px;
 }
@@ -82,7 +86,6 @@ a{
     margin-top: 200px;
     height: auto;
 }
-
 
 /*Dark theme*/
 body.dark {background-color: var(--darkBG);}
@@ -109,12 +112,12 @@ body.dark .navbar{
   align-items: center;
 }
 
-.fa-moon {color: #f1c40f;}
+.fa-moon {color: var(--buttonColor);}
 
-.fa-sun {color: #f39c12;}
+.fa-sun {color: var(--buttonColor);}
 
 .checkbox-label .ball {
-  background-color: #fff;
+  background-color: var(--lightBG);
   width: 22px;
   height: 22px;
   position: absolute;
