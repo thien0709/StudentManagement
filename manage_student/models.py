@@ -180,23 +180,23 @@ class Regulation(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        pass
+        # pass
         db.create_all()
 
         # new_profile = Profile(
-        #     name="Jane Doe",
-        #     email="janedoe@example.com",
-        #     birthday="1995-05-15",
-        #     gender=False,
-        #     address="456 Elm Street",
-        #     phone="0987654321"
+        # name="Jane Doe",
+        # email="janedoe@example.com",
+        # birthday="1995-05-15",
+        # gender=False,
+        # address="456 Elm Street",
+        # phone="0987654321"
         # )
         #
         # new_user = User(
-        #     profile=new_profile,
-        #     username="janedoe",
-        #     password="anothersecurepassword",
-        #     user_role=UserRole.TEACHER
+        # profile=new_profile,
+        # username="janedoe",
+        # password="anothersecurepassword",
+        # user_role=UserRole.TEACHER
         # )
         #
         profiles = [
@@ -255,6 +255,5 @@ if __name__ == '__main__':
                   year_id=1),
             Score(score=6.5, type=TypeExam.EXAM_15P, student_id=4, subject_id=4, semester_id=1, year_id=1),
         ]
-        db.session.add_all( scores)
+        db.session.add_all(scores)
         db.session.commit()
-
