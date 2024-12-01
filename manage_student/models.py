@@ -180,60 +180,64 @@ if __name__ == '__main__':
     with app.app_context():
         # pass
         db.create_all()
-        # Tạo các profile
-        # Tạo đối tượng Profile
-        new_profile = Profile(
-            name="Jane Doe",
-            email="janedoe@example.com",
-            birthday="1995-05-15",
-            gender=False,
-            address="456 Elm Street",
-            phone="0987654321"
-        )
 
-        # Tạo đối tượng User liên kết với Profile
-        new_user = User(
-            profile=new_profile,
-            username="janedoe",
-            password="anothersecurepassword",
-            user_role=UserRole.TEACHER
-        )
+        # new_profile = Profile(
+        #     name="Jane Doe",
+        #     email="janedoe@example.com",
+        #     birthday="1995-05-15",
+        #     gender=False,
+        #     address="456 Elm Street",
+        #     phone="0987654321"
+        # )
+        #
+        # new_user = User(
+        #     profile=new_profile,
+        #     username="janedoe",
+        #     password="anothersecurepassword",
+        #     user_role=UserRole.TEACHER
+        # )
 
-        # Thêm cả hai vào session và commit
-        db.session.add(new_user)
+        profiles = [
+            Profile(name="John Doe", email="johndoe@example.com", birthday=datetime(2000, 5, 20), gender=True,
+                    address="123 Main St", phone="0123456789"),
+            Profile(name="Jane Smith", email="janesmith@example.com", birthday=datetime(2002, 7, 15), gender=False,
+                    address="456 Elm St", phone="0987654321"),
+            Profile(name="Alice Johnson", email="alicej@example.com", birthday=datetime(2001, 3, 10), gender=False,
+                    address="789 Maple St", phone="0112233445"),
+            Profile(name="Bob Brown", email="bobbrown@example.com", birthday=datetime(1999, 12, 25), gender=True,
+                    address="321 Oak St", phone="0223344556")
+        ]
+
+        students = [
+            Student(name="Student A", grade=GRADE.K10, profile=profiles[0]),
+            Student(name="Student B", grade=GRADE.K11, profile=profiles[1]),
+            Student(name="Student C", grade=GRADE.K12, profile=profiles[2]),
+            Student(name="Student D", grade=GRADE.K10, profile=profiles[3])
+        ]
+        users = [
+            User(username="johndoe", password="hashedpassword1", user_role=UserRole.STAFF, profile=profiles[0]),
+            User(username="janesmith", password="hashedpassword2", user_role=UserRole.TEACHER, profile=profiles[1]),
+            User(username="alicej", password="hashedpassword3", user_role=UserRole.ADMIN, profile=profiles[2]),
+            User(username="bobbrown", password="hashedpassword4", user_role=UserRole.STAFF, profile=profiles[3])
+        ]
+        subjects = [
+            Subject(name="Mathematics"),
+            Subject(name="Physics"),
+            Subject(name="Chemistry"),
+            Subject(name="Biology"),
+            Subject(name="History")
+        ]
+
+        classes = [
+            Class(grade=GRADE.K10, amount=25, year=2024),
+            Class(grade=GRADE.K11, amount=30, year=2024),
+            Class(grade=GRADE.K12, amount=20, year=2024)
+        ]
+        scores = [
+            Score(score=8.5, type=TypeExam.EXAM_15P, student_id=0, subject_id=1, semester_id=1, year_id=1),
+            Score(score=7.0, type=TypeExam.EXAM_45P, student_id=1, subject_id=2, semester_id=1, year_id=1),
+            Score(score=9.0, type=TypeExam.EXAM_final, student_id=2, subject_id=3, semester_id=1, year_id=1),
+            Score(score=6.5, type=TypeExam.EXAM_15P, student_id=3, subject_id=4, semester_id=1, year_id=1)
+        ]
+        db.session.add_all(students + users + profiles + subjects + classes + scores)
         db.session.commit()
-
-        print(f"Profile and User added with Profile ID: {new_profile.id}, User ID: {new_user.id}")
-
-        # # Thêm nhiều Subject
-        # subjects = [
-        #     Subject(name="Mathematics"),
-        #     Subject(name="Physics"),
-        #     Subject(name="Chemistry"),
-        #     Subject(name="Biology"),
-        #     Subject(name="History")
-        # ]
-        #
-        # # Thêm nhiều Class
-        # classes = [
-        #     Class(grade=GRADE.K10, amount=25, year=2024),
-        #     Class(grade=GRADE.K11, amount=30, year=2024),
-        #     Class(grade=GRADE.K12, amount=20, year=2024)
-        # ]
-        #
-        # # Thêm nhiều Student
-        # students = [
-        #     Student(name="Student A", grade=GRADE.K10, profile=profiles[0]),
-        #     Student(name="Student B", grade=GRADE.K11, profile=profiles[1]),
-        #     Student(name="Student C", grade=GRADE.K12, profile=profiles[2]),
-        #     Student(name="Student D", grade=GRADE.K10, profile=profiles[3])
-        # ]
-        #
-        # # Thêm nhiều Score
-        # scores = [
-        #     Score(score=8.5, type=TypeExam.EXAM_15P, student_id=1, subject_id=1, semester_id=1, year_id=1),
-        #     Score(score=7.0, type=TypeExam.EXAM_45P, student_id=2, subject_id=2, semester_id=1, year_id=1),
-        #     Score(score=9.0, type=TypeExam.EXAM_final, student_id=3, subject_id=3, semester_id=1, year_id=1),
-        #     Score(score=6.5, type=TypeExam.EXAM_15P, student_id=4, subject_id=4, semester_id=1, year_id=1)
-        # ]
-        #
