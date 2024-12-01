@@ -90,6 +90,7 @@ class Student(db.Model):
     grade = Column(Enum(GRADE), default=GRADE.K10)
     classes = relationship("Students_Classes", backref="student", lazy=True)
     profile = relationship("Profile", backref="student", lazy=True)
+    scores = relationship("Score", backref="student", lazy=True)
 
 
 class Students_Classes(db.Model):
@@ -117,6 +118,7 @@ class Staff_Class(db.Model):
 class Semester(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     semester_name = Column(String(50))
+    scores = relationship('Score', backref='semester', lazy=True)
 
 
 class Year(db.Model):
@@ -233,11 +235,26 @@ if __name__ == '__main__':
             Class(grade=GRADE.K11, amount=30, year=2024),
             Class(grade=GRADE.K12, amount=20, year=2024)
         ]
-        scores = [
-            Score(score=8.5, type=TypeExam.EXAM_15P, student_id=0, subject_id=1, semester_id=1, year_id=1),
-            Score(score=7.0, type=TypeExam.EXAM_45P, student_id=1, subject_id=2, semester_id=1, year_id=1),
-            Score(score=9.0, type=TypeExam.EXAM_final, student_id=2, subject_id=3, semester_id=1, year_id=1),
-            Score(score=6.5, type=TypeExam.EXAM_15P, student_id=3, subject_id=4, semester_id=1, year_id=1)
+
+        semesters = [
+            Semester(semester_name="Semester 1"),
+            Semester(semester_name="Semester 2")
         ]
-        db.session.add_all(students + users + profiles + subjects + classes + scores)
+
+        years = [
+            Year(id=1, name="2024-2025"),
+            Year(id=2, name="2025-2026")
+        ]
+
+        db.session.add_all(students + users + profiles + subjects + classes + semesters + years)
         db.session.commit()
+        scores = [
+            Score(score=8.5, type=TypeExam.EXAM_15P, student_id=1, subject_id=1, semester_id=1, year_id=1),
+            Score(score=7.0, type=TypeExam.EXAM_45P, student_id=2, subject_id=2, semester_id=1, year_id=1),
+            Score(score=9.0, type=TypeExam.EXAM_final, student_id=3, subject_id=3, semester_id=1,
+                  year_id=1),
+            Score(score=6.5, type=TypeExam.EXAM_15P, student_id=4, subject_id=4, semester_id=1, year_id=1),
+        ]
+        db.session.add_all( scores)
+        db.session.commit()
+
