@@ -180,7 +180,7 @@ class Regulation(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        # pass
+        pass
         db.create_all()
 
         # new_profile = Profile(
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         #     password="anothersecurepassword",
         #     user_role=UserRole.TEACHER
         # )
-
+        #
         profiles = [
             Profile(name="John Doe", email="johndoe@example.com", birthday=datetime(2000, 5, 20), gender=True,
                     address="123 Main St", phone="0123456789"),

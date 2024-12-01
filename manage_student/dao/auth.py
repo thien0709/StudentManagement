@@ -5,7 +5,7 @@ import cloudinary.uploader
 
 
 def auth_user(username, password):
-    password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
+    # password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
 
     return User.query.filter(User.username.__eq__(username),
                              User.password.__eq__(password)).first()
