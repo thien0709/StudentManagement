@@ -1,115 +1,259 @@
-from enum import unique
+import enum
+import hashlib
+from datetime import datetime
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from sqlalchemy import Column, String, Float, Integer, ForeignKey, Boolean, DateTime, Enum, Text, CheckConstraint
+from sqlalchemy.orm import relationship
 
 from manage_student import db, app
 
 
-# Bảng lớp học
-class Class(db.Model):
-    __tablename__ = 'classes'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False,unique=True)
-    students = db.relationship('Student', back_populates='classroom', lazy=True)
+class UserRole(enum.Enum):
+    STAFF = 1
+    TEACHER = 2
+    ADMIN = 3
 
 
-# Bảng học sinh
-class Student(db.Model):
-    __tablename__ = 'students'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
-    classroom = db.relationship('Class', back_populates='students')
-    scores = db.relationship('Score', back_populates='student', lazy=True)
+class GRADE(enum.Enum):
+    K10 = 10
+    K11 = 11
+    K12 = 12
 
 
-# Bảng môn học
+class TypeExam(enum.Enum):
+    EXAM_15P = 1
+    EXAM_45P = 2
+    EXAM_final = 3
+
+
+class Profile(db.Model):
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(String(50))
+    email = Column(String(50), unique=True)
+    birthday = Column(DateTime)
+    gender = Column(Boolean)
+    address = Column(Text)
+    phone = Column(String(10), unique=True)
+
+
+class User(db.Model, UserMixin):
+    id = Column(Integer, ForeignKey("profile.id"), primary_key=True, nullable=False, unique=True)
+    username = Column(String(50), unique=True)
+    password = Column(String(50))
+    avatar = Column(String(200),
+                    default='https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg')
+    user_role = Column(Enum(UserRole))
+    profile = relationship("Profile", backref="user", lazy=True)
+
+
+class Staff(db.Model):
+    id = Column(Integer, ForeignKey("user.id"), primary_key=True, unique=True, nullable=False)
+    user = relationship("User", backref="staff", lazy=True)
+    classes = relationship("Staff_Class", backref="staff", lazy=True)
+
+
+class Admin(db.Model):
+    id = Column(Integer, ForeignKey("user.id"), primary_key=True, unique=True, nullable=False)
+    user = relationship("User", backref="admin", lazy=True)
+    regulation = relationship("Regulation", backref="admin", lazy=True)
+
+
+class Teacher(db.Model):
+    id = Column(Integer, ForeignKey("user.id"), primary_key=True, unique=True, nullable=False)
+    # class_teach = relationship("Class", backref="teacher", lazy=True)
+    user = relationship("User", backref="teacher", lazy=True)
+    subject = relationship("Teachers_Subject", backref="teacher", lazy=True)
+
+
 class Subject(db.Model):
-    __tablename__ = 'subjects'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    scores = db.relationship('Score', back_populates='subject', lazy=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(50))
+    scores = relationship("Score", backref="subject", lazy=True)
+    teacher = relationship("Teachers_Subject", backref="subject", lazy=True)
 
 
-# Bảng học kỳ
+class Class(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    grade = Column(Enum(GRADE))
+    # count = Column(Integer)
+    amount = Column(Integer, default=0)
+    year = Column(Integer, default=datetime.now().year)
+    teacher_id = Column(Integer, ForeignKey("teacher.id"))
+    students = relationship("Students_Classes", backref="class", lazy=True)
+    staff = relationship("Staff_Class", backref="class", lazy=True)
+
+
+class Student(db.Model):
+    id = Column(Integer, ForeignKey("profile.id"), primary_key=True, unique=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    grade = Column(Enum(GRADE), default=GRADE.K10)
+    classes = relationship("Students_Classes", backref="student", lazy=True)
+    profile = relationship("Profile", backref="student", lazy=True)
+    scores = relationship("Score", backref="student", lazy=True)
+
+
+class Students_Classes(db.Model):
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    class_id = Column(Integer, ForeignKey("class.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("student.id"), nullable=False)
+
+
+class Teachers_Subject(db.Model):
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subject.id"), nullable=False)
+
+    # teacher = relationship("Teacher", backref="teachers_subject", lazy=True)
+    # subject = relationship("Subject", backref="subject_teacher", lazy=True)
+
+
+class Staff_Class(db.Model):
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    staff_id = Column(Integer, ForeignKey("staff.id"), nullable=False)
+    class_id = Column(Integer, ForeignKey("class.id"), nullable=False)
+    time = Column(DateTime, default=datetime.now())
+
+
 class Semester(db.Model):
-    __tablename__ = 'semesters'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    scores = db.relationship('Score', back_populates='semester', lazy=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    semester_name = Column(String(50))
+    scores = relationship('Score', backref='semester', lazy=True)
 
 
-# Bảng năm học
 class Year(db.Model):
-    __tablename__ = 'years'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    scores = db.relationship('Score', back_populates='year', lazy=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False, unique=True)
+    scores = relationship('Score', backref='year', lazy=True)
 
 
-# Bảng điểm số
+# class Teaching_plan(db.Model):
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     score_deadline = Column(DateTime)
+#     class_id = Column(Integer, ForeignKey(Class.id), nullable=False)
+#     semester_id = Column(Integer, ForeignKey(Semester.id), nullable=False)
+#     teacher_subject_id = Column(Integer, ForeignKey(Teachers_Subject.id), nullable=False)
+#
+#     teacher_subject = relationship("Teachers_Subject", backref="teaching_plan")
+#     # subject_id = Column(Integer, ForeignKey(Subject.id), nullable=False)
+#     # teacher_id = Column(Integer, ForeignKey(Teacher.id), nullable=False)
+#
+#     # teacher = relationship("Teacher", backref="teacher", lazy=True)
+#     semester = relationship("Semester", backref="semester", lazy=True)
+#     class_teach = relationship("Class", backref="teach", lazy=True)
+#     # subject = relationship("Subject", backref="subject", lazy=True)
+
+#
+# class Exam(db.Model):
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     student_id = Column(Integer, ForeignKey(Student.id), nullable=False)
+#     teach_plan_id = Column(Integer, ForeignKey(Teaching_plan.id), nullable=False)
+#     scores = relationship("Score", backref="exam", lazy=True)
+#
+#     student = relationship("Student", backref="exam", lazy=True)
+#     teach_plan = relationship("Teaching_plan", backref="exam", lazy=True)
+
+
 class Score(db.Model):
-    __tablename__ = 'scores'
-    id = db.Column(db.Integer, primary_key=True)
-    score = db.Column(db.Float, nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    student = db.relationship('Student', back_populates='scores')
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    subject = db.relationship('Subject', back_populates='scores')
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'), nullable=False)
-    semester = db.relationship('Semester', back_populates='scores')
-    year_id = db.Column(db.Integer, db.ForeignKey('years.id'), nullable=False)
-    year = db.relationship('Year', back_populates='scores')
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    score = Column(Float)
+    type = Column(Enum(TypeExam))
+    student_id = Column(Integer, ForeignKey("student.id"), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subject.id"), nullable=False)
+    semester_id = Column(Integer, ForeignKey("semester.id"), nullable=False)
+    year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint('score >= 0', name='check_age_min'),
+        CheckConstraint('score <= 10', name='check_age_max'),
+    )
 
 
-# Tạo dữ liệu đầy đủ
-def create_full_sample_data():
-    # Tạo lớp học
-    class_1 = Class(name='Class 1')
-    class_2 = Class(name='Class 2')
-
-    # Tạo môn học
-    subject_math = Subject(name="Mathematics")
-    subject_science = Subject(name="Science")
-    subject_literature = Subject(name="Literature")
-
-    # Tạo học kỳ
-    semester_1 = Semester(name="Semester 1")
-    semester_2 = Semester(name="Semester 2")
-
-    # Tạo năm học
-    year_1 = Year(name="Year 2023-2024")
-    year_2 = Year(name="Year 2024-2025")
-
-    # Tạo học sinh và điểm
-    student_1 = Student(name="Student A", classroom=class_1)
-    student_2 = Student(name="Student B", classroom=class_1)
-    student_3 = Student(name="Student C", classroom=class_1)
-    student_4 = Student(name="Student D", classroom=class_2)
-    student_5 = Student(name="Student E", classroom=class_2)
-    student_6 = Student(name="Student F", classroom=class_2)
-    student_7 = Student(name="Student G", classroom=class_1)
-    student_8 = Student(name="Student H", classroom=class_1)
-    student_9 = Student(name="Student I", classroom=class_2)
-    student_10 = Student(name="Student J", classroom=class_2)
+class Regulation(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String(50))
+    regulation_name = Column(String(100))
+    min = Column(Integer)
+    max = Column(Integer)
+    admin_id = Column(Integer, ForeignKey("admin.id"), nullable=False)
 
 
-    # Thêm dữ liệu vào cơ sở dữ liệu
-    db.session.add_all([class_1, class_2, subject_math, subject_science, subject_literature, semester_1, semester_2, year_1, year_2] )
-    db.session.add_all([student_1, student_2])
-    try:
-        db.session.commit()
-        print("Dữ liệu đã được thêm vào cơ sở dữ liệu.")
-    except Exception as e:
-        db.session.rollback()
-        print(f"Đã xảy ra lỗi khi commit dữ liệu: {e}")
-
-
-# Đảm bảo khi chạy script sẽ tạo dữ liệu mẫu
-if __name__ == "__main__":
+if __name__ == '__main__':
     with app.app_context():
+        # pass
         db.create_all()
-        create_full_sample_data()
 
-    print("Sample data has been created!")
+        # new_profile = Profile(
+        # name="Jane Doe",
+        # email="janedoe@example.com",
+        # birthday="1995-05-15",
+        # gender=False,
+        # address="456 Elm Street",
+        # phone="0987654321"
+        # )
+        #
+        # new_user = User(
+        # profile=new_profile,
+        # username="janedoe",
+        # password="anothersecurepassword",
+        # user_role=UserRole.TEACHER
+        # )
+        #
+        profiles = [
+            Profile(name="John Doe", email="johndoe@example.com", birthday=datetime(2000, 5, 20), gender=True,
+                    address="123 Main St", phone="0123456789"),
+            Profile(name="Jane Smith", email="janesmith@example.com", birthday=datetime(2002, 7, 15), gender=False,
+                    address="456 Elm St", phone="0987654321"),
+            Profile(name="Alice Johnson", email="alicej@example.com", birthday=datetime(2001, 3, 10), gender=False,
+                    address="789 Maple St", phone="0112233445"),
+            Profile(name="Bob Brown", email="bobbrown@example.com", birthday=datetime(1999, 12, 25), gender=True,
+                    address="321 Oak St", phone="0223344556")
+        ]
+
+        students = [
+            Student(name="Student A", grade=GRADE.K10, profile=profiles[0]),
+            Student(name="Student B", grade=GRADE.K11, profile=profiles[1]),
+            Student(name="Student C", grade=GRADE.K12, profile=profiles[2]),
+            Student(name="Student D", grade=GRADE.K10, profile=profiles[3])
+        ]
+        users = [
+            User(username="johndoe", password="hashedpassword1", user_role=UserRole.STAFF, profile=profiles[0]),
+            User(username="janesmith", password="hashedpassword2", user_role=UserRole.TEACHER, profile=profiles[1]),
+            User(username="alicej", password="hashedpassword3", user_role=UserRole.ADMIN, profile=profiles[2]),
+            User(username="bobbrown", password="hashedpassword4", user_role=UserRole.STAFF, profile=profiles[3])
+        ]
+        subjects = [
+            Subject(name="Mathematics"),
+            Subject(name="Physics"),
+            Subject(name="Chemistry"),
+            Subject(name="Biology"),
+            Subject(name="History")
+        ]
+
+        classes = [
+            Class(grade=GRADE.K10, amount=25, year=2024),
+            Class(grade=GRADE.K11, amount=30, year=2024),
+            Class(grade=GRADE.K12, amount=20, year=2024)
+        ]
+
+        semesters = [
+            Semester(semester_name="Semester 1"),
+            Semester(semester_name="Semester 2")
+        ]
+
+        years = [
+            Year(id=1, name="2024-2025"),
+            Year(id=2, name="2025-2026")
+        ]
+
+        db.session.add_all(students + users + profiles + subjects + classes + semesters + years)
+        db.session.commit()
+        scores = [
+            Score(score=8.5, type=TypeExam.EXAM_15P, student_id=1, subject_id=1, semester_id=1, year_id=1),
+            Score(score=7.0, type=TypeExam.EXAM_45P, student_id=2, subject_id=2, semester_id=1, year_id=1),
+            Score(score=9.0, type=TypeExam.EXAM_final, student_id=3, subject_id=3, semester_id=1,
+                  year_id=1),
+            Score(score=6.5, type=TypeExam.EXAM_15P, student_id=4, subject_id=4, semester_id=1, year_id=1),
+        ]
+        db.session.add_all(scores)
+        db.session.commit()

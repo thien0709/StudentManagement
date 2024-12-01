@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Trang chính</title>
-</head>
-<body>
-    <h1>Chào mừng đến hệ thống quản lý điểm</h1>
-    <a href="/input_scores">Nhập điểm</a>
-</body>
-</html>
+{%extends 'layout/base.html'%}
+{%block content%}
+<div class="content">
+    {%if username%}
+    <h1>Hello {{username}}</h1>
+    {%endif%}
+</div>
+{%endblock%}
+
