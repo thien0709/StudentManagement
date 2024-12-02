@@ -62,17 +62,19 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
 
     return query.all()
 
-# Hàm lưu điểm của học sinh
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_exam, subject_id, semester_id, year_id):
     try:
-        # Kiểm tra và chuyển đổi điểm
         score_15_min = [float(score) for score in score_15_min_list if score]
         score_1_hour = [float(score) for score in score_1_hour_list if score]
         final_exam = float(final_exam) if final_exam else 0.0
 
-        print(f"Saving scores for student {student_id}: 15min={score_15_min}, 1 hour={score_1_hour}, final_exam={final_exam}")
+        logger.debug(f"Saving scores for student {student_id}: 15min={score_15_min}, 1 hour={score_1_hour}, final_exam={final_exam}")
 
-        # Tìm bản ghi Score của học sinh theo các tham số (student_id, subject_id, semester_id, year_id)
         score_record = Score.query.filter_by(
             student_id=student_id,
             subject_id=subject_id,
@@ -81,31 +83,31 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         ).first()
 
         if score_record:
-            # Nếu có bản ghi, cập nhật lại các điểm
-            score_record.score_15_min = ",".join([str(s) for s in score_15_min])
-            score_record.score_1_hour = ",".join([str(s) for s in score_1_hour])
-            score_record.final_exam = final_exam
+            logger.debug("Updating existing score record")
+            score_record.score = final_exam  # Lưu điểm cuối kỳ vào cột score
+            score_record.type = 'EXAM_final'
         else:
-            # Nếu không có bản ghi, tạo bản ghi mới
+            logger.debug("Creating new score record")
             new_score = Score(
                 student_id=student_id,
-                score_15_min=",".join([str(s) for s in score_15_min]),
-                score_1_hour=",".join([str(s) for s in score_1_hour]),
-                final_exam=final_exam,
+                score=final_exam,
+                type='EXAM_final',
                 subject_id=subject_id,
                 semester_id=semester_id,
                 year_id=year_id
             )
             db.session.add(new_score)
 
-        db.session.commit()  # Lưu dữ liệu vào cơ sở dữ liệu
-        print("Scores saved successfully.")
+        logger.debug("Committing to database")
+        db.session.commit()
+        logger.debug("Scores saved successfully.")
         return "Lưu điểm thành công"
 
     except Exception as e:
-        db.session.rollback()  # Hủy bỏ giao dịch nếu có lỗi
-        print(f"Error saving scores: {str(e)}")
+        db.session.rollback()
+        logger.error(f"Error saving scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
+
 
 # Hàm lưu điểm trung bình vào cơ sở dữ liệu
 def save_average_score(student_id, average_score):

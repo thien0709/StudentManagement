@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, flash, url_for
 from manage_student.dao import auth, score
-from manage_student import app, login, admin, models
+from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
 
 from manage_student.models import Score
@@ -56,6 +56,10 @@ def input_scores():
         year_id=year_id
     )
 
+
+
+
+# index.py
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
     class_id = request.form.get("class_id")
@@ -89,15 +93,19 @@ def save_scores():
                     average_score = (float(score_15_min) + float(score_1_hour) + float(final_exam)) / 3
 
                     # Lưu điểm vào cơ sở dữ liệu
-                    Score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
-                    Score.save_average_score(student_id, average_score)
+                    score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
+                    score.save_average_score(student_id, average_score)  # Đảm bảo rằng bạn gọi đúng hàm
+                    print(f"Average score saved for student {student_id}: {average_score:.2f}")
 
                 except ValueError:
                     print(f"Error: Invalid score format for student {student_id}")
                     continue  # Nếu điểm không hợp lệ, bỏ qua sinh viên này
 
+        # Commit các thay đổi vào cơ sở dữ liệu
+        db.session.commit()
         flash("Lưu điểm thành công!", "success")
     except Exception as e:
+        db.session.rollback()  # Rollback nếu có lỗi xảy ra
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
