@@ -66,73 +66,68 @@
     <!-- Form lưu điểm -->
     {% if students %}
     <form method="POST" action="/save-scores">
-        <table class="table mt-4">
-            <thead>
-                <tr>
-                    <th scope="col">Tên sinh viên</th>
-                    <th scope="col">Điểm 15 phút</th>
-                    <th scope="col">Điểm 1 tiết</th>
-                    <th scope="col">Điểm thi cuối kỳ</th>
-                    <th scope="col">Điểm trung bình</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student in students %}
-                <tr>
-                    <td>{{ student.name }}</td>
-                    <td>
-                        <input type="number" name="score_15_min_{{ student.id }}" value="{{ student.score_15_min }}" oninput="calculateAverage(this)" class="form-control">
-                    </td>
-                    <td>
-                        <input type="number" name="score_1_hour_{{ student.id }}" value="{{ student.score_1_hour }}" oninput="calculateAverage(this)" class="form-control">
-                    </td>
-                    <td>
-                        <input type="number" name="final_exam_{{ student.id }}" value="{{ student.final_exam }}" oninput="calculateAverage(this)" class="form-control">
-                    </td>
-                    <td>
-                        <input type="text" name="average_score_{{ student.id }}" value="{{ student.average_score }}" class="form-control" readonly>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <button type="submit" class="btn btn-success">Lưu điểm</button>
-    </form>
+    <!-- Truyền lại các tham số từ query string vào các trường hidden -->
+    <input type="hidden" name="class_id" value="{{ class_id }}">
+    <input type="hidden" name="semester_id" value="{{ semester_id }}">
+    <input type="hidden" name="subject_id" value="{{ subject_id }}">
+    <input type="hidden" name="year_id" value="{{ year_id }}">
+
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th scope="col">Tên sinh viên</th>
+                <th scope="col">Điểm 15 phút</th>
+                <th scope="col">Điểm 1 tiết</th>
+                <th scope="col">Điểm thi cuối kỳ</th>
+                <th scope="col">Điểm trung bình</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>
+                    <input type="number" name="score_15_min_{{ student.id }}" value="{{ student.score_15_min }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="score_1_hour_{{ student.id }}" value="{{ student.score_1_hour }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="final_exam_{{ student.id }}" value="{{ student.final_exam }}" oninput="calculateAverage(this)" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="average_score_{{ student.id }}" value="{{ student.average_score }}" class="form-control" readonly>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-success">Lưu điểm</button>
+</form>
+
     {% else %}
     <p class="text-center">Không có sinh viên nào phù hợp với tiêu chí tìm kiếm.</p>
     {% endif %}
-
 </div>
 
 <script>
     function calculateAverage(inputElement) {
         const row = inputElement.closest('tr');
-        const score15MinInputs = row.querySelectorAll('input[name^="score_15_min"]');
-        const score1HourInputs = row.querySelectorAll('input[name^="score_1_hour"]');
+        const score15MinInput = row.querySelector('input[name^="score_15_min"]');
+        const score1HourInput = row.querySelector('input[name^="score_1_hour"]');
         const finalExamInput = row.querySelector('input[name^="final_exam"]');
         const averageScoreInput = row.querySelector('input[name^="average_score"]');
 
-        let totalScore15Min = 0;
-        score15MinInputs.forEach(input => {
-            const value = parseFloat(input.value) || 0;
-            totalScore15Min += value;
-        });
+        const score15Min = parseFloat(score15MinInput.value) || 0;
+        const score1Hour = parseFloat(score1HourInput.value) || 0;
+        const finalExam = parseFloat(finalExamInput.value) || 0;
 
-        let totalScore1Hour = 0;
-        score1HourInputs.forEach(input => {
-            const value = parseFloat(input.value) || 0;
-            totalScore1Hour += value * 2;  // Trọng số 2 cho điểm 1 tiết
-        });
+        const totalScore15Min = score15Min;
+        const totalScore1Hour = score1Hour * 2;  // Trọng số 2 cho điểm 1 tiết
+        const finalExamScore = finalExam;
 
-        const finalExamScore = parseFloat(finalExamInput.value) || 0;
-        const weight15Min = score15MinInputs.length;
-        const weight1Hour = score1HourInputs.length * 2;
-        const weightFinalExam = 3;
-        const totalWeight = weight15Min + weight1Hour + weightFinalExam;
-
-        const averageScore = totalWeight > 0
-            ? (totalScore15Min + totalScore1Hour + finalExamScore * 3) / totalWeight
-            : 0;
+        const totalWeight = 1 + 2 + 3;  // Trọng số cho 3 loại điểm
+        const averageScore = (totalScore15Min + totalScore1Hour + finalExamScore * 3) / totalWeight;
 
         averageScoreInput.value = averageScore.toFixed(2);  // Hiển thị điểm trung bình với 2 chữ số thập phân
     }
