@@ -1,55 +1,68 @@
 from manage_student import db
-from manage_student.models import  Student, Score, Subject, Semester, Class, Year
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, Students_Classes
 from sqlalchemy.orm import aliased
 
-
-# Hàm lấy tất cả các lớp
+# Hàm lấy tất cả các lớp học
 def get_classes():
-    return db.session.query(Class).all()
-
+    try:
+        classes = db.session.query(Class).all()
+        if not classes:
+            print("Không có lớp học trong cơ sở dữ liệu.")
+        return classes
+    except Exception as e:
+        print(f"Lỗi khi truy vấn lớp học: {str(e)}")
+        return []
 
 # Hàm lấy tất cả các môn học
 def get_subjects():
-    return db.session.query(Subject).all()
-
+    try:
+        return db.session.query(Subject).all()
+    except Exception as e:
+        print(f"Lỗi khi truy vấn môn học: {str(e)}")
+        return []
 
 # Hàm lấy tất cả các học kỳ
 def get_semesters():
-    return db.session.query(Semester).all()
-
+    try:
+        semesters = db.session.query(Semester).all()
+        if not semesters:
+            print("Không có học kỳ trong cơ sở dữ liệu.")
+        return semesters
+    except Exception as e:
+        print(f"Lỗi khi truy vấn học kỳ: {str(e)}")
+        return []
 
 # Hàm lấy tất cả các năm học
 def get_years():
-    return db.session.query(Year).all()
-
+    try:
+        return db.session.query(Year).all()
+    except Exception as e:
+        print(f"Lỗi khi truy vấn năm học: {str(e)}")
+        return []
 
 # Hàm lấy học sinh theo các bộ lọc (theo lớp, học kỳ, môn học, năm học)
-
-def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year=None):
+def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
 
-    # Lọc theo lớp học nếu có
+    # Kết nối với bảng Students_Classes và Class
     if class_id:
-        query = query.filter(Student.class_id == class_id)
+        query = query.join(Students_Classes).join(Class).filter(Class.id == class_id)
 
-    # Lọc theo học kỳ, môn học và năm học nếu có
-    if semester_id or subject_id or year:
+    # Kết nối với bảng Score nếu cần lọc theo môn học, học kỳ và năm
+    if semester_id or subject_id or year_id:
         score_alias = aliased(Score)  # Tạo bí danh cho bảng Score
         query = query.outerjoin(score_alias, Student.id == score_alias.student_id)
 
-        # Lọc theo các tiêu chí
         if semester_id:
             query = query.filter(score_alias.semester_id == semester_id)
         if subject_id:
             query = query.filter(score_alias.subject_id == subject_id)
-        if year:
-            query = query.filter(score_alias.year_id == year)
+        if year_id:
+            query = query.filter(score_alias.year_id == year_id)
 
-    # Trả về danh sách học sinh
     return query.all()
 
-
-
+# Hàm lưu điểm của học sinh
 def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_exam, subject_id, semester_id, year_id):
     try:
         # Kiểm tra và chuyển đổi điểm
@@ -94,7 +107,6 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         print(f"Error saving scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
 
-
 # Hàm lưu điểm trung bình vào cơ sở dữ liệu
 def save_average_score(student_id, average_score):
     try:
@@ -115,4 +127,5 @@ def save_average_score(student_id, average_score):
 
     except Exception as e:
         db.session.rollback()  # Hủy bỏ giao dịch nếu có lỗi
+        print(f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}")
         return f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}"

@@ -2,8 +2,8 @@ from flask import redirect, request
 from flask_admin import Admin, expose, AdminIndexView
 from flask_admin import BaseView
 from flask_admin.contrib.sqla import ModelView
-from manage_student.models import *
-from manage_student import app
+from manage_student.models import UserRole, Subject, Teachers_Subject, Regulation
+from manage_student import app, db
 from flask_login import logout_user, current_user
 
 
