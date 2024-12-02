@@ -35,14 +35,14 @@ class Profile(db.Model):
     gender = Column(Boolean)
     address = Column(Text)
     phone = Column(String(10), unique=True)
+    avatar = Column(String(200),
+                    default='https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg')
 
 
 class User(db.Model, UserMixin):
     id = Column(Integer, ForeignKey("profile.id"), primary_key=True, nullable=False, unique=True)
     username = Column(String(50), unique=True)
     password = Column(String(50))
-    avatar = Column(String(200),
-                    default='https://res.cloudinary.com/dxxwcby8l/image/upload/v1647056401/ipmsmnxjydrhpo21xrd8.jpg')
     user_role = Column(Enum(UserRole))
     profile = relationship("Profile", backref="user", lazy=True)
 
@@ -217,11 +217,14 @@ if __name__ == '__main__':
             Student(name="Student D", grade=GRADE.K10, profile=profiles[3])
         ]
         users = [
-            User(username="johndoe", password="hashedpassword1", user_role=UserRole.STAFF, profile=profiles[0]),
-            User(username="janesmith", password="hashedpassword2", user_role=UserRole.TEACHER, profile=profiles[1]),
-            User(username="alicej", password="hashedpassword3", user_role=UserRole.ADMIN, profile=profiles[2]),
-            User(username="bobbrown", password="hashedpassword4", user_role=UserRole.STAFF, profile=profiles[3])
+            User(username="thien", password=str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.STAFF, profile=profiles[0]),
+            User(username="thien123", password=str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.TEACHER, profile=profiles[1]),
+            User(username="thien000",password=str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.ADMIN, profile=profiles[2]),
+            User(username="thien111",password=str(hashlib.md5("123".encode('utf-8')).hexdigest()), user_role=UserRole.STAFF, profile=profiles[3])
         ]
+        # add_user("John Doe", "thien123", "123")
+        # add_user("Jane Smith", "thien2004", "123")
+        # add_user("Alice Johnson", "thien000", "123")
         subjects = [
             Subject(name="Mathematics"),
             Subject(name="Physics"),
@@ -246,7 +249,7 @@ if __name__ == '__main__':
             Year(id=2, name="2025-2026")
         ]
 
-        db.session.add_all(students + users + profiles + subjects + classes + semesters + years)
+        db.session.add_all(students + profiles + subjects + classes + semesters + years)
         db.session.commit()
         scores = [
             Score(score=8.5, type=TypeExam.EXAM_15P, student_id=1, subject_id=1, semester_id=1, year_id=1),
