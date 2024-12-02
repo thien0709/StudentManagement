@@ -75,7 +75,8 @@ class Subject(db.Model):
 
 class Class(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    grade = Column(Enum(GRADE))
+    # grade = Column(Enum(GRADE))
+    name = Column(Enum(GRADE))
     # count = Column(Integer)
     amount = Column(Integer, default=0)
     year = Column(Integer, default=datetime.now().year)
@@ -117,7 +118,8 @@ class Staff_Class(db.Model):
 
 class Semester(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    semester_name = Column(String(50))
+    # semester_name = Column(String(50))  (doi ten semester_name -> name)
+    name = Column(String(50))
     scores = relationship('Score', backref='semester', lazy=True)
 
 
@@ -184,19 +186,19 @@ if __name__ == '__main__':
         db.create_all()
 
         # new_profile = Profile(
-        #     name="Jane Doe",
-        #     email="janedoe@example.com",
-        #     birthday="1995-05-15",
-        #     gender=False,
-        #     address="456 Elm Street",
-        #     phone="0987654321"
+        # name="Jane Doe",
+        # email="janedoe@example.com",
+        # birthday="1995-05-15",
+        # gender=False,
+        # address="456 Elm Street",
+        # phone="0987654321"
         # )
         #
         # new_user = User(
-        #     profile=new_profile,
-        #     username="janedoe",
-        #     password="anothersecurepassword",
-        #     user_role=UserRole.TEACHER
+        # profile=new_profile,
+        # username="janedoe",
+        # password="anothersecurepassword",
+        # user_role=UserRole.TEACHER
         # )
         #
         profiles = [
@@ -231,14 +233,14 @@ if __name__ == '__main__':
         ]
 
         classes = [
-            Class(grade=GRADE.K10, amount=25, year=2024),
-            Class(grade=GRADE.K11, amount=30, year=2024),
-            Class(grade=GRADE.K12, amount=20, year=2024)
+            Class(name=GRADE.K10, amount=25, year=2024),
+            Class(name=GRADE.K11, amount=30, year=2024),
+            Class(name=GRADE.K12, amount=20, year=2024)
         ]
 
         semesters = [
-            Semester(semester_name="Semester 1"),
-            Semester(semester_name="Semester 2")
+            Semester(name="Semester 1"),
+            Semester(name="Semester 2")
         ]
 
         years = [
@@ -246,15 +248,21 @@ if __name__ == '__main__':
             Year(id=2, name="2025-2026")
         ]
 
-        db.session.add_all(students + users + profiles + subjects + classes + semesters + years)
+        students_classes = [
+            Students_Classes(class_id=1, student_id=1),  # Student A thuộc lớp K10
+            Students_Classes(class_id=1, student_id=2),  # Student B thuộc lớp K10
+            Students_Classes(class_id=2, student_id=3),  # Student C thuộc lớp K11
+            Students_Classes(class_id=3, student_id=4),  # Student D thuộc lớp K12
+        ]
+
+
+        db.session.add_all(students + users + profiles + subjects + classes + semesters + years + students_classes)
         db.session.commit()
         scores = [
             Score(score=8.5, type=TypeExam.EXAM_15P, student_id=1, subject_id=1, semester_id=1, year_id=1),
             Score(score=7.0, type=TypeExam.EXAM_45P, student_id=2, subject_id=2, semester_id=1, year_id=1),
-            Score(score=9.0, type=TypeExam.EXAM_final, student_id=3, subject_id=3, semester_id=1,
-                  year_id=1),
+            Score(score=9.0, type=TypeExam.EXAM_final, student_id=3, subject_id=3, semester_id=1, year_id=1),
             Score(score=6.5, type=TypeExam.EXAM_15P, student_id=4, subject_id=4, semester_id=1, year_id=1),
         ]
-        db.session.add_all( scores)
+        db.session.add_all(scores)
         db.session.commit()
-
