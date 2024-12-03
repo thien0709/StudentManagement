@@ -75,17 +75,65 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
 
         logger.debug(f"Saving scores for student {student_id}: 15min={score_15_min}, 1 hour={score_1_hour}, final_exam={final_exam}")
 
+        # Lưu điểm 15 phút
+        for score in score_15_min:
+            score_record = Score.query.filter_by(
+                student_id=student_id,
+                subject_id=subject_id,
+                semester_id=semester_id,
+                year_id=year_id,
+                type='EXAM_15P'
+            ).first()
+            if score_record:
+                logger.debug("Updating existing score record")
+                score_record.score = score
+            else:
+                logger.debug("Creating new score record")
+                new_score = Score(
+                    student_id=student_id,
+                    score=score,
+                    type='EXAM_15P',
+                    subject_id=subject_id,
+                    semester_id=semester_id,
+                    year_id=year_id
+                )
+                db.session.add(new_score)
+
+        # Lưu điểm 1 giờ
+        for score in score_1_hour:
+            score_record = Score.query.filter_by(
+                student_id=student_id,
+                subject_id=subject_id,
+                semester_id=semester_id,
+                year_id=year_id,
+                type='EXAM_45P'
+            ).first()
+            if score_record:
+                logger.debug("Updating existing score record")
+                score_record.score = score
+            else:
+                logger.debug("Creating new score record")
+                new_score = Score(
+                    student_id=student_id,
+                    score=score,
+                    type='EXAM_45P',
+                    subject_id=subject_id,
+                    semester_id=semester_id,
+                    year_id=year_id
+                )
+                db.session.add(new_score)
+
+        # Lưu điểm cuối kỳ
         score_record = Score.query.filter_by(
             student_id=student_id,
             subject_id=subject_id,
             semester_id=semester_id,
-            year_id=year_id
+            year_id=year_id,
+            type='EXAM_final'
         ).first()
-
         if score_record:
             logger.debug("Updating existing score record")
-            score_record.score = final_exam  # Lưu điểm cuối kỳ vào cột score
-            score_record.type = 'EXAM_final'
+            score_record.score = final_exam
         else:
             logger.debug("Creating new score record")
             new_score = Score(
@@ -98,7 +146,6 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
             )
             db.session.add(new_score)
 
-        logger.debug("Committing to database")
         db.session.commit()
         logger.debug("Scores saved successfully.")
         return "Lưu điểm thành công"
@@ -107,27 +154,3 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         db.session.rollback()
         logger.error(f"Error saving scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
-
-
-# Hàm lưu điểm trung bình vào cơ sở dữ liệu
-def save_average_score(student_id, average_score):
-    try:
-        # Tìm bản ghi Score của học sinh theo student_id
-        score_record = Score.query.filter_by(student_id=student_id).first()
-
-        if score_record:
-            # Cập nhật điểm trung bình nếu đã có bản ghi
-            score_record.average_score = average_score
-            db.session.commit()
-        else:
-            # Nếu không có bản ghi nào, tạo mới
-            new_score = Score(student_id=student_id, average_score=average_score)
-            db.session.add(new_score)
-            db.session.commit()
-
-        return "Lưu điểm trung bình thành công"
-
-    except Exception as e:
-        db.session.rollback()  # Hủy bỏ giao dịch nếu có lỗi
-        print(f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}")
-        return f"Đã xảy ra lỗi khi lưu điểm trung bình: {str(e)}"

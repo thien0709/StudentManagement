@@ -6,13 +6,13 @@ from flask_login import login_user, logout_user, current_user
 from manage_student.models import Score
 
 
-
 @app.route("/")
 def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
 
     return render_template("index.html")
+
 
 @app.route("/input_scores", methods=["GET"])
 def input_scores():
@@ -57,8 +57,6 @@ def input_scores():
     )
 
 
-
-
 # index.py
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
@@ -66,46 +64,19 @@ def save_scores():
     semester_id = request.form.get("semester_id")
     subject_id = request.form.get("subject_id")
     year_id = request.form.get("year_id")
-    print(f"Class ID: {class_id}, Semester ID: {semester_id}, Subject ID: {subject_id}, Year ID: {year_id}")
-
     try:
         for key, value in request.form.to_dict(flat=False).items():
-            print(f"Key: {key}, Value: {value}")
-
             if key.startswith("score_15_min"):
-                student_id = key.split("_")[3]  # Lấy ID sinh viên từ key
-
-                # Lấy các điểm từ form
+                student_id = key.split("_")[3]
                 score_15_min = request.form.get(f"score_15_min_{student_id}")
                 score_1_hour = request.form.get(f"score_1_hour_{student_id}")
                 final_exam = request.form.get(f"final_exam_{student_id}")
 
-                # In thông tin các điểm ra để kiểm tra
-                print(f"Saving scores for student {student_id}: 15min={score_15_min}, 1 hour={score_1_hour}, final_exam={final_exam}")
-
-                # Kiểm tra các điểm có bị None hoặc rỗng không
-                if not score_15_min or not score_1_hour or not final_exam:
+                if not all([score_15_min, score_1_hour, final_exam]):
                     print(f"Error: Missing score for student {student_id}")
-                    continue  # Nếu có điểm nào bị thiếu, bỏ qua sinh viên này
-
-                try:
-                    # Tính điểm trung bình
-                    average_score = (float(score_15_min) + float(score_1_hour) + float(final_exam)) / 3
-
-                    # Lưu điểm vào cơ sở dữ liệu
-                    score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
-                    score.save_average_score(student_id, average_score)  # Đảm bảo rằng bạn gọi đúng hàm
-                    print(f"Average score saved for student {student_id}: {average_score:.2f}")
-
-                except ValueError:
-                    print(f"Error: Invalid score format for student {student_id}")
-                    continue  # Nếu điểm không hợp lệ, bỏ qua sinh viên này
-
-        # Commit các thay đổi vào cơ sở dữ liệu
-        db.session.commit()
-        flash("Lưu điểm thành công!", "success")
+                    continue
+                score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id,semester_id, year_id)
     except Exception as e:
-        db.session.rollback()  # Rollback nếu có lỗi xảy ra
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
@@ -141,4 +112,4 @@ def load_user(user_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9999)
+    app.run(debug=True, port=5000)
