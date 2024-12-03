@@ -75,8 +75,7 @@ class Subject(db.Model):
 
 class Class(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    # grade = Column(Enum(GRADE))
-    name = Column(Enum(GRADE))
+    name = Column(String(50))
     # count = Column(Integer)
     amount = Column(Integer, default=0)
     year = Column(Integer, default=datetime.now().year)
@@ -233,9 +232,9 @@ if __name__ == '__main__':
         ]
 
         classes = [
-            Class(name=GRADE.K10, amount=25, year=2024),
-            Class(name=GRADE.K11, amount=30, year=2024),
-            Class(name=GRADE.K12, amount=20, year=2024)
+            Class(name="10A1", amount=25, year=2024),
+            Class(name="10A2", amount=30, year=2024),
+            Class(name="10A3", amount=20, year=2024)
         ]
 
         semesters = [
