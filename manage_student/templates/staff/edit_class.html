@@ -1,0 +1,59 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Danh sách lớp học</h2>
+
+    <!-- Form chọn thông tin -->
+    <form method="POST" action="/class">
+        <div class="row mb-3">
+            <div class="col">
+                <label for="class" class="form-label">Lớp:</label>
+                <select id="class" name="class_id" class="form-select">
+                    <option value="">Chọn lớp</option>
+                    {% for class in classes_list %}
+                    <option value="{{ class.id }}">{{ class.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col">
+                <label for="semester" class="form-label">Học kỳ:</label>
+                <select id="semester" name="semester_id" class="form-select">
+                    <option value="">Chọn học kỳ</option>
+                    {% for semester in semesters %}
+                    <option value="{{ semester.id }}">{{ semester.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col">
+                <label for="year" class="form-label">Năm học:</label>
+                <select id="year" name="year_id" class="form-select">
+                    <option value="">Chọn năm học</option>
+                    {% for year in years %}
+                    <option value="{{ year.id }}">{{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-dark">Hiển thị</button>
+        </div>
+    </form>
+
+    <!-- Thông báo lỗi -->
+    {% if error_message %}
+    <div class="alert alert-danger mt-3" role="alert">
+        {{ error_message }}
+    </div>
+    {% endif %}
+
+    <!-- Hiển thị danh sách học sinh nếu có -->
+    {% if students %}
+    <h2>Danh sách học sinh:</h2>
+    <ul>
+        {% for student in students %}
+        <li>{{ student.name }} ({{ student.class_name }})</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endblock %}
