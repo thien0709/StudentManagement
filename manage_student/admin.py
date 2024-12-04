@@ -1,5 +1,5 @@
 from flask import redirect, request
-from flask_admin import Admin, expose, AdminIndexView
+from flask_admin import Admin, expose
 from flask_admin import BaseView
 from flask_admin.contrib.sqla import ModelView
 from manage_student.models import UserRole, Subject, Teachers_Subject, Regulation

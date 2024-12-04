@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, flash, url_for
-from manage_student.dao import auth, score
+from manage_student.dao import auth, score , classes
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
 
@@ -22,21 +22,11 @@ def input_scores():
     semesters = score.get_semesters()  # Danh sách học kỳ
     years = score.get_years()  # Danh sách năm học
 
-    # In ra các giá trị để kiểm tra dữ liệu
-    print(f"Classes: {classes}")
-    print(f"Subjects: {subjects}")
-    print(f"Semesters: {semesters}")
-    print(f"Years: {years}")
-
     # Lấy các tham số từ URL query string (query params)
     class_id = request.args.get("class_id")
     semester_id = request.args.get("semester_id")
     subject_id = request.args.get("subject_id")
     year_id = request.args.get("year_id")
-
-    # In ra các tham số từ query string để kiểm tra
-    print(f"class_id: {class_id}, semester_id: {semester_id}, subject_id: {subject_id}, year_id: {year_id}")
-
     # Kiểm tra nếu tất cả các tham số đã được cung cấp, tìm danh sách học sinh theo bộ lọc
     students = []
     if class_id and semester_id and subject_id and year_id:
@@ -80,6 +70,44 @@ def save_scores():
 
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
+
+
+@app.route("/class", methods=['GET', 'POST'])
+def edit_class():
+    if request.method == 'GET':
+        # Hiển thị danh sách lớp, học kỳ, và năm học
+        classes_list = classes.get_classes()
+        semesters = score.get_semesters()
+        years = score.get_years()
+        return render_template('staff/edit_class.html',
+                               classes_list=classes_list,
+                               semesters=semesters,
+                               years=years,
+                               students=None)
+
+    elif request.method == 'POST':
+        # Lấy dữ liệu từ form
+        class_id = request.form.get('class_id')
+        semester_id = request.form.get('semester_id')
+        year_id = request.form.get('year_id')
+
+        # # Kiểm tra xem người dùng có điền đủ thông tin không
+        # if not class_id or not semester_id or not year_id:
+        #     error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
+        #     return render_template('staff/edit_class.html',
+        #                            classes_list=classes.get_classes(),
+        #                            semesters=score.get_semesters(),
+        #                            years=score.get_years(),
+        #                            students=None,
+        #                            error_message=error_message)
+
+        # Lấy danh sách học sinh nếu có đầy đủ thông tin
+        students = classes.get_students_by_class(class_id, semester_id, year_id)
+        return render_template('staff/edit_class.html',
+                               classes_list=classes.get_classes(),
+                               semesters=score.get_semesters(),
+                               years=score.get_years(),
+                               students=students)
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
