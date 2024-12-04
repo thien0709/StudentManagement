@@ -57,7 +57,6 @@ def input_scores():
     )
 
 
-# index.py
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
     class_id = request.form.get("class_id")
@@ -75,7 +74,7 @@ def save_scores():
                 if not all([score_15_min, score_1_hour, final_exam]):
                     print(f"Error: Missing score for student {student_id}")
                     continue
-                score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id,semester_id, year_id)
+                score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
     except Exception as e:
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
