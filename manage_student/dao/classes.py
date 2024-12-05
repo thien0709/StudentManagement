@@ -1,5 +1,5 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, Students_Classes
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass
 from sqlalchemy.orm import aliased
 
 # Hàm lấy tất cả các lớp học
@@ -14,7 +14,7 @@ def get_classes():
         return []
 
 def get_students_by_class(class_id=None, semester_id=None, year_id=None):
-    query = db.session.query(Student).join(Students_Classes).join(Class).join(Year).join(Semester)
+    query = db.session.query(Student).join(StudentClass).join(Class).join(Year).join(Semester)
     if class_id:
         query = query.filter(Class.id == class_id)
     if semester_id:
@@ -26,5 +26,5 @@ def get_students_by_class(class_id=None, semester_id=None, year_id=None):
 def count_students_by_class(class_id=None):
     query = db.session.query(Student)
     if class_id:
-        query = query.join(Students_Classes).join(Class).filter(Class.id == class_id)
+        query = query.join(StudentClass).join(Class).filter(Class.id == class_id)
     return query.count()

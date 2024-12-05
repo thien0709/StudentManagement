@@ -1,5 +1,5 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, Students_Classes
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass
 from sqlalchemy.orm import aliased
 
 
@@ -50,7 +50,7 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
 
     # Kết nối với bảng Students_Classes và Class
     if class_id:
-        query = query.join(Students_Classes).join(Class).filter(Class.id == class_id)
+        query = query.join(StudentClass).join(Class).filter(Class.id == class_id)
 
     # Kết nối với bảng Score nếu có môn học hoặc học kỳ
     if subject_id:

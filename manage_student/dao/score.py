@@ -1,5 +1,5 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, Students_Classes
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass
 from manage_student.dao.class_dao import get_classes, get_subjects, get_semesters, get_years, get_students_by_filter
 import logging
 
