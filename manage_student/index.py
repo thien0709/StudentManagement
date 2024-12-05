@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, flash, url_for
-from manage_student.dao import auth, score , classes
+from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
 
@@ -17,10 +17,10 @@ def index():
 @app.route("/input_scores", methods=["GET"])
 def input_scores():
     # Lấy dữ liệu từ các hàm trong model 'score'
-    classes = score.get_classes()  # Danh sách lớp
-    subjects = score.get_subjects()  # Danh sách môn học
-    semesters = score.get_semesters()  # Danh sách học kỳ
-    years = score.get_years()  # Danh sách năm học
+    classes = class_dao.get_classes()  # Danh sách lớp
+    subjects = subject_dao.get_subjects()  # Danh sách môn học
+    semesters = semester_dao.get_semesters()  # Danh sách học kỳ
+    years = year_dao.get_years()  # Danh sách năm học
 
     # Lấy các tham số từ URL query string (query params)
     class_id = request.args.get("class_id")
@@ -30,7 +30,7 @@ def input_scores():
     # Kiểm tra nếu tất cả các tham số đã được cung cấp, tìm danh sách học sinh theo bộ lọc
     students = []
     if class_id and semester_id and subject_id and year_id:
-        students = score.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+        students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
 
     # Trả về template với các dữ liệu đã lấy được
     return render_template(
@@ -64,57 +64,57 @@ def save_scores():
                 if not all([score_15_min, score_1_hour, final_exam]):
                     print(f"Error: Missing score for student {student_id}")
                     continue
-                score.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
+                score_dao.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
     except Exception as e:
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
 
-
-@app.route("/class", methods=['GET', 'POST'])
-def edit_class():
-    if request.method == 'GET':
-        # Hiển thị danh sách lớp, học kỳ, và năm học
-        classes_list = classes.get_classes()
-        semesters = score.get_semesters()
-        years = score.get_years()
-        return render_template('staff/edit_class.html',
-                               classes_list=classes_list,
-                               semesters=semesters,
-                               years=years,
-                               students=None)
-
-    elif request.method == 'POST':
-        # Lấy dữ liệu từ form
-        class_id = request.form.get('class_id')
-        semester_id = request.form.get('semester_id')
-        year_id = request.form.get('year_id')
-
-        # # Kiểm tra xem người dùng có điền đủ thông tin không
-        # if not class_id or not semester_id or not year_id:
-        #     error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
-        #     return render_template('staff/edit_class.html',
-        #                            classes_list=classes.get_classes(),
-        #                            semesters=score.get_semesters(),
-        #                            years=score.get_years(),
-        #                            students=None,
-        #                            error_message=error_message)
-
-        # Lấy danh sách học sinh nếu có đầy đủ thông tin
-        students = classes.get_students_by_class(class_id, semester_id, year_id)
-        return render_template('staff/edit_class.html',
-                               classes_list=classes.get_classes(),
-                               semesters=score.get_semesters(),
-                               years=score.get_years(),
-                               students=students)
+#
+# @app.route("/class", methods=['GET', 'POST'])
+# def edit_class():
+#     if request.method == 'GET':
+#         # Hiển thị danh sách lớp, học kỳ, và năm học
+#         classes_list = class_dao.get_classes()
+#         semesters = score.get_semesters()
+#         years = score.get_years()
+#         return render_template('staff/edit_class.html',
+#                                classes_list=classes_list,
+#                                semesters=semesters,
+#                                years=years,
+#                                students=None)
+#
+#     elif request.method == 'POST':
+#         # Lấy dữ liệu từ form
+#         class_id = request.form.get('class_id')
+#         semester_id = request.form.get('semester_id')
+#         year_id = request.form.get('year_id')
+#
+#         # # Kiểm tra xem người dùng có điền đủ thông tin không
+#         # if not class_id or not semester_id or not year_id:
+#         #     error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
+#         #     return render_template('staff/edit_class.html',
+#         #                            classes_list=classes.get_classes(),
+#         #                            semesters=score.get_semesters(),
+#         #                            years=score.get_years(),
+#         #                            students=None,
+#         #                            error_message=error_message)
+#
+#         # Lấy danh sách học sinh nếu có đầy đủ thông tin
+#         students = class_dao.get_students_by_class(class_id, semester_id, year_id)
+#         return render_template('staff/edit_class.html',
+#                                classes_list=class_dao.get_classes(),
+#                                semesters=score.get_semesters(),
+#                                years=score.get_years(),
+#                                students=students)
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
-        u = auth.auth_user(username=username, password=password)
+        u = auth_dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
             if u.user_role == models.UserRole.ADMIN:
@@ -135,7 +135,7 @@ def logout_process():
 
 @login.user_loader
 def load_user(user_id):
-    return auth.get_user_by_id(user_id)
+    return auth_dao.get_user_by_id(user_id)
 
 
 if __name__ == '__main__':
