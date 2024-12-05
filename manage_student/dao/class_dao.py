@@ -1,5 +1,5 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass, TeachingAssignment
 from sqlalchemy.orm import aliased
 
 
@@ -47,21 +47,16 @@ def get_years():
 
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
-
-    # Kết nối với bảng Students_Classes và Class
+    if semester_id or year_id or subject_id:
+        query = query.join(Score)
+        if semester_id:
+            query = query.filter(Score.semester_id == semester_id)
+        if year_id:
+            query = query.filter(Score.year_id == year_id)
+        if subject_id:
+            query = query.join(Subject).filter(Subject.id == subject_id)
     if class_id:
         query = query.join(StudentClass).join(Class).filter(Class.id == class_id)
-
-    # Kết nối với bảng Score nếu có môn học hoặc học kỳ
-    if subject_id:
-        query = query.join(Score).filter(Score.subject_id == subject_id)
-
-    if semester_id:
-        query = query.join(Semester).filter(Semester.id == semester_id)
-
-    if year_id:
-        query = query.join(Year).filter(Year.id == year_id)
-
     try:
         students = query.all()
         if not students:
