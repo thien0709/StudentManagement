@@ -28,7 +28,9 @@
                 <select id="class" name="class_id" class="form-select">
                     <option value="">Chọn lớp</option>
                     {% for class in classes %}
-                    <option value="{{ class.id }}" {% if class.id == class_id|int %} selected {% endif %}>{{ class.name }}</option>
+                    <option value="{{ class.id }}" {% if class.id== class_id|int %} selected {% endif %}>{{ class.name
+                        }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -37,7 +39,9 @@
                 <select id="semester" name="semester_id" class="form-select">
                     <option value="">Chọn học kỳ</option>
                     {% for semester in semesters %}
-                    <option value="{{ semester.id }}" {% if semester.id == semester_id|int %} selected {% endif %}>{{ semester.name }}</option>
+                    <option value="{{ semester.id }}" {% if semester.id== semester_id|int %} selected {% endif %}>{{
+                        semester.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -46,7 +50,9 @@
                 <select id="subject" name="subject_id" class="form-select">
                     <option value="">Chọn môn học</option>
                     {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if subject.id == subject_id|int %} selected {% endif %}>{{ subject.name }}</option>
+                    <option value="{{ subject.id }}" {% if subject.id== subject_id|int %} selected {% endif %}>{{
+                        subject.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -55,7 +61,8 @@
                 <select id="year" name="year_id" class="form-select">
                     <option value="">Chọn năm học</option>
                     {% for year in years %}
-                    <option value="{{ year.id }}" {% if year.id == year_id|int %} selected {% endif %}>{{ year.name }}</option>
+                    <option value="{{ year.id }}" {% if year.id== year_id|int %} selected {% endif %}>{{ year.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -66,14 +73,14 @@
     <!-- Form lưu điểm -->
     {% if students %}
     <form method="POST" action="/save-scores">
-    <!-- Truyền lại các tham số từ query string vào các trường hidden -->
-    <input type="hidden" name="class_id" value="{{ class_id }}">
-    <input type="hidden" name="semester_id" value="{{ semester_id }}">
-    <input type="hidden" name="subject_id" value="{{ subject_id }}">
-    <input type="hidden" name="year_id" value="{{ year_id }}">
+        <!-- Truyền lại các tham số từ query string vào các trường hidden -->
+        <input type="hidden" name="class_id" value="{{ class_id }}">
+        <input type="hidden" name="semester_id" value="{{ semester_id }}">
+        <input type="hidden" name="subject_id" value="{{ subject_id }}">
+        <input type="hidden" name="year_id" value="{{ year_id }}">
 
-    <table class="table mt-4">
-        <thead>
+        <table class="table mt-4">
+            <thead>
             <tr>
                 <th scope="col">Tên sinh viên</th>
                 <th scope="col">Điểm 15 phút</th>
@@ -81,29 +88,38 @@
                 <th scope="col">Điểm thi cuối kỳ</th>
                 <th scope="col">Điểm trung bình</th>
             </tr>
-        </thead>
-        <tbody>
+            </thead>
+            <tbody>
             {% for student in students %}
             <tr>
                 <td>{{ student.name }}</td>
                 <td>
-                    <input type="number" name="score_15_min_{{ student.id }}" value="{{ student.score_15_min }}" oninput="calculateAverage(this)" class="form-control">
+                    <input type="number" name="score_15_min_{{ student.id }}"
+                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('score_15_min', '') }}"
+                           oninput="calculateAverage(this)" class="form-control">
                 </td>
                 <td>
-                    <input type="number" name="score_1_hour_{{ student.id }}" value="{{ student.score_1_hour }}" oninput="calculateAverage(this)" class="form-control">
+                    <input type="number" name="score_1_hour_{{ student.id }}"
+                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('score_1_hour', '') }}"
+                           oninput="calculateAverage(this)" class="form-control">
                 </td>
                 <td>
-                    <input type="number" name="final_exam_{{ student.id }}" value="{{ student.final_exam }}" oninput="calculateAverage(this)" class="form-control">
+                    <input type="number" name="final_exam_{{ student.id }}"
+                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('final_exam', '') }}"
+                           oninput="calculateAverage(this)" class="form-control">
                 </td>
                 <td>
-                    <input type="text" name="average_score_{{ student.id }}" value="{{ student.average_score }}" class="form-control" readonly>
+                    <input type="text" name="average_score_{{ student.id }}"
+                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('average_score', '') }}"
+                           class="form-control" readonly>
                 </td>
             </tr>
             {% endfor %}
-        </tbody>
-    </table>
-    <button type="submit" class="btn btn-success">Lưu điểm</button>
-</form>
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success">Lưu điểm</button>
+    </form>
+
 
     {% else %}
     <p class="text-center">Không có sinh viên nào phù hợp với tiêu chí tìm kiếm.</p>
@@ -117,6 +133,7 @@
         const score1HourInput = row.querySelector('input[name^="score_1_hour"]');
         const finalExamInput = row.querySelector('input[name^="final_exam"]');
         const averageScoreInput = row.querySelector('input[name^="average_score"]');
+        const hiddenAverageInput = row.querySelector('input[type="hidden"][name^="average_score"]');
 
         const score15Min = parseFloat(score15MinInput.value) || 0;
         const score1Hour = parseFloat(score1HourInput.value) || 0;
@@ -124,12 +141,15 @@
 
         const totalScore15Min = score15Min;
         const totalScore1Hour = score1Hour * 2;  // Trọng số 2 cho điểm 1 tiết
-        const finalExamScore = finalExam;
+        const finalExamScore = finalExam * 3;  // Trọng số 3 cho điểm thi cuối kỳ
 
         const totalWeight = 1 + 2 + 3;  // Trọng số cho 3 loại điểm
-        const averageScore = (totalScore15Min + totalScore1Hour + finalExamScore * 3) / totalWeight;
+        const averageScore = (totalScore15Min + totalScore1Hour + finalExamScore) / totalWeight;
 
         averageScoreInput.value = averageScore.toFixed(2);  // Hiển thị điểm trung bình với 2 chữ số thập phân
+        if (hiddenAverageInput) {
+            hiddenAverageInput.value = averageScore.toFixed(2); // Lưu điểm trung bình vào trường ẩn
+        }
     }
 </script>
 

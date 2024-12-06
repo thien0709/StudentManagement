@@ -67,7 +67,7 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
             subject_id=subject_id,
             semester_id=semester_id,
             year_id=year_id,
-            exam_type='EXAM_final'
+            exam_type='EXAM_FINAL'
         ).first()
         if score_record:
             logger.debug("Updating existing score record")
@@ -77,7 +77,7 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
             new_score = Score(
                 student_id=student_id,
                 score=final_exam,
-                exam_type='EXAM_final',
+                exam_type='EXAM_FINAL',
                 subject_id=subject_id,
                 semester_id=semester_id,
                 year_id=year_id

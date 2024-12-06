@@ -234,14 +234,14 @@ if __name__ == "__main__":
         #
         # db.session.add_all([subject1, subject2, subject3])
         # db.session.commit()
-        #
+
         # # Classes
         # class1 = Class(name="Class A", amount=25)
         # class2 = Class(name="Class B", amount=30)
         #
         # db.session.add_all([class1, class2])
         # db.session.commit()
-        #
+
         # # Students
         # student1 = Student(id=1, name="Alice Smith", grade=Grade.K10)
         # student2 = Student(id=2, name="Bob Johnson", grade=Grade.K11)
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         #
         # db.session.add_all([student1, student2, student3])
         # db.session.commit()
-        #
+
         # # StudentClass
         # student_class1 = StudentClass(class_id=class1.id, student_id=student1.id)
         # student_class2 = StudentClass(class_id=class2.id, student_id=student2.id)
@@ -257,7 +257,7 @@ if __name__ == "__main__":
         #
         # db.session.add_all([student_class1, student_class2, student_class3])
         # db.session.commit()
-
+        #
         # # Semesters and Years
         # semester1 = Semester(name="First Semester")
         # semester2 = Semester(name="Second Semester")
@@ -267,24 +267,24 @@ if __name__ == "__main__":
         # db.session.add_all([semester1, semester2, year1])
         # db.session.commit()
 
-        # TeachingAssignments
-        # teaching_assignment1 = TeachingAssignment(teacher_id=2, subjects_id=1,
+        # # TeachingAssignments
+        # teaching_assignment1 = TeachingAssignment(teacher_id=3, subjects_id=1,
         #                                           class_id=1, semester_id=1, years_id=1)
-        # teaching_assignment2 = TeachingAssignment(teacher_id=2, subjects_id=1,
+        # teaching_assignment2 = TeachingAssignment(teacher_id=3, subjects_id=1,
         #                                           class_id=1, semester_id=2, years_id=1)
         #
         # db.session.add_all([teaching_assignment1, teaching_assignment2])
         # db.session.commit()
-
-        # StaffClasses
-        # staff_class1 = StaffClass(staff_id=1, class_id=1, time=datetime.now())
-        # staff_class2 = StaffClass(staff_id=1, class_id=1, time=datetime.now())
+        #
+        # # StaffClasses
+        # staff_class1 = StaffClass(staff_id=2, class_id=1, time=datetime.now())
+        # staff_class2 = StaffClass(staff_id=2, class_id=1, time=datetime.now())
         #
         # db.session.add_all([staff_class1, staff_class2])
         # db.session.commit()
+
+
         #
-
-
         # Scores
         # score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=1, subject_id=1,
         #                semester_id=1, year_id=1)
@@ -293,10 +293,10 @@ if __name__ == "__main__":
         #
         # db.session.add_all([score1, score2])
         # db.session.commit()
-
-        # Regulations
+        #
+        # # Regulations
         # regulation1 = Regulation(type="General", name="Attendance Policy", min_value=75, max_value=100,
-        #                          admin_id=3)
+        #                          admin_id=1)
         #
         # db.session.add(regulation1)
         # db.session.commit()

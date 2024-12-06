@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, flash, url_for
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
+from flask import session
 
 from manage_student.models import Score
 
@@ -47,12 +48,22 @@ def input_scores():
     )
 
 
+from flask import session, redirect, url_for, flash
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+# luu diem hs
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
     class_id = request.form.get("class_id")
     semester_id = request.form.get("semester_id")
     subject_id = request.form.get("subject_id")
     year_id = request.form.get("year_id")
+
+    scores = {}
+
     try:
         for key, value in request.form.to_dict(flat=False).items():
             if key.startswith("score_15_min"):
@@ -60,15 +71,35 @@ def save_scores():
                 score_15_min = request.form.get(f"score_15_min_{student_id}")
                 score_1_hour = request.form.get(f"score_1_hour_{student_id}")
                 final_exam = request.form.get(f"final_exam_{student_id}")
+                average_score = request.form.get(f"average_score_{student_id}")
 
                 if not all([score_15_min, score_1_hour, final_exam]):
                     print(f"Error: Missing score for student {student_id}")
                     continue
-                score_dao.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id, semester_id, year_id)
+
+                # Lưu điểm vào cơ sở dữ liệu
+                score_dao.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id,
+                                              semester_id, year_id)
+
+                # Lưu lại điểm trong dict và session
+                scores[student_id] = {
+                    "score_15_min": score_15_min,
+                    "score_1_hour": score_1_hour,
+                    "final_exam": final_exam,
+                    "average_score": average_score
+                }
+
+        # Lưu scores vào session để truy cập trong template
+        session['scores'] = scores
+
+        # Redirect lại với các tham số đã chọn
+        return redirect(
+            url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+
     except Exception as e:
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
-
-    return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+        return redirect(
+            url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
 
 #
