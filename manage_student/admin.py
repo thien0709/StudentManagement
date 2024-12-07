@@ -2,7 +2,7 @@ from flask import redirect, request
 from flask_admin import Admin, expose
 from flask_admin import BaseView
 from flask_admin.contrib.sqla import ModelView
-from manage_student.models import UserRole, Subject, Teachers_Subject, Regulation
+from manage_student.models import UserRole, Subject, Regulation, TeachingAssignment
 from manage_student import app, db
 from flask_login import logout_user, current_user
 
@@ -29,32 +29,32 @@ class RegulationsView(AuthenticatedView):
         'max': 'Giá trị tối đa',
     }
 
-class TeacherSubjectView(AuthenticatedView):
-    column_list = ('teacher_id', 'subject_id', 'grade')
-    column_filters = ['teacher_id', 'subject_id']
-    column_labels = {
-        'teacher_id': 'Giáo viên',
-        'subject_id': 'Môn học',
-        'grade': 'Khối'
-    }
-    def _teacher_name(view, context, model, name):
-        return "ID giáo viên: {} | {}".format(model.teacher_id, model.teacher.user.profile.name)
-
-    def _subject_name(view, context, model, name):
-        return "ID môn học : {} | {}".format(model.subject_id, model.subject.name)
-
-    def _grade_name(view, context, model, name):
-        return model.subject.grade.value
-
-    column_formatters = {
-        'teacher_id': _teacher_name,
-        'subject_id': _subject_name,
-        'grade': _grade_name,
-    }
+# class TeacherSubjectView(AuthenticatedView):
+#     column_list = ('teacher_id', 'subject_id', 'grade')
+#     column_filters = ['teacher_id', 'subject_id']
+#     column_labels = {
+#         'teacher_id': 'Giáo viên',
+#         'subject_id': 'Môn học',
+#         'grade': 'Khối'
+#     }
+#     def _teacher_name(view, context, model, name):
+#         return "ID giáo viên: {} | {}".format(model.teacher_id, model.teacher.user.profile.name)
+#
+#     def _subject_name(view, context, model, name):
+#         return "ID môn học : {} | {}".format(model.subject_id, model.subject.name)
+#
+#     def _grade_name(view, context, model, name):
+#         return model.subject.grade.value
+#
+#     column_formatters = {
+#         'teacher_id': _teacher_name,
+#         'subject_id': _subject_name,
+#         'grade': _grade_name,
+#     }
 
 
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 admin.add_view(AuthenticatedView(Subject, db.session, name="Danh sách môn học"))
-admin.add_view(TeacherSubjectView(Teachers_Subject, db.session, name="Phân công giáo viên"))
+# admin.add_view(TeacherSubjectView(TeachingAssignment, db.session, name="Phân công giáo viên"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
 admin.add_view(LogoutView(name='Đăng xuất'))
