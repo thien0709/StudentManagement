@@ -2,9 +2,6 @@ from flask import render_template, request, redirect, flash, url_for, session
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
-from flask import session
-
-from manage_student.models import Score
 
 
 @app.route("/")
@@ -28,14 +25,13 @@ def input_scores():
     year_id = request.args.get("year_id")
 
     students = []
-    scores = {}  # Khởi tạo scores ở đây để tránh lỗi nếu không có đủ tham số
+    scores = {}
     if class_id and semester_id and subject_id and year_id:
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
 
         # Lấy điểm từ database và lưu vào session
-        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)  # Loại bỏ class_id
+        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
 
-        # Chuyển đổi scores_data sang định dạng phù hợp với template
         for score in scores_data:
             student_id = str(score.student_id)
             exam_type = score.exam_type.name
@@ -65,8 +61,11 @@ def input_scores():
         semester_id=semester_id,
         subject_id=subject_id,
         year_id=year_id,
-        scores=scores  # Sử dụng biến scores đã được khởi tạo
+        scores=scores,
+    average_scores = session.get('average_scores', {})  # Truyền biến average_scores vào template
+
     )
+
 
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
@@ -77,6 +76,7 @@ def save_scores():
 
     try:
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+        session['average_scores'] = {}  # Khởi tạo biến mới trong session
 
         for student in students:
             student_id = student.id
@@ -84,7 +84,20 @@ def save_scores():
             scores_1_hour = request.form.getlist(f"score_1_hour_{student_id}[]")
             final_exam = float(request.form.get(f"final_exam_{student_id}"))
 
-            # Lưu điểm vào database (sử dụng ScoreDAO)
+            # Tính toán điểm trung bình
+            average_score = calculate_average_score(scores_15_min, scores_1_hour, final_exam)
+            # Cập nhật session['average_scores']
+            session['average_scores'][str(student.id)] = average_score
+
+            # Cập nhật session['scores'] TRƯỚC KHI LƯU VÀO DATABASE
+            session['scores'][str(student.id)] = {
+                "score_15_min": scores_15_min,
+                "score_1_hour": scores_1_hour,
+                "final_exam": final_exam,
+                "average_score": average_score
+            }
+
+            # Lưu điểm vào database
             score_dao.save_student_scores(
                 student_id,
                 [float(score) for score in scores_15_min],
@@ -95,63 +108,26 @@ def save_scores():
                 year_id
             )
 
-            # Cập nhật session['scores']
-            session['scores'][str(student_id)] = {
-                "score_15_min": scores_15_min,
-                "score_1_hour": scores_1_hour,
-                "final_exam": final_exam
-            }
-
         flash("Lưu điểm thành công!", "success")
-
-
         return redirect(url_for('input_scores',
                                 class_id=class_id,
                                 semester_id=semester_id,
                                 subject_id=subject_id,
-                                year_id=year_id))
+                                year_id=year_id), code=303)
 
     except Exception as e:
         db.session.rollback()
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
         return redirect(request.url)
 
-    # @app.route("/class", methods=['GET', 'POST'])
-# def edit_class():
-#     if request.method == 'GET':
-#         # Hiển thị danh sách lớp, học kỳ, và năm học
-#         classes_list = class_dao.get_classes()
-#         semesters = score.get_semesters()
-#         years = score.get_years()
-#         return render_template('staff/edit_class.html',
-#                                classes_list=classes_list,
-#                                semesters=semesters,
-#                                years=years,
-#                                students=None)
-#
-#     elif request.method == 'POST':
-#         # Lấy dữ liệu từ form
-#         class_id = request.form.get('class_id')
-#         semester_id = request.form.get('semester_id')
-#         year_id = request.form.get('year_id')
-#
-#         # # Kiểm tra xem người dùng có điền đủ thông tin không
-#         # if not class_id or not semester_id or not year_id:
-#         #     error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
-#         #     return render_template('staff/edit_class.html',
-#         #                            classes_list=classes.get_classes(),
-#         #                            semesters=score.get_semesters(),
-#         #                            years=score.get_years(),
-#         #                            students=None,
-#         #                            error_message=error_message)
-#
-#         # Lấy danh sách học sinh nếu có đầy đủ thông tin
-#         students = class_dao.get_students_by_class(class_id, semester_id, year_id)
-#         return render_template('staff/edit_class.html',
-#                                classes_list=class_dao.get_classes(),
-#                                semesters=score.get_semesters(),
-#                                years=score.get_years(),
-#                                students=students)
+
+def calculate_average_score(scores_15_min, scores_1_hour, final_exam):
+    score_15_min = sum([float(score) for score in scores_15_min])
+    score_1_hour = sum([float(score) for score in scores_1_hour])
+    total_weight = len(scores_15_min) * 1 + len(scores_1_hour) * 2 + 3
+    average_score = (score_15_min + score_1_hour * 2 + final_exam * 3) / total_weight
+    return round(average_score, 2)
+
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():

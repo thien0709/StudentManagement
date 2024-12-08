@@ -141,7 +141,8 @@
                 </td>
 
                 <td>
-                    <input type="text" id="average_score_{{ student.id }}" class="form-control" readonly>
+                    <input type="text" id="average_score_{{ student.id }}" class="form-control"
+                           value="{{ average_scores.get(student.id|string, 0) }}" readonly>
                     <input type="hidden" name="average_score_{{ student.id }}" class="form-control">
                 </td>
             </tr>
