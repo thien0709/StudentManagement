@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, flash, url_for
+from flask import render_template, request, redirect, flash, url_for, session
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
@@ -17,23 +17,43 @@ def index():
 
 @app.route("/input_scores", methods=["GET"])
 def input_scores():
-    # Lấy dữ liệu từ các hàm trong model 'score'
-    classes = class_dao.get_classes()  # Danh sách lớp
-    subjects = subject_dao.get_subjects()  # Danh sách môn học
-    semesters = semester_dao.get_semesters()  # Danh sách học kỳ
-    years = year_dao.get_years()  # Danh sách năm học
+    classes = class_dao.get_classes()
+    subjects = subject_dao.get_subjects()
+    semesters = semester_dao.get_semesters()
+    years = year_dao.get_years()
 
-    # Lấy các tham số từ URL query string (query params)
     class_id = request.args.get("class_id")
     semester_id = request.args.get("semester_id")
     subject_id = request.args.get("subject_id")
     year_id = request.args.get("year_id")
-    # Kiểm tra nếu tất cả các tham số đã được cung cấp, tìm danh sách học sinh theo bộ lọc
+
     students = []
+    scores = {}  # Khởi tạo scores ở đây để tránh lỗi nếu không có đủ tham số
     if class_id and semester_id and subject_id and year_id:
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
 
-    # Trả về template với các dữ liệu đã lấy được
+        # Lấy điểm từ database và lưu vào session
+        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)  # Loại bỏ class_id
+
+        # Chuyển đổi scores_data sang định dạng phù hợp với template
+        for score in scores_data:
+            student_id = str(score.student_id)
+            exam_type = score.exam_type.name
+            if student_id not in scores:
+                scores[student_id] = {
+                    "score_15_min": [],
+                    "score_1_hour": [],
+                    "final_exam": None
+                }
+            if exam_type == "EXAM_15P":
+                scores[student_id]["score_15_min"].append(score.score)
+            elif exam_type == "EXAM_45P":
+                scores[student_id]["score_1_hour"].append(score.score)
+            elif exam_type == "EXAM_FINAL":
+                scores[student_id]["final_exam"] = score.score
+
+        session['scores'] = scores
+
     return render_template(
         "input_scores.html",
         classes=classes,
@@ -44,17 +64,10 @@ def input_scores():
         class_id=class_id,
         semester_id=semester_id,
         subject_id=subject_id,
-        year_id=year_id
+        year_id=year_id,
+        scores=scores  # Sử dụng biến scores đã được khởi tạo
     )
 
-
-from flask import session, redirect, url_for, flash
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-# luu diem hs
 @app.route("/save-scores", methods=["POST"])
 def save_scores():
     class_id = request.form.get("class_id")
@@ -62,48 +75,48 @@ def save_scores():
     subject_id = request.form.get("subject_id")
     year_id = request.form.get("year_id")
 
-    scores = {}
-
     try:
-        for key, value in request.form.to_dict(flat=False).items():
-            if key.startswith("score_15_min"):
-                student_id = key.split("_")[3]
-                score_15_min = request.form.get(f"score_15_min_{student_id}")
-                score_1_hour = request.form.get(f"score_1_hour_{student_id}")
-                final_exam = request.form.get(f"final_exam_{student_id}")
-                average_score = request.form.get(f"average_score_{student_id}")
+        students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
 
-                if not all([score_15_min, score_1_hour, final_exam]):
-                    print(f"Error: Missing score for student {student_id}")
-                    continue
+        for student in students:
+            student_id = student.id
+            scores_15_min = request.form.getlist(f"score_15_min_{student_id}[]")
+            scores_1_hour = request.form.getlist(f"score_1_hour_{student_id}[]")
+            final_exam = float(request.form.get(f"final_exam_{student_id}"))
 
-                # Lưu điểm vào cơ sở dữ liệu
-                score_dao.save_student_scores(student_id, [score_15_min], [score_1_hour], final_exam, subject_id,
-                                              semester_id, year_id)
+            # Lưu điểm vào database (sử dụng ScoreDAO)
+            score_dao.save_student_scores(
+                student_id,
+                [float(score) for score in scores_15_min],
+                [float(score) for score in scores_1_hour],
+                final_exam,
+                subject_id,
+                semester_id,
+                year_id
+            )
 
-                # Lưu lại điểm trong dict và session
-                scores[student_id] = {
-                    "score_15_min": score_15_min,
-                    "score_1_hour": score_1_hour,
-                    "final_exam": final_exam,
-                    "average_score": average_score
-                }
+            # Cập nhật session['scores']
+            session['scores'][str(student_id)] = {
+                "score_15_min": scores_15_min,
+                "score_1_hour": scores_1_hour,
+                "final_exam": final_exam
+            }
 
-        # Lưu scores vào session để truy cập trong template
-        session['scores'] = scores
+        flash("Lưu điểm thành công!", "success")
 
-        # Redirect lại với các tham số đã chọn
-        return redirect(
-            url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+
+        return redirect(url_for('input_scores',
+                                class_id=class_id,
+                                semester_id=semester_id,
+                                subject_id=subject_id,
+                                year_id=year_id))
 
     except Exception as e:
+        db.session.rollback()
         flash(f"Đã xảy ra lỗi: {str(e)}", "error")
-        return redirect(
-            url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+        return redirect(request.url)
 
-
-#
-# @app.route("/class", methods=['GET', 'POST'])
+    # @app.route("/class", methods=['GET', 'POST'])
 # def edit_class():
 #     if request.method == 'GET':
 #         # Hiển thị danh sách lớp, học kỳ, và năm học

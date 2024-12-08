@@ -8,19 +8,20 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         .container {
-            margin-top: 30px;
+          margin-top: 30px;
         }
+
         .add-button {
-            cursor: pointer;
-            color: blue;
+          cursor: pointer;
+          color: blue;
         }
     </style>
 </head>
+
 <body>
 <div class="container">
     <h2 class="text-center text-primary">NHẬP ĐIỂM MÔN HỌC</h2>
 
-    <!-- Form tìm kiếm -->
     <form method="GET" action="/input_scores">
         <div class="row mb-3">
             <div class="col">
@@ -70,10 +71,8 @@
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
     </form>
 
-    <!-- Form lưu điểm -->
     {% if students %}
     <form method="POST" action="/save-scores">
-        <!-- Truyền lại các tham số từ query string vào các trường hidden -->
         <input type="hidden" name="class_id" value="{{ class_id }}">
         <input type="hidden" name="semester_id" value="{{ semester_id }}">
         <input type="hidden" name="subject_id" value="{{ subject_id }}">
@@ -93,25 +92,57 @@
             {% for student in students %}
             <tr>
                 <td>{{ student.name }}</td>
+
                 <td>
-                    <input type="number" name="score_15_min_{{ student.id }}"
-                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('score_15_min', '') }}"
-                           oninput="calculateAverage(this)" class="form-control">
+                    <div id="score_15_min_{{ student.id }}">
+                        {% set scores_15_min = scores.get(student.id|string, {}).get('score_15_min', []) %}
+                        {% if scores_15_min %}
+                        {% for score in scores_15_min %}
+                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="{{ score }}">
+                        {% endfor %}
+                        {% else %}
+                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="0">
+                        {% endif %}
+                    </div>
+                    <button type="button" class="add-button" onclick="addScoreColumn('15_min', {{ student.id }})">+
+                    </button>
+                    <button type="button" class="remove-button" onclick="removeScoreColumn('15_min', {{ student.id }})">
+                        -
+                    </button>
                 </td>
+
                 <td>
-                    <input type="number" name="score_1_hour_{{ student.id }}"
-                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('score_1_hour', '') }}"
-                           oninput="calculateAverage(this)" class="form-control">
+                    <div id="score_1_hour_{{ student.id }}">
+                        {% set scores_1_hour = session.get('scores', {}).get(student.id|string, {}).get('score_1_hour',
+                        []) %}
+                        {% if scores_1_hour %}
+                        {% for score in scores_1_hour %}
+                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="{{ score }}" oninput="calculateAverage({{ student.id }})">
+                        {% endfor %}
+                        {% else %}
+                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="0" oninput="calculateAverage({{ student.id }})">
+                        {% endif %}
+                    </div>
+                    <button type="button" class="add-button" onclick="addScoreColumn('1_hour', {{ student.id }})">+
+                    </button>
+                    <button type="button" class="remove-button"
+                            onclick="removeScoreColumn('1_hour', {{ student.id }})">-
+                    </button>
                 </td>
+
                 <td>
-                    <input type="number" name="final_exam_{{ student.id }}"
-                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('final_exam', '') }}"
-                           oninput="calculateAverage(this)" class="form-control">
+                    <input type="number" name="final_exam_{{ student.id }}" class="form-control final_exam"
+                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('final_exam', 0) }}"
+                           oninput="calculateAverage({{ student.id }})">
                 </td>
+
                 <td>
-                    <input type="text" name="average_score_{{ student.id }}"
-                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('average_score', '') }}"
-                           class="form-control" readonly>
+                    <input type="text" id="average_score_{{ student.id }}" class="form-control" readonly>
+                    <input type="hidden" name="average_score_{{ student.id }}" class="form-control">
                 </td>
             </tr>
             {% endfor %}
@@ -127,30 +158,81 @@
 </div>
 
 <script>
-    function calculateAverage(inputElement) {
-        const row = inputElement.closest('tr');
-        const score15MinInput = row.querySelector('input[name^="score_15_min"]');
-        const score1HourInput = row.querySelector('input[name^="score_1_hour"]');
-        const finalExamInput = row.querySelector('input[name^="final_exam"]');
-        const averageScoreInput = row.querySelector('input[name^="average_score"]');
-        const hiddenAverageInput = row.querySelector('input[type="hidden"][name^="average_score"]');
+    function addScoreColumn(scoreType, studentId) {
+      const container = document.getElementById(`score_${scoreType}_${studentId}`);
+      const inputs = container.querySelectorAll('input');
 
-        const score15Min = parseFloat(score15MinInput.value) || 0;
-        const score1Hour = parseFloat(score1HourInput.value) || 0;
-        const finalExam = parseFloat(finalExamInput.value) || 0;
+      // Kiểm tra số lượng input hiện tại
+      if (scoreType === '15_min' && inputs.length >= 5) {
+        alert("Tối đa 5 cột điểm 15 phút!");
+        return;
+      } else if (scoreType === '1_hour' && inputs.length >= 3) {
+        alert("Tối đa 3 cột điểm 1 tiết!");
+        return;
+      }
 
-        const totalScore15Min = score15Min;
-        const totalScore1Hour = score1Hour * 2;  // Trọng số 2 cho điểm 1 tiết
-        const finalExamScore = finalExam * 3;  // Trọng số 3 cho điểm thi cuối kỳ
+      const newInput = document.createElement('input');
+      newInput.type = 'number';
+      newInput.name = `score_${scoreType}_${studentId}[]`;
+      newInput.classList.add('form-control');
+      newInput.classList.add(`score_${scoreType}`);
+      newInput.oninput = function () {
+        calculateAverage(studentId);
+      };
+      newInput.value = 0;
+      container.appendChild(newInput);
 
-        const totalWeight = 1 + 2 + 3;  // Trọng số cho 3 loại điểm
-        const averageScore = (totalScore15Min + totalScore1Hour + finalExamScore) / totalWeight;
-
-        averageScoreInput.value = averageScore.toFixed(2);  // Hiển thị điểm trung bình với 2 chữ số thập phân
-        if (hiddenAverageInput) {
-            hiddenAverageInput.value = averageScore.toFixed(2); // Lưu điểm trung bình vào trường ẩn
-        }
+      calculateAverage(studentId);
     }
+
+    function removeScoreColumn(scoreType, studentId) {
+      const container = document.getElementById(`score_${scoreType}_${studentId}`);
+      const inputs = container.querySelectorAll('input');
+      if (inputs.length > 1) {
+        container.removeChild(inputs[inputs.length - 1]);
+        calculateAverage(studentId);
+      }
+    }
+
+    function calculateAverage(studentId) {
+      const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
+
+      const score15MinInputs = row.querySelectorAll('.score_15_min');
+      let score15Min = 0;
+      score15MinInputs.forEach(input => {
+        score15Min += parseFloat(input.value) || 0;
+      });
+
+
+      const score1HourInputs = row.querySelectorAll('.score_1_hour');
+      let score1Hour = 0;
+      score1HourInputs.forEach(input => {
+        score1Hour += parseFloat(input.value) || 0;
+      });
+
+      const finalExamInput = row.querySelector(`input[name="final_exam_${studentId}"]`);
+      const finalExam = parseFloat(finalExamInput.value) || 0;
+
+      const totalWeight = score15MinInputs.length * 1 + score1HourInputs.length * 2 + 3;
+      let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
+
+      const averageScoreInput = document.getElementById(`average_score_${studentId}`);
+      averageScoreInput.value = averageScore.toFixed(2);
+
+      // Lấy input ẩn để lưu điểm trung bình
+      const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
+      if (hiddenAverageInput) {
+        hiddenAverageInput.value = averageScore.toFixed(2);
+      }
+    }
+
+    window.onload = function () {
+      const rows = document.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
+        calculateAverage(studentId);
+      });
+    };
 </script>
 
 </body>

@@ -183,6 +183,22 @@ class Score(db.Model):
         CheckConstraint("score <= 10", name="check_score_max"),
     )
 
+class ExamScore(db.Model):
+    __tablename__ = "exam_score"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("student.id"), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subject.id"), nullable=False)
+    semester_id = Column(Integer, ForeignKey("semester.id"), nullable=False)
+    year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
+    exam_type = Column(Enum(ExamType), nullable=False)
+    score = Column(Float, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("score >= 0", name="check_exam_score_min"),
+        CheckConstraint("score <= 10", name="check_exam_score_max"),
+    )
+
+
 
 class Regulation(db.Model):
     __tablename__ = "regulation"
@@ -300,3 +316,5 @@ if __name__ == "__main__":
         #
         # db.session.add(regulation1)
         # db.session.commit()
+
+
