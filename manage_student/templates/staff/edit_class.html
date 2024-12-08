@@ -7,29 +7,29 @@
     <form method="POST" action="/class">
         <div class="row mb-3">
             <div class="col">
-                <label for="class" class="form-label">Lớp:</label>
-                <select id="class" name="class_id" class="form-select">
+                <label for="lop_hoc" class="form-label">Lớp:</label>
+                <select id="lop_hoc" name="lop_hoc_id" class="form-select">
                     <option value="">Chọn lớp</option>
-                    {% for class in classes_list %}
-                    <option value="{{ class.id }}">{{ class.name }}</option>
+                    {% for lop_hoc in classes_list %}
+                    <option value="{{ lop_hoc.id }}">{{ lop_hoc.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col">
-                <label for="semester" class="form-label">Học kỳ:</label>
-                <select id="semester" name="semester_id" class="form-select">
+                <label for="hoc_ky" class="form-label">Học kỳ:</label>
+                <select id="hoc_ky" name="hoc_ky_id" class="form-select">
                     <option value="">Chọn học kỳ</option>
-                    {% for semester in semesters %}
-                    <option value="{{ semester.id }}">{{ semester.name }}</option>
+                    {% for hoc_ky in semesters %}
+                    <option value="{{ hoc_ky.id }}">{{ hoc_ky.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col">
-                <label for="year" class="form-label">Năm học:</label>
-                <select id="year" name="year_id" class="form-select">
+                <label for="nam_hoc" class="form-label">Năm học:</label>
+                <select id="nam_hoc" name="nam_hoc_id" class="form-select">
                     <option value="">Chọn năm học</option>
-                    {% for year in years %}
-                    <option value="{{ year.id }}">{{ year.name }}</option>
+                    {% for nam_hoc in years %}
+                    <option value="{{ nam_hoc.id }}">{{ nam_hoc.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -45,15 +45,125 @@
         {{ error_message }}
     </div>
     {% endif %}
-
-    <!-- Hiển thị danh sách học sinh nếu có -->
-    {% if students %}
-    <h2>Danh sách học sinh:</h2>
-    <ul>
-        {% for student in students %}
-        <li>{{ student.name }} ({{ student.class_name }})</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+<div class="row mb-2">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h3>Danh sách học sinh:</h3>
+        <button type="button" id="addStudentBtn" class="btn btn-primary">Thêm học sinh</button>
+    </div>
 </div>
+    {% if students %}
+    {% for student in students %}
+    <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST"
+          class="d-flex align-items-start mb-4">
+        <div class="flex-grow-1">
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>
+                    <input type="text" id="ten_hoc_sinh" name="ten_hoc_sinh" value="{{ student.profile.name }}"
+                           class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label for="gioi_tinh" class="form-label">Giới tính:</label>
+                    <input type="text" id="gioi_tinh" name="gioi_tinh"
+                           value="{% if student.profile.gender == 1 %}Nam{% else %}Nữ{% endif %}" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" id="email" name="email" value="{{ student.profile.email }}"
+                           class="form-control">
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <label for="ngay_sinh" class="form-label">Ngày sinh:</label>
+                    <input type="date" id="ngay_sinh" name="ngay_sinh"
+                           value="{{student.profile.birthday.strftime('%Y/%m/%d %H:%M:%S')}}" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label for="so_dien_thoai" class="form-label">Số điện thoại:</label>
+                    <input type="text" id="so_dien_thoai" name="so_dien_thoai" value="{{ student.profile.phone }}"
+                           class="form-control">
+                </div>
+                <div class="col-md-5">
+                    <label for="dia_chi" class="form-label">Địa chỉ:</label>
+                    <input type="text" id="dia_chi" name="dia_chi" value="{{ student.profile.address }}"
+                           class="form-control">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="ms-3 d-flex flex-column">
+            <button type="submit" name="action" value="edit" class="btn btn-primary mb-2">Sửa</button>
+            <button type="submit" name="action" value="delete" class="btn btn-danger">Xóa</button>
+        </div>
+    </form>
+    <hr>
+    {% endfor %}
+    {% endif %}
+     <div id="newStudentContainer"></div>
+</div>
+
+<script>
+    // Hàm thêm một form học sinh mới vào DOM
+   document.getElementById('addStudentBtn').addEventListener('click', function() {
+    // Lấy lớp học đã chọn từ form lớp học
+    var lop_hoc_id = document.getElementById('lop_hoc').value;
+
+    if (!lop_hoc_id) {
+        alert("Vui lòng chọn lớp học!");
+        return;
+    }
+
+    // Tạo HTML của form học sinh mới, bao gồm lop_hoc_id là trường ẩn
+    var formHtml = `
+    <form action="{{ url_for('edit_student', student_id=0) }}" method="POST" class="d-flex align-items-start mb-4">
+        <div class="flex-grow-1">
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>
+                    <input type="text" id="ten_hoc_sinh" name="ten_hoc_sinh" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="gioi_tinh" class="form-label">Giới tính:</label>
+                    <input type="text" id="gioi_tinh" name="gioi_tinh" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <label for="ngay_sinh" class="form-label">Ngày sinh:</label>
+                    <input type="date" id="ngay_sinh" name="ngay_sinh" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="so_dien_thoai" class="form-label">Số điện thoại:</label>
+                    <input type="text" id="so_dien_thoai" name="so_dien_thoai" class="form-control" required>
+                </div>
+                <div class="col-md-5">
+                    <label for="dia_chi" class="form-label">Địa chỉ:</label>
+                    <input type="text" id="dia_chi" name="dia_chi" class="form-control" required>
+                </div>
+                <input type="hidden" name="lop_hoc" value="${lop_hoc_id}">
+            </div>
+        </div>
+        <div class="ms-3 d-flex flex-column">
+            <button type="submit" name="action" value="add" class="btn btn-primary mb-2">Thêm</button>
+        </div>
+    </form>
+    `;
+
+    // Thêm form vào trong container
+    document.getElementById('newStudentContainer').innerHTML = formHtml;
+});
+
+
+    // Hàm xóa form thêm học sinh mới
+    function removeNewStudentForm(button) {
+        // Xóa form nếu người dùng nhấn "Hủy"
+        button.closest('form').remove();
+    }
+</script>
 {% endblock %}

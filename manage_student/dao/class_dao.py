@@ -13,4 +13,3 @@ def get_classes():
     except Exception as e:
         print(f"Lỗi khi truy vấn lớp học: {str(e)}")
         return []
-

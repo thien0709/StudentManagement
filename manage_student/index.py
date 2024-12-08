@@ -71,43 +71,101 @@ def save_scores():
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
 
+@app.route("/class", methods=['GET', 'POST'])
+def edit_class():
+    if request.method == 'GET':
+        classes_list = class_dao.get_classes()
+        semesters = semester_dao.get_semesters()
+        years = year_dao.get_years()
+        return render_template('staff/edit_class.html',
+                               classes_list=classes_list,
+                               semesters=semesters,
+                               years=years,
+                               students=None)
+
+    elif request.method == 'POST':
+        class_id = request.form.get('lop_hoc_id')
+        semester_id = request.form.get('hoc_ky_id')
+        year_id = request.form.get('nam_hoc_id')
+
+        if not class_id or not semester_id or not year_id:
+            error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
+            return render_template('staff/edit_class.html',
+                                   classes_list=class_dao.get_classes(),
+                                   semesters=semester_dao.get_semesters(),
+                                   years=year_dao.get_years(),
+                                   students=None,
+                                   error_message=error_message)
+
+        students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+        for student in students:
+            print(student.profile.name)
+            print(student.profile.birthday)
+        return render_template('staff/edit_class.html',
+                               classes_list=class_dao.get_classes(),
+                               semesters=semester_dao.get_semesters(),
+                               years=year_dao.get_years(),
+                               students=students)
+
+
+@app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
+def edit_student(student_id):
+    student = student_dao.get_student_by_id(student_id)
+
+    if not student and student_id != 0:
+        return "Học sinh không tồn tại", 404
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'edit':
+            # Lấy thông tin từ form để chỉnh sửa
+            name = request.form.get('ten_hoc_sinh')
+            email = request.form.get('email')
+            birthday = request.form.get('ngay_sinh')
+            gender_str = request.form.get('gioi_tinh')
+            gender = 1 if gender_str == 'Nam' else 0
+            address = request.form.get('dia_chi')
+            phone = request.form.get('so_dien_thoai')
+
+            updated_student = student_dao.update_student(
+                student_id, name, email, birthday, gender, address, phone
+            )
+
+            if updated_student:
+                return redirect('/class')
+            else:
+                return "Lỗi cập nhật học sinh", 400
+
+        elif action == 'delete':
+            student_dao.delete_student(student_id)
+            return redirect('/class')
+
+        elif action == 'add':
+            # Lấy thông tin thêm học sinh
+            name = request.form.get('ten_hoc_sinh')
+            email = request.form.get('email')
+            birthday = request.form.get('ngay_sinh')
+            gender_str = request.form.get('gioi_tinh')
+            gender = 1 if gender_str == 'Nam' else 0
+            address = request.form.get('dia_chi')
+            phone = request.form.get('so_dien_thoai')
+            class_id = request.form.get('lop_hoc')  # Lớp học từ form
+
+            # Thêm học sinh mới
+            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
+
+    return render_template('edit_class.html', student=student)
+
+
+# @app.route("/delete_student/<int:student_id>", methods=['POST'])
+# def delete_student(student_id):
+#     success = student_dao.delete_student(student_id)
 #
-# @app.route("/class", methods=['GET', 'POST'])
-# def edit_class():
-#     if request.method == 'GET':
-#         # Hiển thị danh sách lớp, học kỳ, và năm học
-#         classes_list = class_dao.get_classes()
-#         semesters = score.get_semesters()
-#         years = score.get_years()
-#         return render_template('staff/edit_class.html',
-#                                classes_list=classes_list,
-#                                semesters=semesters,
-#                                years=years,
-#                                students=None)
-#
-#     elif request.method == 'POST':
-#         # Lấy dữ liệu từ form
-#         class_id = request.form.get('class_id')
-#         semester_id = request.form.get('semester_id')
-#         year_id = request.form.get('year_id')
-#
-#         # # Kiểm tra xem người dùng có điền đủ thông tin không
-#         # if not class_id or not semester_id or not year_id:
-#         #     error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
-#         #     return render_template('staff/edit_class.html',
-#         #                            classes_list=classes.get_classes(),
-#         #                            semesters=score.get_semesters(),
-#         #                            years=score.get_years(),
-#         #                            students=None,
-#         #                            error_message=error_message)
-#
-#         # Lấy danh sách học sinh nếu có đầy đủ thông tin
-#         students = class_dao.get_students_by_class(class_id, semester_id, year_id)
-#         return render_template('staff/edit_class.html',
-#                                classes_list=class_dao.get_classes(),
-#                                semesters=score.get_semesters(),
-#                                years=score.get_years(),
-#                                students=students)
+#     if success:
+#         return redirect('/students')
+#     else:
+#         return "Không tìm thấy học sinh", 404
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
