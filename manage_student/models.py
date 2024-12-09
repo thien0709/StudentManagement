@@ -194,26 +194,28 @@ class Regulation(db.Model):
     # 1-n: Admin-Regulation
     admin_id = Column(Integer, ForeignKey("admin.id"), nullable=False)
 
-
     if __name__ == "__main__":
         with app.app_context():
-             db.create_all();
-             print("Tao bang thanh cong");
+        # db.drop_all()
+        # db.create_all()
+        # print("Tao bang thanh cong");
+        # pass
+        # db.drop_all()
+        # # Profile
+
+
+         profile1 = Profile(name="Alice Smith", email="alice@example.com", birthday=datetime(1990, 1, 1),
+                           gender=True, address="123 Main St", phone="1234567890")
+         profile2 = Profile(name="Bob Johnson", email="bob@example.com", birthday=datetime(1985, 5, 5), gender=False,
+                           address="456 Elm St", phone="0987654321")
+         profile3 = Profile(name="Charlie Brown", email="charlie@example.com", birthday=datetime(1995, 7, 7),
+                           gender=True, address="789 Oak St", phone="5678901234")
+
+        db.session.add_all([profile1, profile2, profile3])
+        db.session.commit()
 
 
         pass
-        # db.drop_all()
-        # db.create_all()
-        # # Profile
-        # profile1 = Profile(name="Alice Smith", email="alice@example.com", birthday=datetime(1990, 1, 1),
-        #                    gender=True, address="123 Main St", phone="1234567890")
-        # profile2 = Profile(name="Bob Johnson", email="bob@example.com", birthday=datetime(1985, 5, 5), gender=False,
-        #                    address="456 Elm St", phone="0987654321")
-        # profile3 = Profile(name="Charlie Brown", email="charlie@example.com", birthday=datetime(1995, 7, 7),
-        #                    gender=True, address="789 Oak St", phone="5678901234")
-        #
-        # db.session.add_all([profile1, profile2, profile3])
-        # db.session.commit()
         #
         # # Users
         # user1 = User(username="alice", password="password", role=UserRole.STAFF, profile=profile1)
@@ -287,7 +289,6 @@ class Regulation(db.Model):
         # db.session.add_all([staff_class1, staff_class2])
         # db.session.commit()
         #
-
 
         # Scores
         # score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=1, subject_id=1,

@@ -123,7 +123,6 @@ def login_process():
                 return redirect('/')
         else:
             return render_template('login.html', error='Invalid username or password')
-
     return render_template('login.html')
 
 
