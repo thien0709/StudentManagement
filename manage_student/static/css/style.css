@@ -1,132 +1,222 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 :root {
     --darkBG: #292c35;
-    --lightBG : #F8FFDB;
-    --lightText : #EEEEEE;
+    --lightBG :#F0F8FF;
+    --lightText : #FFFFFF;
     --darkText : #373A40;
-    --lightNavbar : #D9EDBF;
-    --darkNavbar : #647D87;
-    --buttonColor : #D4F6FF
+    --lightNavbar: linear-gradient(-225deg, #22E1FF 0%, #1D8FE1 48%, #625EB1 100%);
+    --darkNavbar : #000000;
+    --buttonColor : #D4F6FF;
+    --formColor:#f9f9f9 !important;
 }
+/* Đặt CSS mặc định */
 body {
-   font-family: "Patrick Hand", cursive;
-    width: 100vw;
+   width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: row;
+    margin: 0;
+    padding: 0;
     background-color: var(--lightBG);
     color: var(--darkText);
+    box-sizing: border-box;
 }
-a{
-    text-decoration: none;
-    color: var(--darkText);
-}
-#left{
-    width: 20%;
-    height: 100%;
-}
-#container{
-    width: 80%;
-    height: 100%;
-}
-.navbar {
+#left {
+    width: 60px; /* Sidebar ban đầu */
     position: fixed;
-    background: var(--lightNavbar);
     height: 100%;
-    width: 20%;
-    display: flex;
-    flex-direction: column;
+}
+#left .sidebar:hover {
+  width: 200px; /* Kích thước khi hover */
+}
+.sidebar     {
+  width: 80px; /* Kích thước thu nhỏ */
+  background: var(--lightNavbar);
+  height: 100vh;
+  position: fixed;
+  transition: width 0.3s ease; /* Hiệu ứng mượt */
+  overflow: hidden; /* Ẩn nội dung thừa */
+  box-sizing: border-box;
 }
 
-.navbar img {
-    width: 100px;
-    height: 10%;
+.sidebar .logo {
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 50px;
 }
 
-.navbar ul {
+.sidebar .logo img {
+  width: 40px;
+  height: 40px;
+  margin-top: 25px;
+}
+.sidebar:hover img {
+    width: 120px;
+    height: 12%;
+}
+
+.sidebar ul {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+        /* CSS để thiết lập các thẻ a trong li */
+        li a {
+            text-decoration: none; /* Loại bỏ dấu gạch dưới */
+             /* Màu chữ đen */
+        }
+.sidebar li{
+    font-size: 18px;
+    padding: 10px;
+    text-align: center;
+    transition: background 0.3s ease;
 }
 
-.content{
-    background: gray;
+.sidebar li:hover {
+    background-color: #b2d9d9;
+    cursor: pointer;
 }
 
-.header{
+ /*container*/
+#container {
+    margin-left: 80px; /* Container mặc định sẽ có margin = với width của sidebar */
+    width: calc(100% - 60px); /* Đảm bảo container không bị che khuất */
+    background-color :# F5F5F5;
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Thêm transition cho container */
+}
+
+.content {
+    padding: 20px;
+    width: 100%;
+    background:# F5F5F5;
+    box-sizing: border-box;
+}
+
+.header {
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding: 20px;
+    align-items: center;
+    background-color: #DCDCDC;
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+#left:hover + #container {
+    margin-left: 200px; /* Khi hover, margin của container sẽ thay đổi tương ứng với chiều rộng sidebar */
+    width: calc(100% - 200px); /* Khi hover, container sẽ chiếm 100% chiều rộng trừ đi sidebar */
 }
 .search input {
-   padding: 10px;
+    padding: 10px;
     border: 2px var(--buttonColor) solid;
     border-radius: 16px;
-   padding: 12px;
     width: 500px;
+    box-sizing: border-box;
 }
-.user{
+
+.search input:focus {
+    outline: none;
+    border-color: #00BFFF;
+}
+
+.user {
     display: flex;
     align-items: center;
     flex-direction: row;
 }
-.user img{
+
+.user img {
     width: 40px;
     height: 40px;
 }
 
-.login{
+/* Chế độ sáng */
+body:not(.dark) {
+    background-color: var(--lightBG);
+    color: var(--darkText);
+}
+
+/* Chế độ tối */
+body.dark {
+    background-color: var(--darkBG);
+    color: var(--lightText);
+}
+/*header*/
+body:not(.dark) .header {
+    color: var(--darkText); /* Màu chữ chế độ sáng */
+    background-color: #C0C0C0; /* Nền chế độ sáng (tuỳ chỉnh nếu cần) */
+}
+
+/* Chế độ tối */
+body.dark .header {
+    color: var(--lightText); /* Màu chữ chế độ tối */
+    background-color: #B0C4DE; /* Nền chế độ tối (tuỳ chỉnh nếu cần) */
+}
+
+/* Navbar */
+body:not(.dark) .sidebar  {
+    background: var(--lightNavbar) ;
+    color: var(--darkText);
+}
+
+body.dark .sidebar {
+    background: var(--darkNavbar) ;
+    color: var(--lightText);
+}
+
+/* Nút chuyển đổi */
+.themeToggle {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin-top: 200px;
-    height: auto;
+    gap: 10px;
 }
 
-/*Dark theme*/
-body.dark {background-color: var(--darkBG);}
-
-body.dark h1, body.dark a {color: var(--lightText);}
-body.dark .navbar{
-    background: var(--darkNavbar);
-}
 .checkbox {
-  opacity: 0;
-  position: absolute;
+    display: none; /* Ẩn checkbox mặc định */
 }
 
 .checkbox-label {
-  background-color: #111;
-  width: 50px;
-  height: 26px;
-  border-radius: 50px;
-  position: relative;
-  padding: 5px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 50px;
+    height: 26px;
+    background-color: #ccc;
+    border-radius: 50px;
+    position: relative;
+    padding: 5px;
+    cursor: pointer;
 }
 
-.fa-moon {color: var(--buttonColor);}
-
-.fa-sun {color: var(--buttonColor);}
-
 .checkbox-label .ball {
-  background-color: var(--lightBG);
-  width: 22px;
-  height: 22px;
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  border-radius: 50%;
-  transition: transform 0.2s linear;
+    position: absolute;
+    background-color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s linear;
 }
 
 .checkbox:checked + .checkbox-label .ball {
-  transform: translateX(24px);
+    transform: translateX(24px);
+}
+
+.fas.fa-moon, .fas.fa-sun {
+    color: #555;
+}
+
+
+.fa-moon {
+    color: var(--buttonColor);
+}
+
+.fa-sun {
+    color: var(--buttonColor);
 }

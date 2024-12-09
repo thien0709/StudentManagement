@@ -1,0 +1,97 @@
+.form-container {
+            background-color: var(--formColor); /* Màu nền trắng nhạt */
+            padding: 20px;
+            border-radius: 8px; /* Bo góc cho form */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng bóng mờ */
+        }
+        body.dark {
+    background-color: var(--darkBG);
+    color: var(--lightText); /* Màu chữ của toàn bộ body khi ở chế độ tối */
+}
+
+body.dark h1, body.dark a {
+    color: var(--lightText); /* Màu chữ cho h1 và a trong chế độ tối */
+}
+
+/* Cập nhật màu chữ cho label */
+body.dark label {
+    color: var(--lightText); /* Màu chữ của label khi ở chế độ tối */
+}
+
+/* Cập nhật màu chữ cho label khi ở chế độ sáng */
+body:not(.dark) label {
+    color: var(--darkText); /* Màu chữ của label khi ở chế độ sáng */
+}
+
+body.dark .navbar {
+    background: var(--darkNavbar);
+}
+
+.checkbox {
+    opacity: 0;
+    position: absolute;
+}
+
+.checkbox-label {
+    background-color: #111;
+    width: 50px;
+    height: 26px;
+    border-radius: 50px;
+    position: relative;
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fa-moon { color: var(--buttonColor); }
+
+.fa-sun { color: var(--buttonColor); }
+
+.checkbox-label .ball {
+    background-color: var(--lightBG);
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    transition: transform 0.2s linear;
+}
+
+.checkbox:checked + .checkbox-label .ball {
+    transform: translateX(24px);
+}
+.image-upload-wrapper {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #ccc; /* Khung ngoài của ảnh */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .image-upload-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo ảnh được cắt vào khung tròn */
+        }
+
+        .image-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0; /* Ẩn input file */
+            width: 100%;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        body label {
+        font-weight: bold;
+        }

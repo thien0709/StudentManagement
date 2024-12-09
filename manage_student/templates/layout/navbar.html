@@ -1,9 +1,21 @@
-<nav class="navbar">
-    <img src="./static/img/images.png" alt="Logo">
-    <ul>
-        <li><a href="">Tiep nhan hoc sinh</a></li>
-        <li><a href="/class">Danh sach hoc sinh</a></li>
-        <li><a href="/input_scores">Nhap diem</a></li>
-        <li><a href="">Xuat diem</a></li>
-    </ul>
-</nav>
+
+<div class="sidebar">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='img/ht2.png') }}" alt="Logo">
+  </div>
+  <ul class="menu">
+    <li>
+      <i class="fas fa-user"></i> <span class="item-text"><a href="/formStudent">Cập nhật thông tin</a></span>
+    </li>
+    <li>
+      <i class="fas fa-pencil-alt"></i> <span class="item-text">Nhập điểm</span>
+    </li>
+    <li>
+      <i class="fas fa-file-alt"></i> <span class="item-text">Xuất điểm</span>
+    </li>
+    <li>
+      <i class="fas fa-chart-bar"></i> <span class="item-text">Thống kê báo cáo</span>
+    </li>
+  </ul>
+ </div>
+
