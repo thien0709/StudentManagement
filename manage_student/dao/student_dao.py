@@ -1,6 +1,5 @@
 from manage_student import db
-from manage_student.models import Score, Student, Subject, StudentClass, Class, ExamScore
-
+from manage_student.models import Score, Student, Subject, StudentClass, Class, TeachingAssignment
 
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
@@ -11,14 +10,18 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
             .filter(Class.id == class_id)
 
     if semester_id or year_id or subject_id:
-        query = query.join(ExamScore, Student.id == ExamScore.student_id)
+        student_class_alias = db.aliased(StudentClass)
+        query = query.join(student_class_alias, Student.id == student_class_alias.student_id) \
+            .join(TeachingAssignment, student_class_alias.class_id == TeachingAssignment.class_id)
         if semester_id:
-            query = query.filter(ExamScore.semester_id == semester_id)
+            query = query.filter(TeachingAssignment.semester_id == semester_id)
         if year_id:
-            query = query.filter(ExamScore.year_id == year_id)
+            query = query.filter(TeachingAssignment.years_id == year_id)
         if subject_id:
-            query = query.join(Subject, Subject.id == ExamScore.subject_id) \
-                .filter(Subject.id == subject_id)
+            query = query.filter(TeachingAssignment.subjects_id == subject_id)
+
+    # Thêm dòng này vào đây:
+    print(query.statement.compile(dialect=db.engine.dialect))
 
     try:
         students = query.all()
@@ -28,7 +31,6 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
     except Exception as e:
         print(f"Lỗi khi truy vấn học sinh: {str(e)}")
         return []
-
 
 def count_students_by_class(class_id=None):
     query = db.session.query(Student)
