@@ -72,11 +72,12 @@
     </form>
 
     {% if students %}
-    <form method="POST" action="/save-scores">
+    <form method="POST" action="/input_scores">
         <input type="hidden" name="class_id" value="{{ class_id }}">
         <input type="hidden" name="semester_id" value="{{ semester_id }}">
         <input type="hidden" name="subject_id" value="{{ subject_id }}">
         <input type="hidden" name="year_id" value="{{ year_id }}">
+
 
         <table class="table mt-4">
             <thead>
@@ -96,12 +97,11 @@
                 <td>
                     <div id="score_15_min_{{ student.id }}">
                         {% set scores_15_min = scores.get(student.id|string, {}).get('score_15_min', []) %}
-                        {% if scores_15_min %}
                         {% for score in scores_15_min %}
                         <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
                                value="{{ score }}">
                         {% endfor %}
-                        {% else %}
+                        {% if not scores_15_min %}
                         <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
                                value="0">
                         {% endif %}
@@ -115,34 +115,32 @@
 
                 <td>
                     <div id="score_1_hour_{{ student.id }}">
-                        {% set scores_1_hour = session.get('scores', {}).get(student.id|string, {}).get('score_1_hour',
-                        []) %}
-                        {% if scores_1_hour %}
+                        {% set scores_1_hour = scores.get(student.id|string, {}).get('score_1_hour', []) %}
                         {% for score in scores_1_hour %}
                         <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
                                value="{{ score }}" oninput="calculateAverage({{ student.id }})">
                         {% endfor %}
-                        {% else %}
+                        {% if not scores_1_hour %}
                         <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
                                value="0" oninput="calculateAverage({{ student.id }})">
                         {% endif %}
                     </div>
                     <button type="button" class="add-button" onclick="addScoreColumn('1_hour', {{ student.id }})">+
                     </button>
-                    <button type="button" class="remove-button"
-                            onclick="removeScoreColumn('1_hour', {{ student.id }})">-
+                    <button type="button" class="remove-button" onclick="removeScoreColumn('1_hour', {{ student.id }})">
+                        -
                     </button>
                 </td>
 
                 <td>
                     <input type="number" name="final_exam_{{ student.id }}" class="form-control final_exam"
-                           value="{{ session.get('scores', {}).get(student.id|string, {}).get('final_exam', 0) }}"
+                           value="{{ scores.get(student.id|string, {}).get('final_exam', 0) }}"
                            oninput="calculateAverage({{ student.id }})">
                 </td>
 
                 <td>
                     <input type="text" id="average_score_{{ student.id }}" class="form-control"
-                           value="{{ average_scores.get(student.id|string, 0) }}" readonly>
+                           value="{{ average_scores.get(student.id, 0) }}" readonly>
                     <input type="hidden" name="average_score_{{ student.id }}" class="form-control">
                 </td>
             </tr>
@@ -151,8 +149,6 @@
         </table>
         <button type="submit" class="btn btn-success">Lưu điểm</button>
     </form>
-
-
     {% else %}
     <p class="text-center">Không có sinh viên nào phù hợp với tiêu chí tìm kiếm.</p>
     {% endif %}
@@ -160,79 +156,77 @@
 
 <script>
     function addScoreColumn(scoreType, studentId) {
-      const container = document.getElementById(`score_${scoreType}_${studentId}`);
-      const inputs = container.querySelectorAll('input');
+        const container = document.getElementById(`score_${scoreType}_${studentId}`);
+        const inputs = container.querySelectorAll('input');
 
-      // Kiểm tra số lượng input hiện tại
-      if (scoreType === '15_min' && inputs.length >= 5) {
-        alert("Tối đa 5 cột điểm 15 phút!");
-        return;
-      } else if (scoreType === '1_hour' && inputs.length >= 3) {
-        alert("Tối đa 3 cột điểm 1 tiết!");
-        return;
-      }
+        if (scoreType === '15_min' && inputs.length >= 5) {
+            alert("Tối đa 5 cột điểm 15 phút!");
+            return;
+        } else if (scoreType === '1_hour' && inputs.length >= 3) {
+            alert("Tối đa 3 cột điểm 1 tiết!");
+            return;
+        }
 
-      const newInput = document.createElement('input');
-      newInput.type = 'number';
-      newInput.name = `score_${scoreType}_${studentId}[]`;
-      newInput.classList.add('form-control');
-      newInput.classList.add(`score_${scoreType}`);
-      newInput.oninput = function () {
+        const newInput = document.createElement('input');
+        newInput.type = 'number';
+        newInput.name = `score_${scoreType}_${studentId}[]`;
+        newInput.classList.add('form-control');
+        newInput.classList.add(`score_${scoreType}`);
+        newInput.oninput = function () {
+            calculateAverage(studentId);
+        };
+        newInput.value = 0;
+        container.appendChild(newInput);
+
         calculateAverage(studentId);
-      };
-      newInput.value = 0;
-      container.appendChild(newInput);
-
-      calculateAverage(studentId);
     }
 
     function removeScoreColumn(scoreType, studentId) {
-      const container = document.getElementById(`score_${scoreType}_${studentId}`);
-      const inputs = container.querySelectorAll('input');
-      if (inputs.length > 1) {
-        container.removeChild(inputs[inputs.length - 1]);
-        calculateAverage(studentId);
-      }
+        const container = document.getElementById(`score_${scoreType}_${studentId}`);
+        const inputs = container.querySelectorAll('input');
+        if (inputs.length > 1) {
+            container.removeChild(inputs[inputs.length - 1]);
+            calculateAverage(studentId);
+        }
     }
 
     function calculateAverage(studentId) {
-      const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
+        const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
 
-      const score15MinInputs = row.querySelectorAll('.score_15_min');
-      let score15Min = 0;
-      score15MinInputs.forEach(input => {
-        score15Min += parseFloat(input.value) || 0;
-      });
+        const score15MinInputs = row.querySelectorAll('.score_15_min');
+        let score15Min = 0;
+        score15MinInputs.forEach(input => {
+            score15Min += parseFloat(input.value) || 0;
+        });
 
+        const score1HourInputs = row.querySelectorAll('.score_1_hour');
+        let score1Hour = 0;
+        score1HourInputs.forEach(input => {
+            score1Hour += parseFloat(input.value) || 0;
+        });
 
-      const score1HourInputs = row.querySelectorAll('.score_1_hour');
-      let score1Hour = 0;
-      score1HourInputs.forEach(input => {
-        score1Hour += parseFloat(input.value) || 0;
-      });
+        const finalExamInput = row.querySelector(`input[name="final_exam_${studentId}"]`);
+        const finalExam = parseFloat(finalExamInput.value) || 0;
 
-      const finalExamInput = row.querySelector(`input[name="final_exam_${studentId}"]`);
-      const finalExam = parseFloat(finalExamInput.value) || 0;
+        const totalWeight = score15MinInputs.length * 1 + score1HourInputs.length * 2 + 3;
+        let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
 
-      const totalWeight = score15MinInputs.length * 1 + score1HourInputs.length * 2 + 3;
-      let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
+        const averageScoreInput = document.getElementById(`average_score_${studentId}`);
+        averageScoreInput.value = averageScore.toFixed(2);
 
-      const averageScoreInput = document.getElementById(`average_score_${studentId}`);
-      averageScoreInput.value = averageScore.toFixed(2);
-
-      // Lấy input ẩn để lưu điểm trung bình
-      const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
-      if (hiddenAverageInput) {
-        hiddenAverageInput.value = averageScore.toFixed(2);
-      }
+        // Lấy input ẩn để lưu điểm trung bình
+        const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
+        if (hiddenAverageInput) {
+            hiddenAverageInput.value = averageScore.toFixed(2);
+        }
     }
 
     window.onload = function () {
-      const rows = document.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
-        calculateAverage(studentId);
-      });
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
+            calculateAverage(studentId);
+        });
     };
 </script>
 
