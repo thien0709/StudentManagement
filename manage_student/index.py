@@ -3,6 +3,8 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
+from manage_student.models import ExamType
+
 
 @app.route("/")
 def index():
@@ -94,6 +96,70 @@ def input_scores():
         average_scores=average_scores,
     )
 
+
+from flask import send_file, request
+import pandas as pd
+import os
+from manage_student.dao import score_dao, student_dao
+
+
+@app.route('/export_scores', methods=['GET'])
+def export_scores():
+    try:
+        class_id = request.args.get("class_id")
+        semester_id = request.args.get("semester_id")
+        subject_id = request.args.get("subject_id")
+        year_id = request.args.get("year_id")
+
+        logger.debug(f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
+
+        students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
+
+        scores_dict = {}
+        for score in scores_data:
+            student_id = str(score.student_id)
+            if student_id not in scores_dict:
+                scores_dict[student_id] = {"score_15_min": [], "score_1_hour": [], "final_exam": None}
+
+            if score.exam_type == ExamType.EXAM_15P:
+                scores_dict[student_id]["score_15_min"].append(score.score)
+            elif score.exam_type == ExamType.EXAM_45P:
+                scores_dict[student_id]["score_1_hour"].append(score.score)
+            elif score.exam_type == ExamType.EXAM_FINAL:
+                scores_dict[student_id]["final_exam"] = score.score
+
+        data = []
+        for student in students:
+            student_scores = scores_dict.get(str(student.id), {})
+            student_id_int = int(student.id)
+
+            # Tính điểm trung bình
+            avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
+            logger.debug(f"Calculated avg_scores: {avg_scores}")
+            avg_score = avg_scores.get(student_id_int, 0)
+            logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
+
+            row = {
+                "Tên sinh viên": student.name,
+                "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
+                "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
+                "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
+                "Điểm trung bình": f"{avg_score:.2f}",
+            }
+
+            logger.debug(f"Row data for student {student.id}: {row}")
+            data.append(row)
+
+        df = pd.DataFrame(data)
+        file_name = "student_scores.xlsx"
+        df.to_excel(file_name, index=False)
+
+        return send_file(file_name, as_attachment=True)
+
+    except Exception as e:
+        logger.error(f"Error exporting scores: {str(e)}")
+        return f"Đã xảy ra lỗi: {str(e)}"
 
 
 
