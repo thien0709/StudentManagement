@@ -99,7 +99,9 @@
                 <select id="class" name="class_id" class="form-select">
                     <option value="">Chọn lớp</option>
                     {% for class in classes %}
-                    <option value="{{ class.id }}" {% if class.id == class_id|int %} selected {% endif %}>{{ class.name }}</option>
+                    <option value="{{ class.id }}" {% if class.id== class_id|int %} selected {% endif %}>{{ class.name
+                        }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -108,7 +110,9 @@
                 <select id="semester" name="semester_id" class="form-select">
                     <option value="">Chọn học kỳ</option>
                     {% for semester in semesters %}
-                    <option value="{{ semester.id }}" {% if semester.id == semester_id|int %} selected {% endif %}>{{ semester.name }}</option>
+                    <option value="{{ semester.id }}" {% if semester.id== semester_id|int %} selected {% endif %}>{{
+                        semester.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -117,7 +121,9 @@
                 <select id="subject" name="subject_id" class="form-select">
                     <option value="">Chọn môn học</option>
                     {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if subject.id == subject_id|int %} selected {% endif %}>{{ subject.name }}</option>
+                    <option value="{{ subject.id }}" {% if subject.id== subject_id|int %} selected {% endif %}>{{
+                        subject.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -126,7 +132,8 @@
                 <select id="year" name="year_id" class="form-select">
                     <option value="">Chọn năm học</option>
                     {% for year in years %}
-                    <option value="{{ year.id }}" {% if year.id == year_id|int %} selected {% endif %}>{{ year.name }}</option>
+                    <option value="{{ year.id }}" {% if year.id== year_id|int %} selected {% endif %}>{{ year.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -162,15 +169,21 @@
                     <div class="score-container" id="score_15_min_{{ student.id }}">
                         {% set scores_15_min = scores.get(student.id|string, {}).get('score_15_min', []) %}
                         {% for score in scores_15_min %}
-                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min" value="{{ score }}" oninput="calculateAverage({{ student.id }})">
+                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="{{ score }}" oninput="calculateAverage({{ student.id }})">
                         {% endfor %}
                         {% if not scores_15_min %}
-                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min" value="0" oninput="calculateAverage({{ student.id }})">
+                        <input type="number" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="0" oninput="calculateAverage({{ student.id }})">
                         {% endif %}
                     </div>
                     <div>
-                        <button type="button" class="add-button" onclick="addScoreColumn('15_min', {{ student.id }})">+</button>
-                        <button type="button" class="remove-button" onclick="removeScoreColumn('15_min', {{ student.id }})">-</button>
+                        <button type="button" class="add-button" onclick="addScoreColumn('15_min', {{ student.id }})">
+                            +
+                        </button>
+                        <button type="button" class="remove-button"
+                                onclick="removeScoreColumn('15_min', {{ student.id }})">-
+                        </button>
                     </div>
                 </td>
 
@@ -178,24 +191,33 @@
                     <div class="score-container" id="score_1_hour_{{ student.id }}">
                         {% set scores_1_hour = scores.get(student.id|string, {}).get('score_1_hour', []) %}
                         {% for score in scores_1_hour %}
-                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour" value="{{ score }}" oninput="calculateAverage({{ student.id }})">
+                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="{{ score }}" oninput="calculateAverage({{ student.id }})">
                         {% endfor %}
                         {% if not scores_1_hour %}
-                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour" value="0" oninput="calculateAverage({{ student.id }})">
+                        <input type="number" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="0" oninput="calculateAverage({{ student.id }})">
                         {% endif %}
                     </div>
                     <div>
-                        <button type="button" class="add-button" onclick="addScoreColumn('1_hour', {{ student.id }})">+</button>
-                        <button type="button" class="remove-button" onclick="removeScoreColumn('1_hour', {{ student.id }})">-</button>
+                        <button type="button" class="add-button" onclick="addScoreColumn('1_hour', {{ student.id }})">
+                            +
+                        </button>
+                        <button type="button" class="remove-button"
+                                onclick="removeScoreColumn('1_hour', {{ student.id }})">-
+                        </button>
                     </div>
                 </td>
 
                 <td>
-                    <input type="number" name="final_exam_{{ student.id }}" class="form-control final_exam" value="{{ scores.get(student.id|string, {}).get('final_exam', 0) }}" oninput="calculateAverage({{ student.id }})">
+                    <input type="number" name="final_exam_{{ student.id }}" class="form-control final_exam"
+                           value="{{ scores.get(student.id|string, {}).get('final_exam', 0) }}"
+                           oninput="calculateAverage({{ student.id }})">
                 </td>
 
                 <td>
-                   <input type="text" id="average_score_{{ student.id }}" class="form-control average-score" value="{{ average_scores.get(student.id, 0) }}" readonly>
+                    <input type="text" id="average_score_{{ student.id }}" class="form-control average-score"
+                           value="{{ average_scores.get(student.id, 0) }}" readonly>
                     <input type="hidden" name="average_score_{{ student.id }}" class="form-control">
                 </td>
             </tr>
@@ -216,11 +238,20 @@
         <input type="hidden" name="subject_id" value="{{ subject_id }}">
         <input type="hidden" name="year_id" value="{{ year_id }}">
         <div class="text-center">
-            <button type="submit" class="btn btn-success">Xuất điểm</button>
+            <button type="submit" class="btn btn-success">Xuất điểm excel</button>
         </div>
     </form>
 </div>
 
+<!-- Form xuất điểm PDF -->
+<form method="GET" action="/export_pdf" class="mt-4"><input type="hidden" name="class_id" value="{{ class_id }}"> <input
+        type="hidden" name="semester_id" value="{{ semester_id }}"> <input type="hidden" name="subject_id"
+                                                                           value="{{ subject_id }}"> <input
+        type="hidden" name="year_id" value="{{ year_id }}">
+    <div class="text-center">
+        <button type="submit" class="btn btn-danger">Xuất điểm PDF</button>
+    </div>
+</form>
 <script>
     function addScoreColumn(scoreType, studentId) {
         const container = document.getElementById(`score_${scoreType}_${studentId}`);

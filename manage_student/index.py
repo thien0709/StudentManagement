@@ -1,4 +1,6 @@
 from flask import render_template, request, redirect, flash, url_for
+from reportlab.lib.styles import getSampleStyleSheet
+
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, admin, models, db
 from flask_login import login_user, logout_user, current_user
@@ -29,14 +31,13 @@ def input_scores():
     average_scores = {}
 
     if request.method == "POST":
-        # Lấy các tham số từ form (hidden inputs)
         class_id = request.form.get("class_id")
         semester_id = request.form.get("semester_id")
         subject_id = request.form.get("subject_id")
         year_id = request.form.get("year_id")
 
         try:
-            # Lưu điểm cho từng học sinh
+            # Lưu điểm
             students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
             for student in students:
                 student_id = student.id
@@ -62,7 +63,7 @@ def input_scores():
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
         scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
 
-        # Xử lý scores
+
         for score in scores_data:
             student_id = str(score.student_id)
             exam_type = score.exam_type.name
@@ -97,15 +98,11 @@ def input_scores():
     )
 
 
-from flask import send_file, request
-import pandas as pd
-import os
-from manage_student.dao import score_dao, student_dao
+
 
 
 from flask import send_file, request
 import pandas as pd
-from io import BytesIO
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
 
 @app.route('/export_scores', methods=['GET'])
@@ -116,7 +113,7 @@ def export_scores():
         subject_id = request.args.get("subject_id")
         year_id = request.args.get("year_id")
 
-        # Lấy tên của các thực thể
+
         class_name = class_dao.get_class_name(class_id)
         semester_name = semester_dao.get_semester_name(semester_id)
         subject_name = subject_dao.get_subject_name(subject_id)
@@ -204,6 +201,115 @@ def export_scores():
 
     except Exception as e:
         logger.error(f"Error exporting scores: {str(e)}")
+        return f"Đã xảy ra lỗi: {str(e)}"
+
+
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from io import BytesIO
+
+@app.route('/export_pdf', methods=['GET'])
+def export_pdf():
+    try:
+        class_id = request.args.get("class_id")
+        semester_id = request.args.get("semester_id")
+        subject_id = request.args.get("subject_id")
+        year_id = request.args.get("year_id")
+
+        # Đăng ký font hỗ trợ tiếng Việt
+        font_path = "C:/DangHoangDanh/BTL_CNPM/StudentManagement/manage_student/templates/fonts/Roboto/Roboto-Regular.ttf"
+        pdfmetrics.registerFont(TTFont('Roboto', font_path))
+
+        styles = getSampleStyleSheet()
+        styles['Normal'].fontName = 'Roboto'
+        styles['Title'].fontName = 'Roboto'
+        styles['Heading2'].fontName = 'Roboto'
+
+        # Lấy thông tin dữ liệu
+        class_name = class_dao.get_class_name(class_id)
+        semester_name = semester_dao.get_semester_name(semester_id)
+        subject_name = subject_dao.get_subject_name(subject_id)
+        years = year_dao.get_years()
+
+        pdf_data = []
+        style_normal = styles['Normal']
+        style_heading = styles['Heading2']
+
+        for year in years:
+            year_id = year.id
+            year_name = year.name
+
+            students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+            scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
+
+            scores_dict = {}
+            for score in scores_data:
+                student_id = str(score.student_id)
+                if student_id not in scores_dict:
+                    scores_dict[student_id] = {"score_15_min": [], "score_1_hour": [], "final_exam": None}
+
+                if score.exam_type == ExamType.EXAM_15P:
+                    scores_dict[student_id]["score_15_min"].append(score.score)
+                elif score.exam_type == ExamType.EXAM_45P:
+                    scores_dict[student_id]["score_1_hour"].append(score.score)
+                elif score.exam_type == ExamType.EXAM_FINAL:
+                    scores_dict[student_id]["final_exam"] = score.score
+
+            data = []
+            for student in students:
+                student_scores = scores_dict.get(str(student.id), {})
+                student_id_int = int(student.id)
+
+                avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
+                avg_score = avg_scores.get(student_id_int, 0)
+
+                row = [
+                    student.name,
+                    ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
+                    ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
+                    f"{student_scores.get('final_exam', 0):.1f}",
+                    f"{avg_score:.2f}",
+                ]
+                data.append(row)
+
+            pdf_data.append(Spacer(1, 12))
+            pdf_data.append(Paragraph(f"Năm học: {year_name}", style_heading))
+            pdf_data.append(Paragraph(f"Lớp: {class_name}", style_normal))
+            pdf_data.append(Paragraph(f"Học kỳ: {semester_name}", style_normal))
+            pdf_data.append(Paragraph(f"Môn học: {subject_name}", style_normal))
+            pdf_data.append(Spacer(1, 12))
+
+            # Tạo bảng với tiêu đề
+            table_data = [
+                ["Tên sinh viên", "Điểm 15 phút", "Điểm 1 tiết", "Điểm thi cuối kỳ", "Điểm trung bình"]
+            ] + data
+
+            table = Table(table_data, colWidths=[100, 100, 100, 100, 100])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Roboto'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+
+            pdf_data.append(table)
+            pdf_data.append(Spacer(1, 12))
+
+        output = BytesIO()
+        doc = SimpleDocTemplate(output, pagesize=A4)
+        doc.build(pdf_data)
+
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name="student_scores.pdf", mimetype='application/pdf')
+
+    except Exception as e:
+        logger.error(f"Error exporting PDF: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
 
 
