@@ -103,6 +103,11 @@ import os
 from manage_student.dao import score_dao, student_dao
 
 
+from flask import send_file, request
+import pandas as pd
+from io import BytesIO
+from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
+
 @app.route('/export_scores', methods=['GET'])
 def export_scores():
     try:
@@ -111,55 +116,96 @@ def export_scores():
         subject_id = request.args.get("subject_id")
         year_id = request.args.get("year_id")
 
+        # Lấy tên của các thực thể
+        class_name = class_dao.get_class_name(class_id)
+        semester_name = semester_dao.get_semester_name(semester_id)
+        subject_name = subject_dao.get_subject_name(subject_id)
+        years = year_dao.get_years()
+
         logger.debug(f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
 
-        students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
-        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
+        excel_data = {}
 
-        scores_dict = {}
-        for score in scores_data:
-            student_id = str(score.student_id)
-            if student_id not in scores_dict:
-                scores_dict[student_id] = {"score_15_min": [], "score_1_hour": [], "final_exam": None}
+        for year in years:
+            year_id = year.id
+            year_name = year.name
 
-            if score.exam_type == ExamType.EXAM_15P:
-                scores_dict[student_id]["score_15_min"].append(score.score)
-            elif score.exam_type == ExamType.EXAM_45P:
-                scores_dict[student_id]["score_1_hour"].append(score.score)
-            elif score.exam_type == ExamType.EXAM_FINAL:
-                scores_dict[student_id]["final_exam"] = score.score
+            students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+            scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
 
-        data = []
-        for student in students:
-            student_scores = scores_dict.get(str(student.id), {})
-            student_id_int = int(student.id)
+            scores_dict = {}
+            for score in scores_data:
+                student_id = str(score.student_id)
+                if student_id not in scores_dict:
+                    scores_dict[student_id] = {"score_15_min": [], "score_1_hour": [], "final_exam": None}
 
-            # Tính điểm trung bình
-            avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
-            logger.debug(f"Calculated avg_scores: {avg_scores}")
-            avg_score = avg_scores.get(student_id_int, 0)
-            logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
+                if score.exam_type == ExamType.EXAM_15P:
+                    scores_dict[student_id]["score_15_min"].append(score.score)
+                elif score.exam_type == ExamType.EXAM_45P:
+                    scores_dict[student_id]["score_1_hour"].append(score.score)
+                elif score.exam_type == ExamType.EXAM_FINAL:
+                    scores_dict[student_id]["final_exam"] = score.score
 
-            row = {
-                "Tên sinh viên": student.name,
-                "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
-                "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
-                "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
-                "Điểm trung bình": f"{avg_score:.2f}",
+            data = []
+            for student in students:
+                student_scores = scores_dict.get(str(student.id), {})
+                student_id_int = int(student.id)
+
+                avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
+                logger.debug(f"Calculated avg_scores: {avg_scores}")
+                avg_score = avg_scores.get(student_id_int, 0)
+                logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
+
+                row = {
+                    "Tên sinh viên": student.name,
+                    "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
+                    "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
+                    "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
+                    "Điểm trung bình": f"{avg_score:.2f}",
+                }
+
+                logger.debug(f"Row data for student {student.id}: {row}")
+                data.append(row)
+
+            df = pd.DataFrame(data)
+
+            excel_data[year_name] = {
+                "dataframe": df,
+                "class_name": class_name,
+                "semester_name": semester_name,
+                "subject_name": subject_name
             }
 
-            logger.debug(f"Row data for student {student.id}: {row}")
-            data.append(row)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            for year_name, content in excel_data.items():
+                df = content["dataframe"]
+                class_name = content["class_name"]
+                semester_name = content["semester_name"]
+                subject_name = content["subject_name"]
 
-        df = pd.DataFrame(data)
-        file_name = "student_scores.xlsx"
-        df.to_excel(file_name, index=False)
+                df.to_excel(writer, sheet_name=year_name, startrow=4, index=False)
 
-        return send_file(file_name, as_attachment=True)
+                worksheet = writer.sheets[year_name]
+                worksheet.write(0, 0, f"Lớp: {class_name}")
+                worksheet.write(1, 0, f"Học kỳ: {semester_name}")
+                worksheet.write(2, 0, f"Môn học: {subject_name}")
+
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(4, col_num, value)
+
+                # Định dạng tiêu đề và bảng
+                header_format = writer.book.add_format({'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(4, col_num, value, header_format)
+
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name="student_scores.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     except Exception as e:
         logger.error(f"Error exporting scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
+
 
 
 
