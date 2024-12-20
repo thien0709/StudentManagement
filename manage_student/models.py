@@ -200,7 +200,7 @@ class Regulation(db.Model):
 
 if __name__ == "__main__":
     with app.app_context():
-        # pass
+        pass
         # db.drop_all()
         # db.create_all()
         # # Profile
