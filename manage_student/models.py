@@ -256,7 +256,7 @@ if __name__ == "__main__":
         #
         # db.session.add_all([subject1, subject2, subject3])
         # db.session.commit()
-        #
+
         # # Classes
         # classes = [
         #     Class(name="10a3", amount=25),
@@ -299,6 +299,7 @@ if __name__ == "__main__":
         # db.session.add_all([student_class1, student_class2, student_class3, student_class4, student_class5,
         #                     student_class6, student_class7])
         # db.session.commit()
+        #
         # # Semesters and Years
         # semester1 = Semester(name="First Semester")
         # semester2 = Semester(name="Second Semester")
@@ -325,15 +326,16 @@ if __name__ == "__main__":
         #                                           class_id=1, semester_id=2, years_id=1)
         # db.session.add_all([teaching_assignment1, teaching_assignment2, teaching_assignment3, teaching_assignment4, teaching_assignment5, teaching_assignment6, teaching_assignment7])
         # db.session.commit()
-
-        # StaffClasses
-        # staff_class1 = StaffClass(staff_id=1, class_id=1, time=datetime.now())
-        # staff_class2 = StaffClass(staff_id=1, class_id=1, time=datetime.now())
+        #
+        # # StaffClasses
+        # staff_class1 = StaffClass(staff_id=2, class_id=1, time=datetime.now())
+        # staff_class2 = StaffClass(staff_id=2, class_id=1, time=datetime.now())
         #
         # db.session.add_all([staff_class1, staff_class2])
         # db.session.commit()
 
 
+        #
         # Scores
         # score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=1, subject_id=1,
         #                semester_id=1, year_id=1)
@@ -342,10 +344,12 @@ if __name__ == "__main__":
         #
         # db.session.add_all([score1, score2])
         # db.session.commit()
-
-        # Regulations
+        #
+        # # Regulations
         # regulation1 = Regulation(type="General", name="Attendance Policy", min_value=75, max_value=100,
-        #                          admin_id=3)
+        #                          admin_id=1)
         #
         # db.session.add(regulation1)
         # db.session.commit()
+
+
