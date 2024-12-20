@@ -85,6 +85,7 @@ class Subject(db.Model):
     __tablename__ = "subject"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
+    score_pass = Column(Float, default=5.0)
     # 1-n Một Subject có nhiều điểm
     scores = relationship("Score", backref="subject", lazy=True)
     # 1-n Một Subject có nhiều TeachingAssignment
@@ -189,7 +190,6 @@ class Score(db.Model):
 class Regulation(db.Model):
     __tablename__ = "regulation"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(String(50), nullable=False)
     name = Column(String(100), nullable=False)
     min_value = Column(Integer)
     max_value = Column(Integer)

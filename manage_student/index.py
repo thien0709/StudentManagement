@@ -1,9 +1,9 @@
 from flask import render_template, request, redirect, flash, url_for
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
-from manage_student import app, login, admin, models, db
+from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 
-from manage_student.models import Score
+from manage_student.models import Subject
 
 
 @app.route("/")
@@ -70,42 +70,37 @@ def save_scores():
 
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
-
-@app.route("/class", methods=['GET', 'POST'])
+@app.route("/class")
 def edit_class():
-    if request.method == 'GET':
-        classes_list = class_dao.get_classes()
-        semesters = semester_dao.get_semesters()
-        years = year_dao.get_years()
-        return render_template('staff/edit_class.html',
-                               classes_list=classes_list,
-                               semesters=semesters,
-                               years=years,
-                               students=None)
+    # Lấy dữ liệu từ GET thay vì POST
+    class_id = request.args.get('lop_hoc_id')
+    semester_id = request.args.get('hoc_ky_id')
+    year_id = request.args.get('nam_hoc_id')
 
-    elif request.method == 'POST':
-        class_id = request.form.get('lop_hoc_id')
-        semester_id = request.form.get('hoc_ky_id')
-        year_id = request.form.get('nam_hoc_id')
-
-        if not class_id or not semester_id or not year_id:
-            error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
-            return render_template('staff/edit_class.html',
-                                   classes_list=class_dao.get_classes(),
-                                   semesters=semester_dao.get_semesters(),
-                                   years=year_dao.get_years(),
-                                   students=None,
-                                   error_message=error_message)
-
-        students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-        for student in students:
-            print(student.profile.name)
-            print(student.profile.birthday)
+    # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
+    if not class_id or not semester_id or not year_id:
+        error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
         return render_template('staff/edit_class.html',
                                classes_list=class_dao.get_classes(),
                                semesters=semester_dao.get_semesters(),
                                years=year_dao.get_years(),
-                               students=students)
+                               students=None,
+                               error_message=error_message,
+                               selected_class_id=class_id,
+                               selected_semester_id=semester_id,
+                               selected_year_id=year_id)
+
+    # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
+    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+
+    return render_template('staff/edit_class.html',
+                           classes_list=class_dao.get_classes(),
+                           semesters=semester_dao.get_semesters(),
+                           years=year_dao.get_years(),
+                           students=students,
+                           selected_class_id=class_id,
+                           selected_semester_id=semester_id,
+                           selected_year_id=year_id)
 
 
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
@@ -113,13 +108,12 @@ def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
     if not student and student_id != 0:
-        return "Học sinh không tồn tại", 404
+        return "Học sinh không tồn tại"
 
     if request.method == 'POST':
         action = request.form.get('action')
 
         if action == 'edit':
-            # Lấy thông tin từ form để chỉnh sửa
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -155,6 +149,9 @@ def edit_student(student_id):
             # Thêm học sinh mới
             student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
 
+            # Redirect về trang class sau khi thêm học sinh
+            return redirect('/class')
+
     return render_template('edit_class.html', student=student)
 
 
@@ -167,6 +164,22 @@ def edit_student(student_id):
 #     else:
 #         return "Không tìm thấy học sinh", 404
 
+
+# @app.route("/edit_subject", methods=['GET', 'POST'])
+# def edit_subject():
+#     if request.method == 'GET':
+#         # This renders the edit form when the user first visits the page
+#         return render_template('admin/subject.html')
+#
+#     elif request.method == 'POST':
+#         # Here you would process the data from the form submitted (e.g., save changes to the database)
+#         subject_name = request.form.get('subject_name')
+#         subject_code = request.form.get('subject_code')
+#         # More processing logic here, such as updating the subject in your database
+#
+#         # After processing, you may want to redirect or render a different template
+#         return redirect(url_for('subject_list'))  # Or another page after successful POST
+
 @app.route("/login", methods=['get', 'post'])
 def login_process():
     if request.method.__eq__('POST'):
@@ -175,7 +188,7 @@ def login_process():
         u = auth_dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
-            if u.user_role == models.UserRole.ADMIN:
+            if u.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:
                 return redirect('/')
