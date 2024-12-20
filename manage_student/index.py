@@ -1,6 +1,11 @@
 from flask import render_template, request, redirect, flash, url_for
 from reportlab.lib.styles import getSampleStyleSheet
-
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
@@ -204,14 +209,6 @@ def export_scores():
     except Exception as e:
         logger.error(f"Error exporting scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
-
-
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from io import BytesIO
 
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
