@@ -3,6 +3,7 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 
+# from manage_student.decorator import require_employee_role
 from manage_student.models import Subject
 
 
@@ -71,6 +72,7 @@ def save_scores():
     return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
 @app.route("/class")
+# @require_employee_role
 def edit_class():
     # Lấy dữ liệu từ GET thay vì POST
     class_id = request.args.get('lop_hoc_id')
@@ -104,6 +106,7 @@ def edit_class():
 
 
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
+# @require_employee_role
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
@@ -207,6 +210,56 @@ def logout_process():
 @login.user_loader
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
+
+@app.route("/register", methods=['GET', 'POST'])
+def register_process():
+    if request.method == 'POST':
+        name = request.form.get('name')  # Retrieve the name from the form
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        avatar = request.files.get('avatar')
+        role = request.form.get('role')  # Retrieve the selected role
+
+        # Validate passwords
+        if password != confirm_password:
+            return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
+                                   username=username, email=email)
+
+        # Validate role
+        if role not in ['staff', 'teacher']:
+            return render_template('register.html', error='Vai trò không hợp lệ',
+                                   username=username, email=email)
+
+        # Map role string to UserRole enum
+        role_enum = models.UserRole.STAFF if role == 'staff' else models.UserRole.TEACHER
+
+        # Check if username already exists
+        existing_user = auth_dao.get_user_by_username(username)
+        if existing_user:
+            return render_template('register.html', error='Tên người dùng đã tồn tại',
+                                   username=username, email=email)
+
+        # Pass name to the add_user function
+        new_user = auth_dao.add_user(username=username, email=email, password=password, role=role_enum, avatar=avatar,
+                                     name=name)
+
+        if new_user:
+            # Automatically log in the user
+            login_user(new_user)
+
+            # Redirect to appropriate page based on role
+            if new_user.role == models.UserRole.ADMIN:
+                return redirect('/admin')
+            else:
+                return redirect('/')
+
+        else:
+            return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
+                                   username=username, email=email)
+
+    return render_template('register.html')
 
 
 if __name__ == '__main__':

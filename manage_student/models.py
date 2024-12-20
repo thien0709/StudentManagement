@@ -97,6 +97,7 @@ class Class(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     amount = Column(Integer, default=0)
+    # grade = Column(Enum(Grade), default=Grade.K10)
     # year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
     # teacher_id = Column(Integer, ForeignKey("teacher.id"))
 
@@ -199,7 +200,7 @@ class Regulation(db.Model):
 
 if __name__ == "__main__":
     with app.app_context():
-        pass
+        # pass
         # db.drop_all()
         # db.create_all()
         # # Profile
@@ -248,7 +249,7 @@ if __name__ == "__main__":
         # db.session.add_all([staff1, admin1, teacher1])
         # db.session.commit()
         #
-        # Subjects
+        # # Subjects
         # subject1 = Subject(name="Mathematics")
         # subject2 = Subject(name="Science")
         # subject3 = Subject(name="History")
@@ -268,40 +269,35 @@ if __name__ == "__main__":
         # # Thêm tất cả các lớp vào cơ sở dữ liệu
         # db.session.add_all(classes)
         # db.session.commit()
+
+        # # Students
+        # student1 = Student(id=4, grade=Grade.K10)  # Profile ID 1
+        # student2 = Student(id=5, grade=Grade.K11)  # Profile ID 2
+        # student3 = Student(id=6, grade=Grade.K12)  # Profile ID 3
+        # student4 = Student(id=7, grade=Grade.K10)  # Profile ID 4
+        # student5 = Student(id=8, grade=Grade.K11)  # Profile ID 5
+        # student6 = Student(id=9, grade=Grade.K12)  # Profile ID 6
+        # student7 = Student(id=10, grade=Grade.K10)  # Profile ID 7
         #
-        # Students
-        # student1 = Student(id=7, grade=Grade.K10)  # Profile ID 1
-        # student2 = Student(id=8, grade=Grade.K11)  # Profile ID 2
-        # student3 = Student(id=9, grade=Grade.K12)  # Profile ID 3
-        # student4 = Student(id=10, grade=Grade.K10)  # Profile ID 4
-        # student5 = Student(id=11, grade=Grade.K11)  # Profile ID 5
-        # student6 = Student(id=12, grade=Grade.K12)  # Profile ID 6
-        # student7 = Student(id=13, grade=Grade.K10)  # Profile ID 7
-        # student8 = Student(id=14, grade=Grade.K11)  # Profile ID 8
-        # student9 = Student(id=15, grade=Grade.K12)  # Profile ID 9
-        # student10 = Student(id=16, grade=Grade.K10)  # Profile ID 10
         #
         # # Thêm các đối tượng Student vào cơ sở dữ liệu
         # db.session.add_all(
-        #     [student1, student2, student3, student4, student5, student6, student7, student8, student9, student10])
+        #     [student1, student2, student3, student4, student5, student6, student7])
         #
         # db.session.commit()
 
         # # Tạo các đối tượng StudentClass để liên kết Student với các lớp học
-        # student_class1 = StudentClass(class_id=1, student_id=7)  # Student ID 4
-        # student_class2 = StudentClass(class_id=2, student_id=8)  # Student ID 5
-        # student_class3 = StudentClass(class_id=23, student_id=9)  # Student ID 6
-        # student_class4 = StudentClass(class_id=24, student_id=10)  # Student ID 7
-        # student_class5 = StudentClass(class_id=25, student_id=11)  # Student ID 8
-        # student_class6 = StudentClass(class_id=26, student_id=12)  # Student ID 9
-        # student_class7 = StudentClass(class_id=27, student_id=13)  # Student ID 10
-        # student_class8 = StudentClass(class_id=1, student_id=14)  # Student ID 11
-        # student_class9 = StudentClass(class_id=1, student_id=15)  # Student ID 12
-        # student_class10 = StudentClass(class_id=1, student_id=16)  # Student ID 13
+        # student_class1 = StudentClass(class_id=1, student_id=4)  # Student ID 4
+        # student_class2 = StudentClass(class_id=2, student_id=5)  # Student ID 5
+        # student_class3 = StudentClass(class_id=3, student_id=6)  # Student ID 6
+        # student_class4 = StudentClass(class_id=3, student_id=7)  # Student ID 7
+        # student_class5 = StudentClass(class_id=4, student_id=8)  # Student ID 8
+        # student_class6 = StudentClass(class_id=5, student_id=9)  # Student ID 9
+        # student_class7 = StudentClass(class_id=1, student_id=10)  # Student ID 10
         #
         # # Thêm tất cả các bản ghi vào cơ sở dữ liệu
         # db.session.add_all([student_class1, student_class2, student_class3, student_class4, student_class5,
-        #                     student_class6, student_class7, student_class8, student_class9, student_class10])
+        #                     student_class6, student_class7])
         # db.session.commit()
         # # Semesters and Years
         # semester1 = Semester(name="First Semester")
@@ -312,21 +308,21 @@ if __name__ == "__main__":
         # db.session.add_all([semester1, semester2, year1])
         # db.session.commit()
 
-        # TeachingAssignments
-        # teaching_assignment1 = TeachingAssignment(teacher_id=2, subjects_id=1,
+        # # TeachingAssignments
+        # teaching_assignment1 = TeachingAssignment(teacher_id=12, subjects_id=1,
         #                                           class_id=1, semester_id=1, years_id=1)
-        # teaching_assignment2 = TeachingAssignment(teacher_id=2, subjects_id=1,
+        # teaching_assignment2 = TeachingAssignment(teacher_id=12, subjects_id=1,
         #                                           class_id=2, semester_id=2, years_id=1)
-        # teaching_assignment3 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=23, semester_id=2, years_id=1)
-        # teaching_assignment4 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=24, semester_id=2, years_id=1)
-        # teaching_assignment5 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=25, semester_id=2, years_id=1)
-        # teaching_assignment6 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=26, semester_id=2, years_id=1)
-        # teaching_assignment7 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=27, semester_id=2, years_id=1)
+        # teaching_assignment3 = TeachingAssignment(teacher_id=12, subjects_id=1,
+        #                                           class_id=3, semester_id=2, years_id=1)
+        # teaching_assignment4 = TeachingAssignment(teacher_id=12, subjects_id=1,
+        #                                           class_id=4, semester_id=2, years_id=1)
+        # teaching_assignment5 = TeachingAssignment(teacher_id=12, subjects_id=1,
+        #                                           class_id=5, semester_id=2, years_id=1)
+        # teaching_assignment6 = TeachingAssignment(teacher_id=12, subjects_id=1,
+        #                                           class_id=1, semester_id=2, years_id=1)
+        # teaching_assignment7 = TeachingAssignment(teacher_id=12, subjects_id=1,
+        #                                           class_id=1, semester_id=2, years_id=1)
         # db.session.add_all([teaching_assignment1, teaching_assignment2, teaching_assignment3, teaching_assignment4, teaching_assignment5, teaching_assignment6, teaching_assignment7])
         # db.session.commit()
 
@@ -336,7 +332,7 @@ if __name__ == "__main__":
         #
         # db.session.add_all([staff_class1, staff_class2])
         # db.session.commit()
-        #
+
 
         # Scores
         # score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=1, subject_id=1,

@@ -78,18 +78,15 @@ def add_student(name, email, birthday, gender, address, phone, class_id, grade):
         profile=profile
     )
 
-    # Lưu học sinh vào cơ sở dữ liệu
     db.session.add(student)
     db.session.commit()
-
-    # Thêm kết nối giữa học sinh và lớp học
-    studentclass = StudentClass(
-        student_id=student.id,  # Lấy ID của học sinh mới
-        class_id=class_id
-    )
-
-    db.session.add(studentclass)
-    db.session.commit()
+    if class_id :
+        studentclass = StudentClass(
+            student_id=student.id,
+            class_id=class_id
+        )
+        db.session.add(studentclass)
+        db.session.commit()
 
     return student
 

@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 :root {
     --darkBG: #292c35;
-    --lightBG : #F8FFDB;
+    --lightBG : #FFFFFF;
     --lightText : #EEEEEE;
     --darkText : #373A40;
-    --lightNavbar : #D9EDBF;
+    --lightNavbar : #D4F6FF;
     --darkNavbar : #647D87;
     --buttonColor : #D4F6FF
 }
