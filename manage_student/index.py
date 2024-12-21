@@ -161,7 +161,7 @@ def export_scores():
                 avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
                 logger.debug(f"Calculated avg_scores: {avg_scores}")
                 avg_score = avg_scores.get(student_id_int, 0)
-                logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
+                logger.debug(f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
 
                 row = {
                     "Tên sinh viên": student.name(),
