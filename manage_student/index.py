@@ -104,6 +104,7 @@ def input_scores():
 from flask import send_file, request
 import pandas as pd
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
+from io import BytesIO
 
 @app.route('/export_scores', methods=['GET'])
 def export_scores():
@@ -151,10 +152,10 @@ def export_scores():
                 avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
                 logger.debug(f"Calculated avg_scores: {avg_scores}")
                 avg_score = avg_scores.get(student_id_int, 0)
-                logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
+                logger.debug(f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
 
                 row = {
-                    "Tên sinh viên": student.name,
+                    "Tên sinh viên": student.profile.name,
                     "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
@@ -267,7 +268,7 @@ def export_pdf():
                 avg_score = avg_scores.get(student_id_int, 0)
 
                 row = [
-                    student.name,
+                    student.profile.name,
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     f"{student_scores.get('final_exam', 0):.1f}",
