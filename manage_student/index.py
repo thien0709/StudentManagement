@@ -1,6 +1,5 @@
 from flask import render_template, request, redirect, url_for, jsonify, flash, session
 from flask_login import login_user, logout_user, current_user
-
 from dao.semester_dao import get_semesters
 from dao.subject_dao import get_subjects
 from dao.year_dao import get_years
