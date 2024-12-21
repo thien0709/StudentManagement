@@ -1,4 +1,6 @@
-from flask import render_template, request, redirect, flash, url_for
+import os
+
+from flask import render_template, request, redirect, flash, url_for, current_app
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
@@ -162,7 +164,7 @@ def export_scores():
                 logger.debug(f"Calculating average score for student {student.name} ({student_id_int}): {avg_score}")
 
                 row = {
-                    "Tên sinh viên": student.name,
+                    "Tên sinh viên": student.name(),
                     "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
@@ -220,7 +222,7 @@ def export_pdf():
         year_id = request.args.get("year_id")
 
         # Đăng ký font hỗ trợ tiếng Việt
-        font_path = "C:/DangHoangDanh/BTL_CNPM/StudentManagement/manage_student/templates/fonts/Roboto/Roboto-Regular.ttf"
+        font_path = os.path.join(current_app.root_path, "templates/fonts/Roboto/Roboto-Regular.ttf")
         pdfmetrics.registerFont(TTFont('Roboto', font_path))
 
         styles = getSampleStyleSheet()
@@ -267,7 +269,7 @@ def export_pdf():
                 avg_score = avg_scores.get(student_id_int, 0)
 
                 row = [
-                    student.name,
+                    student.name(),
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     f"{student_scores.get('final_exam', 0):.1f}",
