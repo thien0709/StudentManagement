@@ -163,7 +163,7 @@
             <tbody>
             {% for student in students %}
             <tr>
-                <td>{{ student.profile.name }}</td>
+                <td>{{ student.name() }}</td>
 
                 <td>
                     <div class="score-container" id="score_15_min_{{ student.id }}">

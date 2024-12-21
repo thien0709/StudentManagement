@@ -2,42 +2,40 @@
 {% block content %}
 <div class="container">
     <h2>Danh sách lớp học</h2>
-
-    <!-- Form chọn thông tin -->
-    <form method="POST" action="/class">
-        <div class="row mb-3">
-            <div class="col">
-                <label for="class" class="form-label">Lớp:</label>
-                <select id="class" name="class_id" class="form-select">
-                    <option value="">Chọn lớp</option>
-                    {% for class in classes_list %}
-                    <option value="{{ class.id }}">{{ class.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col">
-                <label for="semester" class="form-label">Học kỳ:</label>
-                <select id="semester" name="semester_id" class="form-select">
-                    <option value="">Chọn học kỳ</option>
-                    {% for semester in semesters %}
-                    <option value="{{ semester.id }}">{{ semester.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col">
-                <label for="year" class="form-label">Năm học:</label>
-                <select id="year" name="year_id" class="form-select">
-                    <option value="">Chọn năm học</option>
-                    {% for year in years %}
-                    <option value="{{ year.id }}">{{ year.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+<form method="GET" action="/class">
+    <div class="row mb-3">
+        <div class="col">
+            <label for="lop_hoc" class="form-label">Lớp:</label>
+            <select id="lop_hoc" name="lop_hoc_id" class="form-select">
+                <option value="">Chọn lớp</option>
+                {% for lop_hoc in classes_list %}
+                    <option value="{{ lop_hoc.id }}" {% if lop_hoc.id == selected_class_id | int %}selected{% endif %}>{{ lop_hoc.name }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <div class="text-center">
-            <button type="submit" class="btn btn-dark">Hiển thị</button>
+        <div class="col">
+            <label for="hoc_ky" class="form-label">Học kỳ:</label>
+            <select id="hoc_ky" name="hoc_ky_id" class="form-select">
+                <option value="">Chọn học kỳ</option>
+                {% for hoc_ky in semesters %}
+                    <option value="{{ hoc_ky.id }}" {% if hoc_ky.id == selected_semester_id |int %} selected {% endif %}>{{ hoc_ky.name }}</option>
+                {% endfor %}
+            </select>
         </div>
-    </form>
+        <div class="col">
+            <label for="nam_hoc" class="form-label">Năm học:</label>
+            <select id="nam_hoc" name="nam_hoc_id" class="form-select">
+                <option value="">Chọn năm học</option>
+                {% for nam_hoc in years %}
+                    <option value="{{ nam_hoc.id }}" {% if nam_hoc.id == selected_year_id |int %}selected{% endif %}>{{ nam_hoc.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="text-center">
+        <button type="submit" class="btn btn-dark">Hiển thị</button>
+    </div>
+</form>
 
     <!-- Thông báo lỗi -->
     {% if error_message %}
@@ -46,14 +44,172 @@
     </div>
     {% endif %}
 
-    <!-- Hiển thị danh sách học sinh nếu có -->
+    <div class="row mb-2">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h3>Danh sách học sinh:</h3>
+            <button type="button" id="addStudentBtn" class="btn btn-primary">Thêm học sinh</button>
+        </div>
+    </div>
+
     {% if students %}
-    <h2>Danh sách học sinh:</h2>
-    <ul>
+    <div class="row">
         {% for student in students %}
-        <li>{{ student.name }} ({{ student.class_name }})</li>
+        <div class="col-12 mb-4">
+            <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST"
+                  class="d-flex align-items-start">
+                <div class="row w-100">
+                    <div class="col-md-2">
+                        <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>
+                        <input type="text" id="ten_hoc_sinh" name="ten_hoc_sinh" value="{{ student.profile.name }}"
+                               class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="row mb-2">
+                            <label class="form-label">Giới tính:</label>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="form-check me-3">
+                                <input type="radio" id="gioi_tinh_nam" name="gioi_tinh" value="1" {% if
+                                       student.profile.gender== 1 %}checked{% endif %} class="form-check-input">
+                                <label for="gioi_tinh_nam" class="form-check-label">Nam</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="gioi_tinh_nu" name="gioi_tinh" value="0" {% if
+                                       student.profile.gender== 0 %}checked{% endif %} class="form-check-input">
+                                <label for="gioi_tinh_nu" class="form-check-label">Nữ</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" id="email" name="email" value="{{ student.profile.email }}"
+                               class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="ngay_sinh" class="form-label">Ngày sinh:</label>
+                        <input type="date" id="ngay_sinh" name="ngay_sinh"
+                               value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="so_dien_thoai" class="form-label">Số điện thoại:</label>
+                        <input type="text" id="so_dien_thoai" name="so_dien_thoai" value="{{ student.profile.phone }}"
+                               class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dia_chi" class="form-label">Địa chỉ:</label>
+                        <input type="text" id="dia_chi" name="dia_chi" value="{{ student.profile.address }}"
+                               class="form-control">
+                    </div>
+                </div>
+                <div class="d-flex flex-column ms-3 mt-2">
+                    <button type="submit" name="action" value="edit" class="btn btn-primary mb-2 w-100">Cập nhật
+                    </button>
+                    <button type="submit" name="action" value="delete" class="btn btn-danger w-100">Xóa</button>
+                </div>
+
+            </form>
+            <hr>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
     {% endif %}
+
+    <div id="newStudentContainer"></div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3>Danh sách học sinh chưa có lớp:</h3>
+            {% if students_without_class %}
+            <div class="row">
+                {% for student in students_without_class %}
+                <div class="col-12 mb-4">
+                    <div class="row w-100">
+                        <div class="col-md-2">{{ student.name }}</div>
+                        <div class="col-md-2">
+                            {% if student.gender == 1 %}Nam{% else %}Nữ{% endif %}
+                        </div>
+                        <div class="col-md-3">{{ student.email }}</div>
+                        <div class="col-md-2">{{ student.birthday.strftime('%Y/%m/%d') }}</div>
+                        <div class="col-md-2">{{ student.phone }}</div>
+                        <div class="col-md-3">{{ student.address }}</div>
+                        <div class="col-md-2">
+                            <form action="{{ url_for('assign_class', student_id=student.id) }}" method="POST">
+                                <input type="hidden" name="lop_hoc_id" value="{{ lop_hoc_id }}">
+                                <button type="submit" class="btn btn-primary btn-sm">Gán vào lớp</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>Không có học sinh chưa có lớp.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+</div>
+
+<script>
+    document.getElementById('addStudentBtn').addEventListener('click', function () {
+        let lop_hoc_id = document.getElementById('lop_hoc').value;
+        if (!lop_hoc_id) {
+            alert("Vui lòng chọn lớp học!");
+            return;
+        }
+var formHtml = `
+        <form action="{{ url_for('edit_student', student_id=0) }}" method="POST" class="d-flex align-items-start mb-4">
+            <div class="row w-100">
+                <div class="col-md-2">
+                    <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>
+                    <input type="text" id="ten_hoc_sinh" name="ten_hoc_sinh" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <div class="row mb-2">
+                        <label class="form-label">Giới tính:</label>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="form-check me-3">
+                            <input type="radio" id="gioi_tinh_nam" name="gioi_tinh" value="1" class="form-check-input" required>
+                            <label for="gioi_tinh_nam" class="form-check-label">Nam</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" id="gioi_tinh_nu" name="gioi_tinh" value="0" class="form-check-input" required>
+                            <label for="gioi_tinh_nu" class="form-check-label">Nữ</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="email" class="form-label">Email:</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="ngay_sinh" class="form-label">Ngày sinh:</label>
+                    <input type="date" id="ngay_sinh" name="ngay_sinh" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="so_dien_thoai" class="form-label">Số điện thoại:</label>
+                    <input type="text" id="so_dien_thoai" name="so_dien_thoai" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="dia_chi" class="form-label">Địa chỉ:</label>
+                    <input type="text" id="dia_chi" name="dia_chi" class="form-control" required>
+                </div>
+            </div>
+            <input type="hidden" name="lop_hoc" value="${lop_hoc_id}">
+            <div class="d-flex flex-column ms-3 mt-2">
+                <button type="submit" name="action" value="add" class="btn btn-primary mb-2 w-100">Thêm</button>
+            </div>
+        </form>
+    `;
+
+    // Đưa form vào container
+    document.getElementById('newStudentContainer').innerHTML = formHtml;
+});
+
+    function removeNewStudentForm(button) {
+        button.closest('form').remove();
+    }
+</script>
 {% endblock %}

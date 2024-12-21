@@ -1,11 +1,22 @@
-from flask import render_template, request, redirect, flash, url_for
-from reportlab.lib.styles import getSampleStyleSheet
+import os
 
+from flask import render_template, request, redirect, flash, url_for, current_app
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
-from manage_student import app, login, admin, models, db
+from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
-from manage_student.models import ExamType
+from manage_student.form import TeachingTaskForm
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year
+
+
+# from manage_student.decorator import require_employee_role
 
 
 @app.route("/")
@@ -55,7 +66,6 @@ def input_scores():
             return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     # GET request: Hiển thị danh sách sinh viên và điểm
@@ -104,7 +114,6 @@ def input_scores():
 from flask import send_file, request
 import pandas as pd
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
-from io import BytesIO
 
 @app.route('/export_scores', methods=['GET'])
 def export_scores():
@@ -155,7 +164,7 @@ def export_scores():
                 logger.debug(f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
 
                 row = {
-                    "Tên sinh viên": student.profile.name,
+                    "Tên sinh viên": student.name(),
                     "Điểm 15 phút": ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     "Điểm 1 tiết": ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     "Điểm thi cuối kỳ": f"{student_scores.get('final_exam', 0):.1f}",
@@ -204,14 +213,6 @@ def export_scores():
         logger.error(f"Error exporting scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
 
-
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from io import BytesIO
-
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
     try:
@@ -221,7 +222,7 @@ def export_pdf():
         year_id = request.args.get("year_id")
 
         # Đăng ký font hỗ trợ tiếng Việt
-        font_path = "C:/DangHoangDanh/BTL_CNPM/StudentManagement/manage_student/templates/fonts/Roboto/Roboto-Regular.ttf"
+        font_path = os.path.join(current_app.root_path, "templates/fonts/Roboto/Roboto-Regular.ttf")
         pdfmetrics.registerFont(TTFont('Roboto', font_path))
 
         styles = getSampleStyleSheet()
@@ -268,7 +269,7 @@ def export_pdf():
                 avg_score = avg_scores.get(student_id_int, 0)
 
                 row = [
-                    student.profile.name,
+                    student.name(),
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_15_min", [])),
                     ", ".join(f"{score:.1f}" for score in student_scores.get("score_1_hour", [])),
                     f"{student_scores.get('final_exam', 0):.1f}",
@@ -314,7 +315,136 @@ def export_pdf():
         return f"Đã xảy ra lỗi: {str(e)}"
 
 
+@app.route("/class")
+# @require_employee_role
+def edit_class():
+    # Lấy dữ liệu từ GET thay vì POST
+    class_id = request.args.get('lop_hoc_id')
+    semester_id = request.args.get('hoc_ky_id')
+    year_id = request.args.get('nam_hoc_id')
 
+    # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
+    if not class_id or not semester_id or not year_id:
+        error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
+        return render_template('staff/edit_class.html',
+                               classes_list=class_dao.get_classes(),
+                               semesters=semester_dao.get_semesters(),
+                               years=year_dao.get_years(),
+                               students=None,
+                               error_message=error_message,
+                               selected_class_id=class_id,
+                               selected_semester_id=semester_id,
+                               selected_year_id=year_id)
+
+    # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
+    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+
+    return render_template('staff/edit_class.html',
+                           classes_list=class_dao.get_classes(),
+                           semesters=semester_dao.get_semesters(),
+                           years=year_dao.get_years(),
+                           students=students,
+                           selected_class_id=class_id,
+                           selected_semester_id=semester_id,
+                           selected_year_id=year_id)
+
+
+@app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
+# @require_employee_role
+def edit_student(student_id):
+    student = student_dao.get_student_by_id(student_id)
+
+    if not student and student_id != 0:
+        return "Học sinh không tồn tại"
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'edit':
+            name = request.form.get('ten_hoc_sinh')
+            email = request.form.get('email')
+            birthday = request.form.get('ngay_sinh')
+            gender_str = request.form.get('gioi_tinh')
+            gender = 1 if gender_str == 'Nam' else 0
+            address = request.form.get('dia_chi')
+            phone = request.form.get('so_dien_thoai')
+
+            updated_student = student_dao.update_student(
+                student_id, name, email, birthday, gender, address, phone
+            )
+
+            if updated_student:
+                return redirect('/class')
+            else:
+                return "Lỗi cập nhật học sinh", 400
+
+        elif action == 'delete':
+            student_dao.delete_student(student_id)
+            return redirect('/class')
+
+        elif action == 'add':
+            # Lấy thông tin thêm học sinh
+            name = request.form.get('ten_hoc_sinh')
+            email = request.form.get('email')
+            birthday = request.form.get('ngay_sinh')
+            gender_str = request.form.get('gioi_tinh')
+            gender = 1 if gender_str == 'Nam' else 0
+            address = request.form.get('dia_chi')
+            phone = request.form.get('so_dien_thoai')
+            class_id = request.form.get('lop_hoc')  # Lớp học từ form
+
+            # Thêm học sinh mới
+            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
+
+            # Redirect về trang class sau khi thêm học sinh
+            return redirect('/class')
+
+    return render_template('edit_class.html', student=student)
+
+
+# @app.route("/delete_student/<int:student_id>", methods=['POST'])
+# def delete_student(student_id):
+#     success = student_dao.delete_student(student_id)
+#
+#     if success:
+#         return redirect('/students')
+#     else:
+#         return "Không tìm thấy học sinh", 404
+
+
+# @app.route("/edit_subject", methods=['GET', 'POST'])
+# def edit_subject():
+#     if request.method == 'GET':
+#         # This renders the edit form when the user first visits the page
+#         return render_template('admin/subject.html')
+#
+#     elif request.method == 'POST':
+#         # Here you would process the data from the form submitted (e.g., save changes to the database)
+#         subject_name = request.form.get('subject_name')
+#         subject_code = request.form.get('subject_code')
+#         # More processing logic here, such as updating the subject in your database
+#
+#         # After processing, you may want to redirect or render a different template
+#         return redirect(url_for('subject_list'))  # Or another page after successful POST
+
+
+
+
+# Trong view, truyền dữ liệu
+@app.route('/assign', methods=['GET', 'POST'])
+def assign_task():
+    form = TeachingTaskForm()
+    form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]  # Assuming Teacher model exists
+    form.subject.choices = [(subject.id, subject.name) for subject in Subject.query.all()]
+    form.classroom.choices = [(classroom.id, classroom.name) for classroom in Class.query.all()]
+    form.semester.choices = [(semester.id, semester.name) for semester in Semester.query.all()]
+    form.year.choices = [(year.id, year.name) for year in Year.query.all()]
+
+    if form.validate_on_submit():
+        # Xử lý form sau khi submit
+        pass
+
+    return render_template('/staff/teaching_assignment.html', form=form)
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
@@ -324,7 +454,7 @@ def login_process():
         u = auth_dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
-            if u.user_role == models.UserRole.ADMIN:
+            if u.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:
                 return redirect('/')
@@ -341,6 +471,57 @@ def logout_process():
 @login.user_loader
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
+
+@app.route("/register", methods=['GET', 'POST'])
+def register_process():
+    if request.method == 'POST':
+        name = request.form.get('name')  # Retrieve the name from the form
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        avatar = request.files.get('avatar')
+        role = request.form.get('role')  # Retrieve the selected role
+
+        # Validate passwords
+        if password != confirm_password:
+            return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
+                                   username=username, email=email)
+
+        # Validate role
+        if role not in ['staff', 'teacher']:
+            return render_template('register.html', error='Vai trò không hợp lệ',
+                                   username=username, email=email)
+
+        # Map role string to UserRole enum
+        role_enum = models.UserRole.STAFF if role == 'staff' else models.UserRole.TEACHER
+
+        # Check if username already exists
+        existing_user = auth_dao.get_user_by_username(username)
+        if existing_user:
+            return render_template('register.html', error='Tên người dùng đã tồn tại',
+                                   username=username, email=email)
+
+        # Pass name to the add_user function
+        new_user = auth_dao.add_user(username=username, email=email, password=password, role=role_enum, avatar=avatar,
+                                     name=name)
+
+        if new_user:
+            # Automatically log in the user
+            login_user(new_user)
+
+            # Redirect to appropriate page based on role
+            if new_user.role == models.UserRole.ADMIN:
+                return redirect('/admin')
+            else:
+                return redirect('/')
+
+        else:
+            return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
+                                   username=username, email=email)
+
+    return render_template('register.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
