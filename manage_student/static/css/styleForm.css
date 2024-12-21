@@ -3,10 +3,40 @@
             padding: 20px;
             border-radius: 8px; /* Bo góc cho form */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng bóng mờ */
+
         }
         body.dark {
     background-color: var(--darkBG);
     color: var(--lightText); /* Màu chữ của toàn bộ body khi ở chế độ tối */
+}
+input.form-control {
+    font-size: 18px; /* Tăng kích thước chữ */
+    padding: 10px; /* Tăng kích thước padding của các ô nhập */
+    width: 100%; /* Đảm bảo các input chiếm toàn bộ chiều rộng của container */
+}
+
+/* Đảm bảo các label cũng căn chỉnh đẹp */
+label {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Điều chỉnh form */
+.form-group {
+    margin-bottom: 20px; /* Tăng khoảng cách giữa các trường nhập */
+}
+/* Căn giữa các nút */
+.button-container {
+    display: flex;
+    justify-content: center; /* Căn giữa các phần tử trong container */
+    gap: 10px; /* Thêm khoảng cách giữa các nút */
+}
+
+/* Thay đổi kích thước nút */
+.btn-lg {
+    padding: 15px 30px;
+    font-size: 18px;
+    width: 150px; /* Tùy chỉnh chiều rộng của nút */
 }
 
 body.dark h1, body.dark a {
@@ -95,3 +125,5 @@ body.dark .navbar {
         body label {
         font-weight: bold;
         }
+
+

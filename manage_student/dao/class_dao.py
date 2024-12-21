@@ -1,6 +1,5 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass, TeachingAssignment
-from sqlalchemy.orm import aliased
+from manage_student.models import Class, Grade
 
 
 # Hàm lấy tất cả các lớp học
@@ -14,3 +13,11 @@ def get_classes():
         print(f"Lỗi khi truy vấn lớp học: {str(e)}")
         return []
 
+
+def get_grades():
+    return [grade.name for grade in Grade]
+
+
+def get_classes_by_grade(grade):
+    # Ví dụ sử dụng SQLAlchemy để lấy danh sách lớp theo khối
+    return Class.query.filter_by(grade=grade).all()

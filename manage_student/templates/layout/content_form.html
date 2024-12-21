@@ -5,80 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Đăng Nhập</title>
     <!-- Thêm Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEJdYcB1TXYR7jcfPpxvR0r5vRrz9J0TtD4vv5yCm60Qgb7ujEubzWc3NBz5J" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-KyZXEJdYcB1TXYR7jcfPpxvR0r5vRrz9J0TtD4vv5yCm60Qgb7ujEubzWc3NBz5J" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styleForm.css') }}"/>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center">Bổ sung hồ sơ</h2>
-        <form>
-            <!-- Họ và Tên và Email -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="fullName" class="form-label">Họ và Tên</label>
-                    <input type="text" class="form-control" id="fullName" placeholder="Nhập họ và tên" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" placeholder="Nhập email" required>
-                </div>
+<div class="container mt-5" style="margin-top: 30px">
+    <h2 class="text-center">Bổ sung hồ sơ</h2>
+    <!-- Thêm ID cho form để dễ dàng nhận diện trong JS -->
+    <form id="studentForm" method="POST" action="{{ url_for('formStudent') }}">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="fullName" class="form-label">Họ và Tên</label>
+                <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Nhập họ và tên"
+                       required>
             </div>
-
-            <!-- Số Điện Thoại và Ngày Sinh -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="phone" class="form-label">Số Điện Thoại</label>
-                    <input type="tel" class="form-control" id="phone" placeholder="Nhập số điện thoại" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="dob" class="form-label">Ngày Sinh</label>
-                    <input type="date" class="form-control" id="dob" required>
-                </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Nhập email" required>
             </div>
-
-            <!-- Địa Chỉ và Giới Tính -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="address" class="form-label">Địa Chỉ</label>
-                    <input type="text" class="form-control" id="address" placeholder="Nhập địa chỉ" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Giới Tính</label><br>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" id="genderMale" value="male">
-                        <label class="form-check-label" for="genderMale">Nam</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="female">
-                        <label class="form-check-label" for="genderFemale">Nữ</label>
-                    </div>
-                </div>
-            </div>
-           <!-- Hình Ảnh và Nút -->
-<div class="row align-items-center mb-3">
-    <!-- Hình Ảnh -->
-    <div class="col-md-6 d-flex flex-column align-items-center">
-        <label for="profileImage" class="form-label">Chọn Hình Ảnh</label>
-        <div class="image-upload-wrapper">
-            <img id="profileImagePreview" src="https://via.placeholder.com/150" alt="Ảnh đại diện">
-            <input type="file" id="profileImage" accept="image/*" onchange="previewImage(event)">
         </div>
-    </div>
-
-    <!-- Nút Save và Home -->
-    <div class="col-md-6 d-flex justify-content-center">
-        <div class="d-flex gap-3">
-            <button type="submit" class="btn btn-primary btn-lg px-5 py-3 fs-3">Save</button>
-            <button type="button" class="btn btn-secondary btn-lg px-5 py-3 fs-3" onclick="window.location.href='/'">Home</button>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="phone" class="form-label">Số Điện Thoại</label>
+                <input type="tel" class="form-control" id="phone" name="phone" placeholder="Nhập số điện thoại"
+                       required>
+            </div>
+            <div class="col-md-6">
+                <label for="dob" class="form-label">Ngày Sinh</label>
+                <input type="date" class="form-control" id="dob" name="dob" required>
+            </div>
         </div>
-    </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="address" class="form-label">Địa Chỉ</label>
+                <input type="text" class="form-control" id="address" name="address" placeholder="Nhập địa chỉ" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Giới Tính</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="genderMale" value="1">
+                    <label class="form-check-label" for="genderMale">Nam</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="0">
+                    <label class="form-check-label" for="genderFemale">Nữ</label>
+                </div>
+            </div>
+        </div>
+        <!-- Thêm class 'button-container' cho div chứa các nút -->
+        <div class="button-container text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">Lưu</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">Home</a>
+        </div>
+
+    </form>
 </div>
+<script>
+        // Gửi dữ liệu form qua AJAX
+        document.getElementById("studentForm").addEventListener("submit", function (e) {
+            e.preventDefault(); // Ngăn reload trang
 
+            // Lấy dữ liệu form
+            const formData = new FormData(this);
 
-    <!-- Thêm Bootstrap 5 JS -->
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pzjw8f+ua7Kw1TIq0v8Fq9C3BQni1kxTmBbhOGzww6Sww6Fw5VtD5UnLzD5gsrt3" crossorigin="anonymous">
+            // Gửi AJAX request
+            fetch("/studentForm", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    // Hiển thị thông báo thành công
+                    Swal.fire("Thành công!", data.message, "success").then(() => {
+                        // Sau khi hiển thị thông báo thành công, reset form và quay về trang chủ
+                        document.getElementById("studentForm").reset();
+                        window.location.href = "{{ url_for('index') }}"; // Chuyển hướng về trang chủ
+                    });
+                } else {
+                    Swal.fire("Lỗi!", data.message, "error");
+                }
+            })
+            .catch(error => {
+                Swal.fire("Lỗi!", "Đã xảy ra lỗi khi gửi yêu cầu.", "error");
+            });
+        });
 
-            </script>
-
+</script>
 </body>
 </html>
