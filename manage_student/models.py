@@ -79,7 +79,9 @@ class Teacher(User):
     assignment = relationship("TeachingAssignment", backref="teacher", lazy=True)
     # 1-1, User-Teacher
     user = relationship("User", backref="teacher", lazy=True, uselist=False)
-
+    def name(self):
+        # Lấy tên của giáo viên thông qua mối quan hệ với Profile
+        return self.user.profile.name
 
 class Subject(db.Model):
     __tablename__ = "subject"
@@ -120,7 +122,9 @@ class Student(db.Model):
     classes = relationship("StudentClass", backref="student", lazy=True)
     # 1-n Một Student có nhiều điểm
     scores = relationship("Score", backref="student", lazy=True)
-
+    def name(self):
+        # Lấy tên của giáo viên thông qua mối quan hệ với Profile
+        return self.profile.name
 
 class StudentClass(db.Model):
     __tablename__ = "student_class"

@@ -10,7 +10,9 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
-from manage_student.models import ExamType, Subject
+from manage_student.form import TeachingTaskForm
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year
+
 
 # from manage_student.decorator import require_employee_role
 
@@ -62,7 +64,6 @@ def input_scores():
             return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
 
         except Exception as e:
-            db.session.rollback()
             flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     # GET request: Hiển thị danh sách sinh viên và điểm
@@ -423,6 +424,25 @@ def edit_student(student_id):
 #
 #         # After processing, you may want to redirect or render a different template
 #         return redirect(url_for('subject_list'))  # Or another page after successful POST
+
+
+
+
+# Trong view, truyền dữ liệu
+@app.route('/assign', methods=['GET', 'POST'])
+def assign_task():
+    form = TeachingTaskForm()
+    form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]  # Assuming Teacher model exists
+    form.subject.choices = [(subject.id, subject.name) for subject in Subject.query.all()]
+    form.classroom.choices = [(classroom.id, classroom.name) for classroom in Class.query.all()]
+    form.semester.choices = [(semester.id, semester.name) for semester in Semester.query.all()]
+    form.year.choices = [(year.id, year.name) for year in Year.query.all()]
+
+    if form.validate_on_submit():
+        # Xử lý form sau khi submit
+        pass
+
+    return render_template('/staff/teaching_assignment.html', form=form)
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
