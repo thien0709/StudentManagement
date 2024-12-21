@@ -123,7 +123,6 @@ class Student(db.Model):
     # 1-n Một Student có nhiều điểm
     scores = relationship("Score", backref="student", lazy=True)
     def name(self):
-        # Lấy tên của giáo viên thông qua mối quan hệ với Profile
         return self.profile.name
 
 class StudentClass(db.Model):
