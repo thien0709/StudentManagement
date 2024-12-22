@@ -53,6 +53,15 @@ class User(db.Model, UserMixin):
     # 1-1, User-Profile
     profile = relationship("Profile", backref="user", lazy=True, uselist=False)
 
+    def get_id(self):
+        return self.id
+    def get_username(self):
+        return self.username
+    def get_password(self):
+        return self.password
+    def get_role(self):
+        return self.role
+
 
 class Staff(User):
     __tablename__ = "staff"

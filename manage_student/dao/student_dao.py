@@ -142,3 +142,16 @@ def delete_student( student_id):
         return True
 
     return False
+def get_students_without_class():
+    try:
+        # Truy vấn các học sinh không có lớp, sử dụng LEFT OUTER JOIN
+        students_without_class = db.session.query(Student).outerjoin(StudentClass, Student.id == StudentClass.student_id) \
+            .filter(StudentClass.student_id == None).all()
+
+        if not students_without_class:
+            print("Không có học sinh nào chưa có lớp.")
+        return students_without_class
+
+    except Exception as e:
+        print(f"Lỗi khi truy vấn học sinh chưa có lớp: {str(e)}")
+        return []

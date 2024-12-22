@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 :root {
     --darkBG: #292c35;
     --lightBG : #FFFFFF;
@@ -9,7 +9,6 @@
     --buttonColor : #D4F6FF
 }
 body {
-   font-family: "Patrick Hand", cursive;
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -53,6 +52,7 @@ a{
 
 .content{
     background: gray;
+    font-size: medium;
 }
 
 .header{
@@ -62,7 +62,6 @@ a{
     padding: 20px;
 }
 .search input {
-   padding: 10px;
     border: 2px var(--buttonColor) solid;
     border-radius: 16px;
    padding: 12px;
