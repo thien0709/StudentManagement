@@ -352,21 +352,21 @@ def edit_class():
                            selected_semester_id=semester_id,
                            selected_year_id=year_id)
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
-# @require_employee_role
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
     if not student and student_id != 0:
         return "Học sinh không tồn tại"
 
-    class_id = request.args.get('lop_hoc_id')
-    semester_id = request.args.get('hoc_ky_id')
-    year_id = request.args.get('nam_hoc_id')
-
     if request.method == 'POST':
         action = request.form.get('action')
+        class_id = request.form.get('lop_hoc')
+        semester_id = request.form.get('hoc_ky')
+        year_id = request.form.get('nam_hoc')
+        print("test", class_id, semester_id, year_id)
 
         if action == 'edit':
+            print("edit")
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -380,26 +380,19 @@ def edit_student(student_id):
             )
 
             if updated_student:
-                # Sau khi cập nhật, lấy lại danh sách học sinh
                 students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-                return render_template('staff/edit_class.html', students=students,
-                                       selected_class_id=class_id,
-                                       selected_semester_id=semester_id,
-                                       selected_year_id=year_id)
-
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
 
         elif action == 'delete':
-            student_dao.delete_student(student_id)
-            # Sau khi xóa, lấy lại danh sách học sinh
+            print("delete")
+            student_dao.remove_student_from_class(student_id,class_id)
             students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-            return render_template('staff/edit_class.html', students=students,
-                                   selected_class_id=class_id,
-                                   selected_semester_id=semester_id,
-                                   selected_year_id=year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
         elif action == 'add':
+            print("add")
             # Thêm học sinh mới
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
@@ -410,21 +403,22 @@ def edit_student(student_id):
             phone = request.form.get('so_dien_thoai')
             class_id = request.form.get('lop_hoc')
 
-            # Thêm học sinh mới
             student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
 
             # Lấy lại danh sách học sinh sau khi thêm
             students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-            return render_template('staff/edit_class.html', students=students,
-                                   selected_class_id=class_id,
-                                   selected_semester_id=semester_id,
-                                   selected_year_id=year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
-    return render_template('staff/edit_class.html', student=student,
-                           selected_class_id=class_id,
-                           selected_semester_id=semester_id,
-                           selected_year_id=year_id)
+        elif action == 'add_to_class':
+            print("add_to_class")
+            class_id = request.form.get('lop_hoc')
+            student_dao.add_student_to_class(student_id, class_id)
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
+    # Render giao diện khi request là GET
+    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 # @app.route("/delete_student/<int:student_id>", methods=['POST'])
 # def delete_student(student_id):
