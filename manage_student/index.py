@@ -12,7 +12,7 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
-from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO
+from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
 from manage_student.decorator import require_teacher_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
@@ -20,18 +20,6 @@ from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Y
 
 # from manage_student.decorator import require_employee_role
 
-# Hàm kiểm tra phân công giảng dạy
-def check_assignment(assignments, class_id, subject_id, semester_id, year_id):
-    """Kiểm tra xem giáo viên có được phân công giảng dạy
-       môn học, lớp học, học kỳ và năm học tương ứng hay không.
-    """
-    for assignment in assignments:
-        if (assignment.class_id == class_id and
-            assignment.subjects_id == subject_id and
-            assignment.semester_id == semester_id and
-            assignment.years_id == year_id):
-            return True
-    return False
 
 
 @app.route("/")

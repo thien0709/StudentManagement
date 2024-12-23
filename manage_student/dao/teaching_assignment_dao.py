@@ -50,3 +50,13 @@ def delete_teaching_assignment(assignment_id):
         db.session.rollback()
         print(f"Error when deleting teaching assignment: {e}")
         return False
+
+
+def check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+    for assignment in assignments:
+        if (assignment.class_id == class_id and
+            assignment.subjects_id == subject_id and
+            assignment.semester_id == semester_id and
+            assignment.years_id == year_id):
+            return True
+    return False
