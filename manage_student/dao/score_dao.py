@@ -73,6 +73,11 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         score_1_hour_list = [float(score) for score in score_1_hour_list if score is not None]
         final_exam = float(final_exam) if final_exam else 0.0
 
+        # Làm tròn điểm trước lưu
+        score_15_min_list = [round(score, 2) for score in score_15_min_list]
+        score_1_hour_list = [round(score, 2) for score in score_1_hour_list]
+        final_exam = round(final_exam, 2)
+
         logger.debug(f"Saving scores for student {student_id}: 15min={score_15_min_list}, 1 hour={score_1_hour_list}, final_exam={final_exam}")
 
         # Xóa điểm cũ
@@ -93,7 +98,7 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         new_score = Score(student_id=student_id, score=final_exam, exam_type=ExamType.EXAM_FINAL, subject_id=subject_id, semester_id=semester_id, year_id=year_id)
         db.session.add(new_score)
 
-        # Commit transaction
+
         db.session.commit()
         logger.debug("Scores saved successfully.")
         return "Lưu điểm thành công"

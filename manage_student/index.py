@@ -1,6 +1,6 @@
 import os
 
-from flask import render_template, request, redirect, flash, url_for, current_app, session
+from flask import render_template, request, redirect, flash, url_for, current_app, session, jsonify
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
@@ -13,11 +13,25 @@ from manage_student import app, login, models , admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
 from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO
+from manage_student.decorator import require_teacher_role
 from manage_student.form import TeachingTaskForm
-from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
 
 
 # from manage_student.decorator import require_employee_role
+
+# Hàm kiểm tra phân công giảng dạy
+def check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+    """Kiểm tra xem giáo viên có được phân công giảng dạy
+       môn học, lớp học, học kỳ và năm học tương ứng hay không.
+    """
+    for assignment in assignments:
+        if (assignment.class_id == class_id and
+            assignment.subjects_id == subject_id and
+            assignment.semester_id == semester_id and
+            assignment.years_id == year_id):
+            return True
+    return False
 
 
 @app.route("/")
@@ -27,7 +41,16 @@ def index():
     return render_template("index.html")
 
 @app.route("/input_scores", methods=["GET", "POST"])
+@require_teacher_role
 def input_scores():
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
+
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
     classes = class_dao.get_classes()
     subjects = subject_dao.get_subjects()
     semesters = semester_dao.get_semesters()
@@ -43,10 +66,15 @@ def input_scores():
     average_scores = {}
 
     if request.method == "POST":
-        class_id = request.form.get("class_id")
-        semester_id = request.form.get("semester_id")
-        subject_id = request.form.get("subject_id")
-        year_id = request.form.get("year_id")
+        class_id = int(request.form.get("class_id"))
+        semester_id = int(request.form.get("semester_id"))
+        subject_id = int(request.form.get("subject_id"))
+        year_id = int(request.form.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
+                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
 
         try:
             # Lưu điểm
@@ -71,6 +99,16 @@ def input_scores():
 
     # GET request: Hiển thị danh sách sinh viên và điểm
     if class_id and semester_id and subject_id and year_id:
+        class_id = int(class_id)
+        semester_id = int(semester_id)
+        subject_id = int(subject_id)
+        year_id = int(year_id)
+
+        # Kiểm tra phân công
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
+                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
+
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
         scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
 
@@ -111,19 +149,31 @@ def input_scores():
 
 
 
-
 from flask import send_file, request
 import pandas as pd
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
 
 @app.route('/export_scores', methods=['GET'])
+@require_teacher_role
 def export_scores():
-    try:
-        class_id = request.args.get("class_id")
-        semester_id = request.args.get("semester_id")
-        subject_id = request.args.get("subject_id")
-        year_id = request.args.get("year_id")
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
 
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
+    try:
+        class_id = int(request.args.get("class_id"))
+        semester_id = int(request.args.get("semester_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
         class_name = class_dao.get_class_name(class_id)
         semester_name = semester_dao.get_semester_name(semester_id)
@@ -216,11 +266,24 @@ def export_scores():
 
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
+
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
     try:
-        class_id = request.args.get("class_id")
-        semester_id = request.args.get("semester_id")
-        subject_id = request.args.get("subject_id")
-        year_id = request.args.get("year_id")
+        class_id = int(request.args.get("class_id"))
+        semester_id = int(request.args.get("semester_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
         # Đăng ký font hỗ trợ tiếng Việt
         font_path = os.path.join(current_app.root_path, "templates/fonts/Roboto/Roboto-Regular.ttf")
@@ -319,7 +382,7 @@ def export_pdf():
 @app.route("/class")
 # @require_employee_role
 def edit_class():
-    # Lấy dữ liệu từ GET thay vì POST
+
     class_id = request.args.get('lop_hoc_id')
     semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
@@ -475,6 +538,40 @@ def assign_task():
     return render_template('/staff/teaching_assignment.html', form=form)
 
 
+@app.route('/teaching_assignments')
+@require_teacher_role
+def teaching_assignments():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+    # Tạo list chứa các dictionary, mỗi dictionary chứa thông tin về một phân công
+    assignments_info = []
+    for assignment in assignments:
+        class_name = Class.query.get(assignment.class_id).name
+        subject_name = Subject.query.get(assignment.subjects_id).name
+        semester_name = Semester.query.get(assignment.semester_id).name
+        year_name = Year.query.get(assignment.years_id).name
+        assignments_info.append({
+            'class_name': class_name,
+            'subject_name': subject_name,
+            'semester_name': semester_name,
+            'year_name': year_name
+        })
+    return render_template('staff/teaching_assignment.html', assignments=assignments_info)
+
+
+@app.route("/check_assignment")
+@require_teacher_role
+def check_assignment_route():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+    class_id = int(request.args.get("class_id"))
+    subject_id = int(request.args.get("subject_id"))
+    semester_id = int(request.args.get("semester_id"))
+    year_id = int(request.args.get("year_id"))
+    assigned = check_assignment(assignments, class_id, subject_id, semester_id, year_id)
+    return jsonify({'assigned': assigned})
+
+
 @app.route("/login", methods=['get', 'post'])
 def login_process():
     if request.method.__eq__('POST'):
@@ -482,12 +579,16 @@ def login_process():
         password = request.form.get('password')
         u = auth_dao.auth_user(username=username, password=password)
         if u:
-            # session['user_id'] = u.get_id()
-            # session['username'] = u.get_username()
-            # session['role'] = u.get_role()
             login_user(u)
+
+
+            session['role'] = u.role.value
+
+            # Chuyển hướng dựa trên vai trò
             if u.role == models.UserRole.ADMIN:
                 return redirect('/admin')
+            elif u.role == models.UserRole.TEACHER:
+                return redirect('/input_scores')
             else:
                 return redirect('/')
         else:
@@ -513,7 +614,7 @@ def register_process():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         avatar = request.files.get('avatar')
-        role = request.form.get('role')  # Retrieve the selected role
+        role = request.form.get('role')
 
         # Validate passwords
         if password != confirm_password:
@@ -539,10 +640,10 @@ def register_process():
                                      name=name)
 
         if new_user:
-            # Automatically log in the user
+
             login_user(new_user)
 
-            # Redirect to appropriate page based on role
+
             if new_user.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:
