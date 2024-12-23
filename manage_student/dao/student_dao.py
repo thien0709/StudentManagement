@@ -20,7 +20,7 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
         if subject_id:
             query = query.filter(TeachingAssignment.subjects_id == subject_id)
 
-    # Thêm dòng này vào đây:
+
     print(query.statement.compile(dialect=db.engine.dialect))
 
     try:
@@ -120,7 +120,7 @@ def delete_student( student_id):
     student = db.session.query(Student).filter_by(id=student_id).first()
 
     if student:
-        # Lấy profile_id từ student (vì student và profile có quan hệ 1-1)
+        # Lấy profile_id từ student
         profile_id = student.profile.id
 
         # Xóa tất cả các điểm liên quan đến học sinh này
@@ -137,7 +137,7 @@ def delete_student( student_id):
         if profile:
             db.session.delete(profile)
 
-        # Commit để xác nhận các thay đổi
+
         db.session.commit()
         return True
 
