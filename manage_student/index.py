@@ -402,6 +402,7 @@ def edit_class():
                            selected_class_id=class_id,
                            selected_semester_id=semester_id,
                            selected_year_id=year_id)
+
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)

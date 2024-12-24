@@ -1,6 +1,5 @@
 from functools import wraps
 from urllib import request
-
 from flask import session, redirect, url_for, flash
 from flask_login import current_user
 
@@ -41,3 +40,19 @@ def require_teacher_role(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+def role_only(role):
+    def wrap(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash("Vui lòng đăng nhập trước khi truy cập trang này.", "error")
+                return redirect(url_for('login_process'))
+            if current_user.role not in role:
+                flash("Quyền không phù hợp", "forbidden")
+                # abort(403)
+                return redirect(url_for('index'))
+            else:
+                return f(*args, **kwargs)
+        return decorated_function
+    return wrap
