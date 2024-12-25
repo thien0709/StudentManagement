@@ -1,23 +1,28 @@
 import os
-from flask import render_template, request, redirect, flash, url_for, current_app, jsonify
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
+from datetime import datetime
 from io import BytesIO
-from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
-from manage_student import app, login, models, admin, db
+from flask import render_template, redirect, flash, url_for, current_app, session, jsonify
 from flask_login import login_user, logout_user, current_user
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from manage_student import app, login, models, db
+from manage_student.dao import auth_dao
 from manage_student.dao.class_dao import get_classes_by_grade
 from manage_student.dao.profile_dao import add_profile
-from manage_student.dao.score_dao import logger, count_students_passed
+from manage_student.dao.score_dao import count_students_passed
+from manage_student.dao.score_dao import logger
 from manage_student.dao.semester_dao import get_semesters
 from manage_student.dao.subject_dao import get_subjects
+from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
 from manage_student.dao.year_dao import get_years
+from manage_student.decorator import require_teacher_role
 from manage_student.form import TeachingTaskForm
-from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, Grade, Student, StudentClass, Score
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
+from manage_student.models import Grade, Student, StudentClass, Score
 
 
 # from manage_student.decorator import require_employee_role
@@ -28,6 +33,7 @@ def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
+
 
 @app.route("/studentForm", methods=["GET", "POST"])
 def formStudent():
@@ -44,16 +50,22 @@ def formStudent():
         if not all([full_name, email, phone, dob, address, gender]):
             return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
 
-        # Nếu tất cả thông tin có đủ, tạo profile và lưu vào cơ sở dữ liệu
+        # Chuyển đổi ngày sinh từ chuỗi
+        try:
+            dob = datetime.strptime(dob, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
+
+        # Nếu tất cả thông tin có đủ, gọi hàm add_profile để thêm hồ sơ
         result = add_profile(full_name, email, dob, gender, address, phone)
 
-        if result == True:
+        if isinstance(result, dict) and result.get("status") == "error":
+            # Nếu có lỗi (do độ tuổi không hợp lệ)
+            return jsonify(result)
+        else:
             # Trả về phản hồi thành công
             return jsonify({"status": "success", "message": "Thông tin đã được lưu thành công!"})
-            return redirect(url_for('index'))
-        else:
-            # Nếu có lỗi, trả về phản hồi lỗi
-            return jsonify(result)
+            return redirect(url_for('edit_class'))  # Uncomment nếu cần chuyển hướng sau khi thêm thành công
     return render_template("student_form.html")
 
 
@@ -100,7 +112,6 @@ def api_get_subjects():
     except Exception as e:
         print(f"Lỗi API: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 
 # Route lấy tất cả các khối (Grade)
@@ -205,7 +216,16 @@ def get_average_scores():
 
 
 @app.route("/input_scores", methods=["GET", "POST"])
+@require_teacher_role
 def input_scores():
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
+
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
     classes = class_dao.get_classes()
     subjects = subject_dao.get_subjects()
     semesters = semester_dao.get_semesters()
@@ -221,10 +241,15 @@ def input_scores():
     average_scores = {}
 
     if request.method == "POST":
-        class_id = request.form.get("class_id")
-        semester_id = request.form.get("semester_id")
-        subject_id = request.form.get("subject_id")
-        year_id = request.form.get("year_id")
+        class_id = int(request.form.get("class_id"))
+        semester_id = int(request.form.get("semester_id"))
+        subject_id = int(request.form.get("subject_id"))
+        year_id = int(request.form.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
+                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
 
         try:
             # Lưu điểm
@@ -242,16 +267,26 @@ def input_scores():
             flash("Lưu điểm thành công!", "success")
 
             # Redirect lại với các query parameters để tránh load mất dữ liệu
-            return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+            return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id,
+                                    year_id=year_id))
 
         except Exception as e:
             flash(f"Đã xảy ra lỗi: {str(e)}", "error")
 
     # GET request: Hiển thị danh sách sinh viên và điểm
     if class_id and semester_id and subject_id and year_id:
+        class_id = int(class_id)
+        semester_id = int(semester_id)
+        subject_id = int(subject_id)
+        year_id = int(year_id)
+
+        # Kiểm tra phân công
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
+                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
+
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
         scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
-
 
         for score in scores_data:
             student_id = str(score.student_id)
@@ -287,28 +322,40 @@ def input_scores():
     )
 
 
-
-
-
 from flask import send_file, request
 import pandas as pd
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
 
-@app.route('/export_scores', methods=['GET'])
-def export_scores():
-    try:
-        class_id = request.args.get("class_id")
-        semester_id = request.args.get("semester_id")
-        subject_id = request.args.get("subject_id")
-        year_id = request.args.get("year_id")
 
+@app.route('/export_scores', methods=['GET'])
+@require_teacher_role
+def export_scores():
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
+
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
+    try:
+        class_id = int(request.args.get("class_id"))
+        semester_id = int(request.args.get("semester_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
         class_name = class_dao.get_class_name(class_id)
         semester_name = semester_dao.get_semester_name(semester_id)
         subject_name = subject_dao.get_subject_name(subject_id)
         years = year_dao.get_years()
 
-        logger.debug(f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
+        logger.debug(
+            f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
 
         excel_data = {}
 
@@ -340,7 +387,8 @@ def export_scores():
                 avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
                 logger.debug(f"Calculated avg_scores: {avg_scores}")
                 avg_score = avg_scores.get(student_id_int, 0)
-                logger.debug(f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
+                logger.debug(
+                    f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
 
                 row = {
                     "Tên sinh viên": student.name(),
@@ -381,24 +429,40 @@ def export_scores():
                     worksheet.write(4, col_num, value)
 
                 # Định dạng tiêu đề và bảng
-                header_format = writer.book.add_format({'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
+                header_format = writer.book.add_format(
+                    {'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
                 for col_num, value in enumerate(df.columns.values):
                     worksheet.write(4, col_num, value, header_format)
 
         output.seek(0)
-        return send_file(output, as_attachment=True, download_name="student_scores.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        return send_file(output, as_attachment=True, download_name="student_scores.xlsx",
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     except Exception as e:
         logger.error(f"Error exporting scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
 
+
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
+    # Chuyển hướng nếu người dùng không có quyền
+    if session.get('role') != models.UserRole.TEACHER.value:
+        return redirect(url_for('index'))
+
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
     try:
-        class_id = request.args.get("class_id")
-        semester_id = request.args.get("semester_id")
-        subject_id = request.args.get("subject_id")
-        year_id = request.args.get("year_id")
+        class_id = int(request.args.get("class_id"))
+        semester_id = int(request.args.get("semester_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+        # Kiểm tra phân công giảng dạy
+        if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
         # Đăng ký font hỗ trợ tiếng Việt
         font_path = os.path.join(current_app.root_path, "templates/fonts/Roboto/Roboto-Regular.ttf")
@@ -465,8 +529,8 @@ def export_pdf():
 
             # Tạo bảng với tiêu đề
             table_data = [
-                ["Tên sinh viên", "Điểm 15 phút", "Điểm 1 tiết", "Điểm thi cuối kỳ", "Điểm trung bình"]
-            ] + data
+                             ["Tên sinh viên", "Điểm 15 phút", "Điểm 1 tiết", "Điểm thi cuối kỳ", "Điểm trung bình"]
+                         ] + data
 
             table = Table(table_data, colWidths=[100, 100, 100, 100, 100])
             table.setStyle(TableStyle([
@@ -497,11 +561,11 @@ def export_pdf():
 @app.route("/class")
 # @require_employee_role
 def edit_class():
-    # Lấy dữ liệu từ GET thay vì POST
     class_id = request.args.get('lop_hoc_id')
     semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
 
+    students_without_class = student_dao.get_students_without_class()
     # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
     if not class_id or not semester_id or not year_id:
         error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
@@ -510,6 +574,7 @@ def edit_class():
                                semesters=semester_dao.get_semesters(),
                                years=year_dao.get_years(),
                                students=None,
+                               students_without_class=students_without_class,
                                error_message=error_message,
                                selected_class_id=class_id,
                                selected_semester_id=semester_id,
@@ -517,10 +582,11 @@ def edit_class():
 
     # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-
+    students_without_class = student_dao.get_students_without_class()
     return render_template('staff/edit_class.html',
                            classes_list=class_dao.get_classes(),
                            semesters=semester_dao.get_semesters(),
+                           students_without_class=students_without_class,
                            years=year_dao.get_years(),
                            students=students,
                            selected_class_id=class_id,
@@ -529,7 +595,6 @@ def edit_class():
 
 
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
-# @require_employee_role
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
@@ -538,13 +603,18 @@ def edit_student(student_id):
 
     if request.method == 'POST':
         action = request.form.get('action')
+        class_id = request.form.get('lop_hoc')
+        semester_id = request.form.get('hoc_ky')
+        year_id = request.form.get('nam_hoc')
+        print("test", class_id, semester_id, year_id)
 
         if action == 'edit':
+            print("edit")
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
             gender_str = request.form.get('gioi_tinh')
-            gender = 1 if gender_str == 'Nam' else 0
+            gender = int(gender_str) if gender_str else 0
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
 
@@ -553,16 +623,20 @@ def edit_student(student_id):
             )
 
             if updated_student:
-                return redirect('/class')
+                students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
 
         elif action == 'delete':
-            student_dao.delete_student(student_id)
-            return redirect('/class')
+            print("delete")
+            student_dao.remove_student_from_class(student_id, class_id)
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
         elif action == 'add':
-            # Lấy thông tin thêm học sinh
+            print("add")
+            # Thêm học sinh mới
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -570,15 +644,24 @@ def edit_student(student_id):
             gender = 1 if gender_str == 'Nam' else 0
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
-            class_id = request.form.get('lop_hoc')  # Lớp học từ form
+            class_id = request.form.get('lop_hoc')
 
-            # Thêm học sinh mới
             student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
 
-            # Redirect về trang class sau khi thêm học sinh
-            return redirect('/class')
+            # Lấy lại danh sách học sinh sau khi thêm
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
-    return render_template('edit_class.html', student=student)
+        elif action == 'add_to_class':
+            print("add_to_class")
+            class_id = request.form.get('lop_hoc')
+            student_dao.add_student_to_class(student_id, class_id)
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+
+    # Render giao diện khi request là GET
+    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 
 # @app.route("/delete_student/<int:student_id>", methods=['POST'])
@@ -606,24 +689,69 @@ def edit_student(student_id):
 #         # After processing, you may want to redirect or render a different template
 #         return redirect(url_for('subject_list'))  # Or another page after successful POST
 
-
-
-
-# Trong view, truyền dữ liệu
 @app.route('/assign', methods=['GET', 'POST'])
 def assign_task():
     form = TeachingTaskForm()
-    form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]  # Assuming Teacher model exists
+    form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]
     form.subject.choices = [(subject.id, subject.name) for subject in Subject.query.all()]
     form.classroom.choices = [(classroom.id, classroom.name) for classroom in Class.query.all()]
     form.semester.choices = [(semester.id, semester.name) for semester in Semester.query.all()]
     form.year.choices = [(year.id, year.name) for year in Year.query.all()]
 
     if form.validate_on_submit():
-        # Xử lý form sau khi submit
-        pass
+        teacher_id = form.teacher.data
+        subjects_id = form.subject.data  # Đổi từ `subject_id` thành `subjects_id`
+        class_id = form.classroom.data  # Đổi từ `classroom_id` thành `class_id`
+        semester_id = form.semester.data
+        years_id = form.year.data  # Đổi từ `year_id` thành `years_id`
+
+        new_assignment = TeachingAssignmentDAO.add_teaching_assignment(
+            teacher_id, subjects_id, class_id, semester_id, years_id
+        )
+
+        if new_assignment:
+            flash('Teaching assignment has been saved successfully!', 'success')
+        else:
+            flash('Failed to save the teaching assignment. Please try again.', 'danger')
+
+        return redirect(url_for('assign_task'))
 
     return render_template('/staff/teaching_assignment.html', form=form)
+
+
+@app.route('/teaching_assignments')
+@require_teacher_role
+def teaching_assignments():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+    # Tạo list chứa các dictionary, mỗi dictionary chứa thông tin về một phân công
+    assignments_info = []
+    for assignment in assignments:
+        class_name = Class.query.get(assignment.class_id).name
+        subject_name = Subject.query.get(assignment.subjects_id).name
+        semester_name = Semester.query.get(assignment.semester_id).name
+        year_name = Year.query.get(assignment.years_id).name
+        assignments_info.append({
+            'class_name': class_name,
+            'subject_name': subject_name,
+            'semester_name': semester_name,
+            'year_name': year_name
+        })
+    return render_template('staff/teaching_assignment.html', assignments=assignments_info)
+
+
+@app.route("/check_assignment")
+@require_teacher_role
+def check_assignment_route():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+    class_id = int(request.args.get("class_id"))
+    subject_id = int(request.args.get("subject_id"))
+    semester_id = int(request.args.get("semester_id"))
+    year_id = int(request.args.get("year_id"))
+    assigned = check_assignment(assignments, class_id, subject_id, semester_id, year_id)
+    return jsonify({'assigned': assigned})
+
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
@@ -633,8 +761,14 @@ def login_process():
         u = auth_dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
+
+            session['role'] = u.role.value
+
+            # Chuyển hướng dựa trên vai trò
             if u.role == models.UserRole.ADMIN:
                 return redirect('/admin')
+            elif u.role == models.UserRole.TEACHER:
+                return redirect('/input_scores')
             else:
                 return redirect('/')
         else:
@@ -642,14 +776,17 @@ def login_process():
 
     return render_template('login.html')
 
+
 @app.route("/logout", methods=['get', 'post'])
 def logout_process():
     logout_user()
     return redirect("/login")
 
+
 @login.user_loader
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
@@ -660,7 +797,7 @@ def register_process():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         avatar = request.files.get('avatar')
-        role = request.form.get('role')  # Retrieve the selected role
+        role = request.form.get('role')
 
         # Validate passwords
         if password != confirm_password:
@@ -686,10 +823,9 @@ def register_process():
                                      name=name)
 
         if new_user:
-            # Automatically log in the user
+
             login_user(new_user)
 
-            # Redirect to appropriate page based on role
             if new_user.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:

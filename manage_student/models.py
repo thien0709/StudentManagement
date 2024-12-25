@@ -64,6 +64,10 @@ class User(db.Model, UserMixin):
     def get_password(self):
         return self.password
 
+    def get_username(self):
+        return self.username
+    def get_password(self):
+        return self.password
     def get_role(self):
         return self.role
 

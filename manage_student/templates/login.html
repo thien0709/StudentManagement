@@ -1,29 +1,31 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
-<h1 class="text-center text-danger mt-2">ĐĂNG NHẬP NGƯỜI DÙNG</h1>
+<h1 class="text-center text-danger mt-4">ĐĂNG NHẬP NGƯỜI DÙNG</h1>
 
-<form class="login" method="post" action="/login">
-    <div class="card shadow p-4" style="width: 400px;">
-        <div class="form-floating mb-3 mt-3">
-            <input type="text" class="form-control" id="username" placeholder="Tên đăng nhập" name="username">
-            <label for="username">Tên đăng nhập</label>
+<form class="login mt-4" method="post" action="/login">
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="card shadow p-4" style="width: 400px;">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="username" placeholder="Tên đăng nhập" name="username" required>
+                <label for="username">Tên đăng nhập</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Mật khẩu" name="password" required>
+                <label for="password">Mật khẩu</label>
+            </div>
+            <div class="d-grid gap-2 mb-3">
+                <button class="btn btn-primary" type="submit">Đăng nhập</button>
+            </div>
+            <div class="text-center">
+                <a href="/register" class="text-decoration-none">Chưa có tài khoản? Đăng ký ngay!</a>
+            </div>
+            {% if error %}
+            <div class="alert alert-danger mt-3" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
         </div>
-        <div class="form-floating mt-3 mb-3">
-            <input type="password" class="form-control" id="password" placeholder="Mật khẩu" name="password">
-            <label for="password">Mật khẩu</label>
-        </div>
-        <div class="form-floating mt-3 mb-3">
-            <button class="btn btn-info">Đăng nhập</button>
-        </div>
-        <div class="form-floating mt-3 mb-3">
-            <a href="/register">Đăng ký</a>
-        </div>
-        {% if error %}
-        <div class="alert alert-danger" role="alert">
-            {{error}}
-        </div>
-        {% endif %}
     </div>
 </form>
 {% endblock %}
