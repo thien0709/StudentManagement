@@ -12,7 +12,7 @@ from io import BytesIO
 from semester import assignments
 
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
-from manage_student import app, login, models , admin
+from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
 from manage_student.decorator import require_teacher_role
@@ -29,9 +29,9 @@ def check_assignment(assignments, class_id, subject_id, semester_id, year_id):
     """
     for assignment in assignments:
         if (assignment.class_id == class_id and
-            assignment.subjects_id == subject_id and
-            assignment.semester_id == semester_id and
-            assignment.years_id == year_id):
+                assignment.subjects_id == subject_id and
+                assignment.semester_id == semester_id and
+                assignment.years_id == year_id):
             return True
     return False
 
@@ -41,6 +41,7 @@ def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
+
 
 @app.route("/input_scores", methods=["GET", "POST"])
 @require_teacher_role
@@ -94,7 +95,8 @@ def input_scores():
             flash("Lưu điểm thành công!", "success")
 
             # Redirect lại với các query parameters để tránh load mất dữ liệu
-            return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+            return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id,
+                                    year_id=year_id))
 
         except Exception as e:
             flash(f"Đã xảy ra lỗi: {str(e)}", "error")
@@ -113,7 +115,6 @@ def input_scores():
 
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
         scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
-
 
         for score in scores_data:
             student_id = str(score.student_id)
@@ -149,11 +150,72 @@ def input_scores():
     )
 
 
+@app.route("/export", methods=["GET"])
+@require_teacher_role
+def export():
+    # Lấy danh sách phân công giảng dạy của giáo viên
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
 
+    classes = class_dao.get_classes()
+    subjects = subject_dao.get_subjects()
+    years = year_dao.get_years()
+
+    # Tạo dictionary ánh xạ ID lớp với tên lớp
+    classes_dict = {class_.id: class_.name for class_ in classes}
+
+    class_id = request.args.get("class_id")
+    subject_id = request.args.get("subject_id")
+    year_id = request.args.get("year_id")
+
+    students = []
+    average_scores = {}
+
+    if class_id and subject_id and year_id:
+        class_id = int(class_id)
+        subject_id = int(subject_id)
+        year_id = int(year_id)
+
+        # Kiểm tra phân công giảng dạy (cho cả 2 học kỳ)
+        if not check_assignment(assignments, class_id, subject_id, 1, year_id) and not check_assignment(assignments, class_id, subject_id, 2, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
+
+        # Sử dụng hàm get_students_by_filter để lấy danh sách học sinh
+        students = student_dao.get_students_by_filter(class_id=class_id, subject_id=subject_id, year_id=year_id)
+
+        print("classes_dict:", classes_dict)  # In ra classes_dict
+        # In ra danh sách học sinh và class_id (đã sửa)
+        for student in students:
+            for student_class in student.classes:
+                print(f"Student {student.name()} - Class ID: {student_class.class_id}")
+
+        # Tính điểm trung bình cho từng học kỳ
+        for semester_id in [1, 2]:
+            student_ids = [student.id for student in students]
+            semester_avg_scores = score_dao.calculate_average_scores(student_ids, semester_id, subject_id, year_id)
+            for student_id, avg_score in semester_avg_scores.items():
+                if student_id not in average_scores:
+                    average_scores[student_id] = {}
+                average_scores[student_id][semester_id] = avg_score
+
+    return render_template(
+        "export.html",
+        classes=classes,
+        subjects=subjects,
+        years=years,
+        students=students,
+        class_id=class_id,
+        subject_id=subject_id,
+        year_id=year_id,
+        average_scores=average_scores,
+        classes_dict=classes_dict  # Truyền dictionary vào template
+    )
 
 from flask import send_file, request
 import pandas as pd
 from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, student_dao, score_dao
+
 
 @app.route('/export_scores', methods=['GET'])
 @require_teacher_role
@@ -182,7 +244,8 @@ def export_scores():
         subject_name = subject_dao.get_subject_name(subject_id)
         years = year_dao.get_years()
 
-        logger.debug(f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
+        logger.debug(
+            f"Export Scores: class_id={class_id}, semester_id={semester_id}, subject_id={subject_id}, year_id={year_id}")
 
         excel_data = {}
 
@@ -214,7 +277,8 @@ def export_scores():
                 avg_scores = score_dao.calculate_average_scores([student_id_int], semester_id, subject_id, year_id)
                 logger.debug(f"Calculated avg_scores: {avg_scores}")
                 avg_score = avg_scores.get(student_id_int, 0)
-                logger.debug(f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
+                logger.debug(
+                    f"Calculating average score for student {student.profile.name} ({student_id_int}): {avg_score}")
 
                 row = {
                     "Tên sinh viên": student.name(),
@@ -255,16 +319,19 @@ def export_scores():
                     worksheet.write(4, col_num, value)
 
                 # Định dạng tiêu đề và bảng
-                header_format = writer.book.add_format({'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
+                header_format = writer.book.add_format(
+                    {'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
                 for col_num, value in enumerate(df.columns.values):
                     worksheet.write(4, col_num, value, header_format)
 
         output.seek(0)
-        return send_file(output, as_attachment=True, download_name="student_scores.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        return send_file(output, as_attachment=True, download_name="student_scores.xlsx",
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     except Exception as e:
         logger.error(f"Error exporting scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
+
 
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
@@ -352,8 +419,8 @@ def export_pdf():
 
             # Tạo bảng với tiêu đề
             table_data = [
-                ["Tên sinh viên", "Điểm 15 phút", "Điểm 1 tiết", "Điểm thi cuối kỳ", "Điểm trung bình"]
-            ] + data
+                             ["Tên sinh viên", "Điểm 15 phút", "Điểm 1 tiết", "Điểm thi cuối kỳ", "Điểm trung bình"]
+                         ] + data
 
             table = Table(table_data, colWidths=[100, 100, 100, 100, 100])
             table.setStyle(TableStyle([
@@ -384,7 +451,6 @@ def export_pdf():
 @app.route("/class")
 # @require_employee_role
 def edit_class():
-
     class_id = request.args.get('lop_hoc_id')
     semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
@@ -494,9 +560,6 @@ def edit_student(student_id):
 #         return redirect(url_for('subject_list'))  # Or another page after successful POST
 
 
-
-
-
 # Trong view, truyền dữ liệu
 @app.route('/assign', methods=['GET', 'POST'])
 def assign_task():
@@ -557,7 +620,6 @@ def login_process():
         if u:
             login_user(u)
 
-
             session['role'] = u.role.value
 
             # Chuyển hướng dựa trên vai trò
@@ -572,14 +634,17 @@ def login_process():
 
     return render_template('login.html')
 
+
 @app.route("/logout", methods=['get', 'post'])
 def logout_process():
     logout_user()
     return redirect("/login")
 
+
 @login.user_loader
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
@@ -618,7 +683,6 @@ def register_process():
         if new_user:
 
             login_user(new_user)
-
 
             if new_user.role == models.UserRole.ADMIN:
                 return redirect('/admin')
