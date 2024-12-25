@@ -49,24 +49,16 @@ def formStudent():
         # Kiểm tra nếu thiếu thông tin
         if not all([full_name, email, phone, dob, address, gender]):
             return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
-
         # Chuyển đổi ngày sinh từ chuỗi
         try:
             dob = datetime.strptime(dob, "%Y-%m-%d")
         except ValueError:
             return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
-
         # Nếu tất cả thông tin có đủ, gọi hàm add_profile để thêm hồ sơ
-        result = add_profile(full_name, email, dob, gender, address, phone)
-
-        if isinstance(result, dict) and result.get("status") == "error":
-            # Nếu có lỗi (do độ tuổi không hợp lệ)
-            return jsonify(result)
-        else:
-            # Trả về phản hồi thành công
-            return jsonify({"status": "success", "message": "Thông tin đã được lưu thành công!"})
-            return redirect(url_for('edit_class'))  # Uncomment nếu cần chuyển hướng sau khi thêm thành công
+        add_profile(full_name, email, dob, gender, address, phone)
+        return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
     return render_template("student_form.html")
+
 
 
 # Thong ke bao cao

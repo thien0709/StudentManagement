@@ -1,0 +1,27 @@
+/* Lớp phủ phía sau popup */
+#popupOverlay {
+    position:absolute; /* Đảm bảo lớp phủ bao phủ toàn bộ màn hình */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Lớp phủ bán trong suốt */
+    display: none; /* Ban đầu ẩn đi */
+    z-index: 999; /* Đảm bảo lớp phủ nằm trên các phần tử khác */
+}
+
+/* Popup form */
+#popupForm {
+    position:absolute; /* Định vị cố định trong viewport */
+    top: 50%; /* Căn giữa popup */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: none; /* Ban đầu ẩn đi */
+    z-index: 1000; /* Đảm bảo popup nằm trên lớp phủ */
+}
+
+
