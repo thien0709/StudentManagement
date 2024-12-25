@@ -138,3 +138,69 @@ def delete_student( student_id):
         return True
 
     return False
+
+def remove_student_from_class(student_id, class_id):
+    try:
+        # Tìm bản ghi trong bảng StudentClass dựa trên student_id và class_id
+        student_class_entry = db.session.query(StudentClass).filter_by(student_id=student_id, class_id=class_id).first()
+
+        if not student_class_entry:
+            print("Học sinh không có trong lớp.")
+            return False
+
+        # Xóa bản ghi StudentClass
+        db.session.delete(student_class_entry)
+        db.session.commit()
+
+        print("Xóa học sinh khỏi lớp thành công.")
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Lỗi khi xóa học sinh khỏi lớp: {str(e)}")
+        return False
+
+def get_students_without_class():
+    try:
+        # Truy vấn các học sinh không có lớp, sử dụng LEFT OUTER JOIN
+        students_without_class = db.session.query(Student).outerjoin(StudentClass, Student.id == StudentClass.student_id) \
+            .filter(StudentClass.student_id == None).all()
+
+        if not students_without_class:
+            print("Không có học sinh nào chưa có lớp.")
+        return students_without_class
+
+    except Exception as e:
+        print(f"Lỗi khi truy vấn học sinh chưa có lớp: {str(e)}")
+        return []
+
+
+def add_student_to_class( student_id, class_id):
+    try:
+        student = db.session.query(Student).filter_by(id=student_id).first()
+
+        if not student:
+            print("Học sinh không tồn tại.")
+            return False
+        class_instance = db.session.query(Class).filter_by(id=class_id).first()
+
+        if not class_instance:
+            print("Lớp học không tồn tại.")
+            return False
+        existing_entry = db.session.query(StudentClass).filter_by(student_id=student_id, class_id=class_id).first()
+
+        if existing_entry:
+            print("Học sinh đã có trong lớp.")
+            return False
+
+        new_student_class = StudentClass(student_id=student_id, class_id=class_id)
+        db.session.add(new_student_class)
+        db.session.commit()
+
+        print("Thêm học sinh vào lớp thành công.")
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Lỗi khi thêm học sinh vào lớp: {str(e)}")
+        return False

@@ -8,33 +8,17 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from io import BytesIO
-
-from semester import assignments
-
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
+from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
 from manage_student.decorator import require_teacher_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
 
 
 # from manage_student.decorator import require_employee_role
-
-# Hàm kiểm tra phân công giảng dạy
-def check_assignment(assignments, class_id, subject_id, semester_id, year_id):
-    """Kiểm tra xem giáo viên có được phân công giảng dạy
-       môn học, lớp học, học kỳ và năm học tương ứng hay không.
-    """
-    for assignment in assignments:
-        if (assignment.class_id == class_id and
-                assignment.subjects_id == subject_id and
-                assignment.semester_id == semester_id and
-                assignment.years_id == year_id):
-            return True
-    return False
-
 
 @app.route("/")
 def index():
@@ -455,6 +439,7 @@ def edit_class():
     semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
 
+    students_without_class = student_dao.get_students_without_class()
     # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
     if not class_id or not semester_id or not year_id:
         error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
@@ -463,6 +448,7 @@ def edit_class():
                                semesters=semester_dao.get_semesters(),
                                years=year_dao.get_years(),
                                students=None,
+                               students_without_class = students_without_class,
                                error_message=error_message,
                                selected_class_id=class_id,
                                selected_semester_id=semester_id,
@@ -470,19 +456,18 @@ def edit_class():
 
     # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-
+    students_without_class = student_dao.get_students_without_class()
     return render_template('staff/edit_class.html',
                            classes_list=class_dao.get_classes(),
                            semesters=semester_dao.get_semesters(),
+                           students_without_class = students_without_class,
                            years=year_dao.get_years(),
                            students=students,
                            selected_class_id=class_id,
                            selected_semester_id=semester_id,
                            selected_year_id=year_id)
 
-
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
-# @require_employee_role
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
@@ -491,13 +476,18 @@ def edit_student(student_id):
 
     if request.method == 'POST':
         action = request.form.get('action')
+        class_id = request.form.get('lop_hoc')
+        semester_id = request.form.get('hoc_ky')
+        year_id = request.form.get('nam_hoc')
+        print("test", class_id, semester_id, year_id)
 
         if action == 'edit':
+            print("edit")
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
             gender_str = request.form.get('gioi_tinh')
-            gender = 1 if gender_str == 'Nam' else 0
+            gender = int(gender_str) if gender_str else 0
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
 
@@ -506,16 +496,20 @@ def edit_student(student_id):
             )
 
             if updated_student:
-                return redirect('/class')
+                students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
 
         elif action == 'delete':
-            student_dao.delete_student(student_id)
-            return redirect('/class')
+            print("delete")
+            student_dao.remove_student_from_class(student_id,class_id)
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
         elif action == 'add':
-            # Lấy thông tin thêm học sinh
+            print("add")
+            # Thêm học sinh mới
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -523,16 +517,24 @@ def edit_student(student_id):
             gender = 1 if gender_str == 'Nam' else 0
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
-            class_id = request.form.get('lop_hoc')  # Lớp học từ form
+            class_id = request.form.get('lop_hoc')
 
-            # Thêm học sinh mới
             student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
 
-            # Redirect về trang class sau khi thêm học sinh
-            return redirect('/class')
+            # Lấy lại danh sách học sinh sau khi thêm
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
-    return render_template('edit_class.html', student=student)
+        elif action == 'add_to_class':
+            print("add_to_class")
+            class_id = request.form.get('lop_hoc')
+            student_dao.add_student_to_class(student_id, class_id)
+            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
+    # Render giao diện khi request là GET
+    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 # @app.route("/delete_student/<int:student_id>", methods=['POST'])
 # def delete_student(student_id):
@@ -559,8 +561,6 @@ def edit_student(student_id):
 #         # After processing, you may want to redirect or render a different template
 #         return redirect(url_for('subject_list'))  # Or another page after successful POST
 
-
-# Trong view, truyền dữ liệu
 @app.route('/assign', methods=['GET', 'POST'])
 def assign_task():
     form = TeachingTaskForm()
@@ -571,8 +571,22 @@ def assign_task():
     form.year.choices = [(year.id, year.name) for year in Year.query.all()]
 
     if form.validate_on_submit():
-        # Xử lý form sau khi submit
-        pass
+        teacher_id = form.teacher.data
+        subjects_id = form.subject.data  # Đổi từ `subject_id` thành `subjects_id`
+        class_id = form.classroom.data   # Đổi từ `classroom_id` thành `class_id`
+        semester_id = form.semester.data
+        years_id = form.year.data       # Đổi từ `year_id` thành `years_id`
+
+        new_assignment = TeachingAssignmentDAO.add_teaching_assignment(
+            teacher_id, subjects_id, class_id, semester_id, years_id
+        )
+
+        if new_assignment:
+            flash('Teaching assignment has been saved successfully!', 'success')
+        else:
+            flash('Failed to save the teaching assignment. Please try again.', 'danger')
+
+        return redirect(url_for('assign_task'))
 
     return render_template('/staff/teaching_assignment.html', form=form)
 
