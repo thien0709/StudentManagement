@@ -108,8 +108,8 @@ class Class(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     amount = Column(Integer, default=0)
-    # grade = Column(Enum(Grade), default=Grade.K10)
-    # year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
+    grade = Column(Enum(Grade), default=Grade.K10)
+    year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
     # teacher_id = Column(Integer, ForeignKey("teacher.id"))
 
     # n-n Một Class có nhiều Student

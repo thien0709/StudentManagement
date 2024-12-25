@@ -13,9 +13,9 @@ from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
 from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
-from manage_student.decorator import require_teacher_role
+from manage_student.decorator import require_teacher_role, role_only
 from manage_student.form import TeachingTaskForm
-from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
 
 
 # from manage_student.decorator import require_employee_role
@@ -433,15 +433,14 @@ def export_pdf():
 
 
 @app.route("/class")
-# @require_employee_role
+@role_only([UserRole.STAFF])
 def edit_class():
     class_id = request.args.get('lop_hoc_id')
-    semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
 
     students_without_class = student_dao.get_students_without_class()
     # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
-    if not class_id or not semester_id or not year_id:
+    if not class_id or not year_id:
         error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
         return render_template('staff/edit_class.html',
                                classes_list=class_dao.get_classes(),
@@ -451,11 +450,12 @@ def edit_class():
                                students_without_class = students_without_class,
                                error_message=error_message,
                                selected_class_id=class_id,
-                               selected_semester_id=semester_id,
                                selected_year_id=year_id)
 
     # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
-    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    students = student_dao.get_students_by_class(class_id, year_id)
+    for x in students:
+        print(x.name())
     students_without_class = student_dao.get_students_without_class()
     return render_template('staff/edit_class.html',
                            classes_list=class_dao.get_classes(),
@@ -464,9 +464,12 @@ def edit_class():
                            years=year_dao.get_years(),
                            students=students,
                            selected_class_id=class_id,
-                           selected_semester_id=semester_id,
                            selected_year_id=year_id)
 
+@app.route('/assign_to_class', methods=['POST'])
+def assign_to_class():
+    class_dao.assign_students_to_classes()
+    return redirect(url_for('edit_class'))
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
@@ -496,7 +499,7 @@ def edit_student(student_id):
             )
 
             if updated_student:
-                students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+                students = student_dao.get_students_by_class(class_id, year_id)
                 return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
@@ -504,7 +507,7 @@ def edit_student(student_id):
         elif action == 'delete':
             print("delete")
             student_dao.remove_student_from_class(student_id,class_id)
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            students = student_dao.get_students_by_class(class_id, year_id)
             return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
         elif action == 'add':
@@ -522,18 +525,18 @@ def edit_student(student_id):
             student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
 
             # Lấy lại danh sách học sinh sau khi thêm
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            students = student_dao.get_students_by_class(class_id, year_id)
             return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
         elif action == 'add_to_class':
             print("add_to_class")
             class_id = request.form.get('lop_hoc')
             student_dao.add_student_to_class(student_id, class_id)
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+            students = student_dao.get_students_by_class(class_id, year_id)
             return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
     # Render giao diện khi request là GET
-    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    # students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 # @app.route("/delete_student/<int:student_id>", methods=['POST'])
@@ -663,7 +666,7 @@ def load_user(user_id):
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
     if request.method == 'POST':
-        name = request.form.get('name')  # Retrieve the name from the form
+        name = request.form.get('name')
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')

@@ -52,8 +52,18 @@ def get_students_by_teaching(class_id=None, semester_id=None, year_id=None):
         return
 
 
-def get_students_by_class(class_id, semester_id, year_id):
+def get_students_by_class1(class_id, semester_id, year_id):
     return get_students_by_teaching(class_id=class_id, semester_id=semester_id, year_id=year_id)
+
+def get_students_by_class(class_id, year_id):
+    return (
+        db.session.query(Student)
+        .join(StudentClass, Student.id == StudentClass.student_id)
+        .join(Class, StudentClass.class_id == Class.id)
+        .filter(Class.id == class_id, Class.year_id == year_id)
+        .all()
+    )
+
 
 
 def count_students_by_class(class_id=None):

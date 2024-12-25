@@ -12,13 +12,14 @@
             </label>
         </div>
         <div class="avatar">
-            {% if username %}
-            <a href="/"> <img src="./static/img/avatar.png" alt=""></a>
+            {% if current_user.is_authenticated %}
+            <a href="/"> <img src="{{ current_user.avatar }}" alt=""></a>
             <a href="/logout">Logout</a>
             {% else %}
             <a href="/login"> <img src="./static/img/avatar.png" alt=""></a>
             {% endif %}
         </div>
+
 
     </div>
 </div>

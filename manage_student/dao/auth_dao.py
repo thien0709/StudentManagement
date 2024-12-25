@@ -24,8 +24,9 @@ def get_user_by_username(username):
     user = db.session.query(User).filter_by(username=username).first()
     return user
 
+
 def add_user(username, email, role, password, avatar=None, name=None, birthday=None, gender=None, address=None, phone=None):
-    # Create the Profile object
+    # Tạo đối tượng Profile
     profile = Profile(
         name=name,
         email=email,
@@ -35,18 +36,28 @@ def add_user(username, email, role, password, avatar=None, name=None, birthday=N
         phone=phone
     )
 
-    # Hash the password
-    password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
+    # Mã hóa mật khẩu
+    hashed_password = hashlib.md5(password.encode('utf-8')).hexdigest()  # không cần str() ở đây
 
-    # Create the User object and link it to the Profile
+    # Tải lên avatar nếu có
+    avatar_url = None
+    if avatar:
+        try:
+            res = cloudinary.uploader.upload(avatar)
+            avatar_url = res.get('secure_url')
+        except Exception as e:
+            print(f"Error uploading avatar: {e}")
+
+    # Tạo đối tượng User và liên kết với Profile
     user = User(
         username=username,
-        password=password,
+        password=hashed_password,
         role=role,
-        avatar=avatar if avatar else User.avatar.default,
+        avatar=avatar_url if avatar_url else User.avatar.default,
         profile=profile
     )
 
+    # Thêm người dùng vào cơ sở dữ liệu
     try:
         db.session.add(user)
         db.session.commit()

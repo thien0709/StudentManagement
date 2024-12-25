@@ -1,5 +1,7 @@
 from manage_student import db
-from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass, TeachingAssignment
+from manage_student.dao import regulation_dao, student_dao
+from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass, TeachingAssignment, \
+    Grade
 from sqlalchemy.orm import aliased
 
 
@@ -26,39 +28,41 @@ def get_class_name(class_id):
         print(f"Lỗi khi truy vấn tên lớp học: {str(e)}")
         return None
 
-def assign_students_to_classes():
-    # Lấy danh sách học sinh chưa được phân lớp
-    unassigned_students = Student.query.filter(~Student.classes.any()).all()
+def get_classes_by_grade(grade):
+    if grade:
+        return Class.query.filter_by(grade=Grade[grade]).all()
+    return Class.query.all()
 
-    # Lấy danh sách các lớp hiện có
+def assign_students_to_classes():
+    unassigned_students = student_dao.get_students_without_class()
     classes = Class.query.all()
 
     for student in unassigned_students:
         assigned = False
 
-        # Tìm lớp có chỗ trống
+        # Lặp qua các lớp để tìm lớp phù hợp
         for class_ in classes:
-            if class_.amount < 30:  # Giả sử mỗi lớp tối đa 30 học sinh
-                # Thêm học sinh vào lớp
+            # Kiểm tra grade của học sinh và lớp
+            if class_.grade == student.grade and class_.amount < regulation_dao.get_max_students_in_class():
                 student_class = StudentClass(class_id=class_.id, student_id=student.id)
                 db.session.add(student_class)
-
-                # Cập nhật số lượng học sinh trong lớp
                 class_.amount += 1
                 assigned = True
                 break
 
-        # Nếu không có lớp nào đủ chỗ, tạo lớp mới
         if not assigned:
-            new_class = Class(name=f"Class {len(classes) + 1}", amount=1)
-            db.session.add(new_class)
-            db.session.commit()  # Lưu lớp mới vào DB
+            # Lọc các lớp cùng khối (grade) của học sinh
+            classes_in_grade = [class_ for class_ in classes if class_.grade == student.grade]
 
-            # Thêm học sinh vào lớp mới
+            # Đếm số lớp cùng khối và tạo lớp mới
+            new_class_name = f"{student.grade.value}A{len(classes_in_grade) + 1}"
+
+            # Tạo lớp mới và gán học sinh vào
+            new_class = Class(name=new_class_name, amount=1, grade=student.grade, year_id= Year.query.first().id)
+            db.session.add(new_class)
+            db.session.commit()
+
             student_class = StudentClass(class_id=new_class.id, student_id=student.id)
             db.session.add(student_class)
-
-            # Thêm lớp mới vào danh sách lớp
             classes.append(new_class)
-
-    db.session.commit()  # Lưu tất cả thay đổi vào DB
+    db.session.commit()  # Lưu các thay đổi vào cơ sở dữ liệu

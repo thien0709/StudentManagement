@@ -50,7 +50,6 @@ def role_only(role):
                 return redirect(url_for('login_process'))
             if current_user.role not in role:
                 flash("Quyền không phù hợp", "forbidden")
-                # abort(403)
                 return redirect(url_for('index'))
             else:
                 return f(*args, **kwargs)
