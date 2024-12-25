@@ -40,17 +40,17 @@ a {
     padding: 20px; /* Thêm khoảng cách bên trong */
 }
 
-#footer {
-    position: fixed; /* Cố định footer ở cuối màn hình */
-    bottom: 0; /* Đảm bảo footer nằm sát cạnh dưới */
-    width: 100%; /* Chiều rộng toàn màn hình */
-    height: 50px; /* Chiều cao của footer */
-    background-color: var(--lightNavbar); /* Giữ màu như hiện tại */
-    text-align: center; /* Căn giữa nội dung */
-    line-height: 50px; /* Đặt nội dung theo chiều cao */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng chiều sâu */
-    z-index: 100; /* Đảm bảo footer nằm trên các nội dung khác */
-}
+/*#footer {*/
+/*    position: fixed; !* Cố định footer ở cuối màn hình *!*/
+/*    bottom: 0; !* Đảm bảo footer nằm sát cạnh dưới *!*/
+/*    width: 100%; !* Chiều rộng toàn màn hình *!*/
+/*    height: 50px; !* Chiều cao của footer *!*/
+/*    background-color: var(--lightNavbar); !* Giữ màu như hiện tại *!*/
+/*    text-align: center; !* Căn giữa nội dung *!*/
+/*    line-height: 50px; !* Đặt nội dung theo chiều cao *!*/
+/*    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); !* Tạo hiệu ứng chiều sâu *!*/
+/*    z-index: 100; !* Đảm bảo footer nằm trên các nội dung khác *!*/
+/*}*/
 
 /*.container-main{*/
 /*    height: 100%;*/

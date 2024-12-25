@@ -1,6 +1,11 @@
 {%extends 'layout/base.html'%}
 {%block content%}
 <div class="content">
+    {%if error%}
+    <h1>
+        {{msg}}
+    </h1>
+    {%endif%}
     {%if username%}
     <h1>Hello {{username}}</h1>
     {%endif%}

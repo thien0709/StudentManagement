@@ -36,6 +36,7 @@ def get_classes_by_grade(grade):
 def assign_students_to_classes():
     unassigned_students = student_dao.get_students_without_class()
     classes = Class.query.all()
+    print(classes)
 
     for student in unassigned_students:
         assigned = False
@@ -55,7 +56,7 @@ def assign_students_to_classes():
             classes_in_grade = [class_ for class_ in classes if class_.grade == student.grade]
 
             # Đếm số lớp cùng khối và tạo lớp mới
-            new_class_name = f"{student.grade.value}A{len(classes_in_grade) + 1}"
+            new_class_name = f"{student.grade.value}a{len(classes_in_grade) + 1}"
 
             # Tạo lớp mới và gán học sinh vào
             new_class = Class(name=new_class_name, amount=1, grade=student.grade, year_id= Year.query.first().id)

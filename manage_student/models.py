@@ -1,6 +1,6 @@
 from enum import Enum as PyEnum
 from datetime import datetime
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from sqlalchemy import (
     Column, String, Float, Integer, ForeignKey, Boolean, DateTime, Enum, Text, CheckConstraint
 )
@@ -208,6 +208,7 @@ class Regulation(db.Model):
     max_value = Column(Integer)
     # 1-n: Admin-Regulation
     admin_id = Column(Integer, ForeignKey("admin.id"), nullable=False)
+
 
 
 if __name__ == "__main__":
