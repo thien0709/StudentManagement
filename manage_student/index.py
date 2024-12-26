@@ -12,7 +12,7 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
-from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
+from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
 from manage_student.decorator import require_teacher_role, role_only
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
@@ -567,31 +567,34 @@ def edit_student(student_id):
 @app.route('/assign', methods=['GET', 'POST'])
 def assign_task():
     form = TeachingTaskForm()
+
+    # Tạo danh sách lựa chọn cho form
     form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]
     form.subject.choices = [(subject.id, subject.name) for subject in Subject.query.all()]
     form.classroom.choices = [(classroom.id, classroom.name) for classroom in Class.query.all()]
     form.semester.choices = [(semester.id, semester.name) for semester in Semester.query.all()]
     form.year.choices = [(year.id, year.name) for year in Year.query.all()]
 
+    # Lấy danh sách phân công từ database thông qua DAO
+    assignments_info = get_all_assignments()
+
+    # Xử lý khi form được submit
     if form.validate_on_submit():
         teacher_id = form.teacher.data
-        subjects_id = form.subject.data  # Đổi từ `subject_id` thành `subjects_id`
-        class_id = form.classroom.data   # Đổi từ `classroom_id` thành `class_id`
+        subjects_id = form.subject.data
+        class_id = form.classroom.data
         semester_id = form.semester.data
-        years_id = form.year.data       # Đổi từ `year_id` thành `years_id`
+        years_id = form.year.data
 
-        new_assignment = TeachingAssignmentDAO.add_teaching_assignment(
+        # Thêm phân công mới vào database thông qua DAO
+        new_assignment = add_teaching_assignment(
             teacher_id, subjects_id, class_id, semester_id, years_id
         )
 
-        if new_assignment:
-            flash('Teaching assignment has been saved successfully!', 'success')
-        else:
-            flash('Failed to save the teaching assignment. Please try again.', 'danger')
-
+        flash('Teaching assignment has been saved successfully!', 'success')
         return redirect(url_for('assign_task'))
 
-    return render_template('/staff/teaching_assignment.html', form=form)
+    return render_template('/staff/teaching_assignment.html', form=form, assignments=assignments_info)
 
 
 @app.route('/teaching_assignments')

@@ -150,6 +150,18 @@ class TeachingAssignment(db.Model):
     semester_id = Column(Integer, ForeignKey("semester.id"), nullable=False)
     years_id = Column(Integer, ForeignKey("year.id"), nullable=False)
 
+    def get_teacher(self):
+        return self.teacher.name()
+    def get_subject(self):
+        return self.subject.name
+    def get_class(self):
+        return getattr(self, "class").name
+    def get_semester(self):
+        return self.semester.name
+    def get_year(self):
+        return self.year.name
+
+
 
 class StaffClass(db.Model):
     __tablename__ = "staff_class"
