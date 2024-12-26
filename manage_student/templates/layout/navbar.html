@@ -1,5 +1,5 @@
 <nav class="navbar">
-    <img src="./static/img/images.png" alt="Logo">
+    <img class="navbar-logo" src="./static/img/logo_edu.png" alt="Logo">
     <ul>
         <li><a href="">Tiếp nhận học sinh</a></li>
         <li><a href="/assign">Phân công giảng dạy</a></li>
@@ -7,3 +7,40 @@
         <li><a href="/input_scores">Nhập điểm</a></li>
     </ul>
 </nav>
+
+<style>
+.navbar-logo {
+    max-height: 70px;
+    width: auto;
+    border-radius: 8px;
+    margin-right: 20px;
+    padding: 5px;
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 2px solid rgba(200, 200, 200, 0.8);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(255, 255, 255, 0.4) inset;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2), 0px 3px 6px rgba(255, 255, 255, 0.5) inset;
+    border-color: #007bff;
+    background: linear-gradient(135deg, #eaf4ff, #ffffff);
+}
+
+/* Hoạt ảnh khi tải trang */
+@keyframes logo-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.navbar-logo {
+    animation: logo-fade-in 0.5s ease-in-out;
+}
+</style>

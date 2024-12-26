@@ -1,9 +1,96 @@
-{%extends 'layout/base.html'%}
-{%block content%}
-<div class="content">
-    {%if username%}
-    <h1>Hello {{username}}</h1>
-    {%endif%}
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="welcome-container">
+    {% if username %}
+    <div class="welcome-header">
+        <h1>Welcome back, {{ username }}</h1>
+        <p>Hệ thống QUẢN LÝ HỌC SINH đã sẵn sàng để sử dụng.</p>
+       <p class="welcome-message">Chúc bạn một ngày làm việc hiệu quả và vui vẻ!</p>
+    </div>
+    <div class="welcome-illustration">
+        <img src="static/img/illustration.png" alt="Illustration" />
+    </div>
+    {% endif %}
 </div>
-{%endblock%}
 
+<style>
+    .welcome-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(90deg, #004aad, #0066cc);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 900px;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .welcome-container:hover {
+        transform: scale(1.02);
+    }
+
+    .welcome-header {
+        max-width: 60%;
+    }
+
+    .welcome-header h1 {
+        font-size: 3em;
+        margin: 0;
+        transition: color 0.3s ease-in-out;
+    }
+
+    .welcome-header h1:hover {
+        color: #ffcc00;
+    }
+
+    .welcome-header p {
+        font-size: 1.2em;
+        margin-top: 15px;
+        line-height: 1.5;
+    }
+
+    .welcome-actions {
+        margin-top: 20px;
+    }
+
+    .welcome-illustration img {
+        max-width: 200px;
+        height: auto;
+        border-radius: 10px;
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .welcome-illustration img:hover {
+        transform: scale(1.1);
+        box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .welcome-message {
+    font-size: 1.1em;
+    margin-top: 15px;
+    color: #ffd700;
+    font-style: italic;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+
+    @media (max-width: 768px) {
+        .welcome-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .welcome-header {
+            max-width: 100%;
+        }
+
+        .welcome-illustration img {
+            max-width: 150px;
+        }
+    }
+</style>
+{% endblock %}
