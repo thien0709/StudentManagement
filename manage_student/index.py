@@ -30,6 +30,12 @@ def index():
 @app.route("/input_scores", methods=["GET", "POST"])
 @require_teacher_role
 def input_scores():
+    # Hàm validate điểm
+    def validate_scores(scores):
+        for score in scores:
+            if score < 0 or score > 10:
+                raise ValueError("Điểm không hợp lệ. Điểm phải nằm trong khoảng từ 0 đến 10.")
+
     # Chuyển hướng nếu người dùng không có quyền
     if session.get('role') != models.UserRole.TEACHER.value:
         return redirect(url_for('index'))
@@ -51,7 +57,9 @@ def input_scores():
     students = []
     scores = {}
     average_scores = {}
+    notification = "Vui lòng chọn lớp, học kỳ, môn học và năm học để hiển thị danh sách sinh viên."  # Khởi tạo notification với thông báo mặc định
 
+    # POST request để lưu điểm
     if request.method == "POST":
         class_id = int(request.form.get("class_id"))
         semester_id = int(request.form.get("semester_id"))
@@ -60,30 +68,78 @@ def input_scores():
 
         # Kiểm tra phân công giảng dạy
         if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
-            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
-                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
         try:
             # Lưu điểm
             students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
             for student in students:
                 student_id = student.id
-                scores_15_min = request.form.getlist(f"score_15_min_{student_id}[]")
-                scores_1_hour = request.form.getlist(f"score_1_hour_{student_id}[]")
-                final_exam = request.form.get(f"final_exam_{student_id}")
+                scores_15_min = [float(score) for score in request.form.getlist(f"score_15_min_{student_id}[]")]
+                scores_1_hour = [float(score) for score in request.form.getlist(f"score_1_hour_{student_id}[]")]
+                final_exam = float(request.form.get(f"final_exam_{student_id}"))
 
+                # Kiểm tra điểm hợp lệ
+                validate_scores(scores_15_min)
+                validate_scores(scores_1_hour)
+                validate_scores([final_exam])
+
+                # Lưu vào cơ sở dữ liệu
                 score_dao.save_student_scores(
                     student_id, scores_15_min, scores_1_hour, final_exam, subject_id, semester_id, year_id
                 )
 
             flash("Lưu điểm thành công!", "success")
 
-            # Redirect lại với các query parameters để tránh load mất dữ liệu
-            return redirect(url_for("input_scores", class_id=class_id, semester_id=semester_id, subject_id=subject_id,
-                                    year_id=year_id))
+            # Render template với dữ liệu mới
+            students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
+            scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
+            for score in scores_data:
+                student_id = str(score.student_id)
+                exam_type = score.exam_type.name
 
+                if student_id not in scores:
+                    scores[student_id] = {"score_15_min": [], "score_1_hour": [], "final_exam": None}
+
+                if exam_type == "EXAM_15P":
+                    scores[student_id]["score_15_min"].append(score.score)
+                elif exam_type == "EXAM_45P":
+                    scores[student_id]["score_1_hour"].append(score.score)
+                elif exam_type == "EXAM_FINAL":
+                    scores[student_id]["final_exam"] = score.score
+
+            # Tính điểm trung bình
+            student_ids = [student.id for student in students]
+            average_scores = score_dao.calculate_average_scores(student_ids, semester_id, subject_id, year_id)
+
+            if students:
+                notification = "Có danh sách học sinh."  # Cập nhật notification nếu có học sinh
+            else:
+                notification = "Không có sinh viên nào phù hợp với tiêu chí tìm kiếm."  # Cập nhật notification nếu không có học sinh
+
+            return render_template(
+                "input_scores.html",
+                classes=classes,
+                subjects=subjects,
+                semesters=semesters,
+                years=years,
+                students=students,
+                class_id=class_id,
+                semester_id=semester_id,
+                subject_id=subject_id,
+                year_id=year_id,
+                scores=scores,
+                average_scores=average_scores,
+                notification=notification  # Truyền notification vào template
+            )
+        except ValueError as e:
+            flash(str(e), "error")
         except Exception as e:
             flash(f"Đã xảy ra lỗi: {str(e)}", "error")
+        return redirect(url_for('input_scores', class_id=class_id, semester_id=semester_id, subject_id=subject_id, year_id=year_id))
+
+
 
     # GET request: Hiển thị danh sách sinh viên và điểm
     if class_id and semester_id and subject_id and year_id:
@@ -94,12 +150,14 @@ def input_scores():
 
         # Kiểm tra phân công
         if not check_assignment(assignments, class_id, subject_id, semester_id, year_id):
-            return redirect(url_for('input_scores', error="Bạn không được phân công giảng dạy lớp học này. ",
-                                    info="Bạn có muốn xem <a href='{{ url_for('teaching_assignments') }}'>danh sách lớp học mà bạn được phân công</a>?"))
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('input_scores'))
 
+        # Lấy danh sách sinh viên
         students = student_dao.get_students_by_filter(class_id, semester_id, subject_id, year_id)
-        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
 
+        # Lấy điểm của sinh viên
+        scores_data = score_dao.get_scores_by_filter(semester_id, subject_id, year_id)
         for score in scores_data:
             student_id = str(score.student_id)
             exam_type = score.exam_type.name
@@ -118,6 +176,11 @@ def input_scores():
         student_ids = [student.id for student in students]
         average_scores = score_dao.calculate_average_scores(student_ids, semester_id, subject_id, year_id)
 
+        if students:
+            notification = "Có danh sách học sinh."  # Cập nhật notification nếu có học sinh
+        else:
+            notification = "Không có sinh viên nào phù hợp với tiêu chí tìm kiếm." # Cập nhật notification nếu không có học sinh
+
     return render_template(
         "input_scores.html",
         classes=classes,
@@ -131,7 +194,27 @@ def input_scores():
         year_id=year_id,
         scores=scores,
         average_scores=average_scores,
+        notification=notification,  # Truyền notification vào template
     )
+@app.route("/get_notification")
+@require_teacher_role
+def get_notification():
+    class_id = request.args.get("class_id")
+    semester_id = request.args.get("semester_id")
+    subject_id = request.args.get("subject_id")
+    year_id = request.args.get("year_id")
+
+    notification = None
+    if class_id and semester_id and subject_id and year_id:
+        students = student_dao.get_students_by_filter(int(class_id), int(semester_id), int(subject_id), int(year_id))
+        if students:
+            notification = "Có danh sách học sinh."
+        else:
+            notification = "Không có sinh viên nào phù hợp với tiêu chí tìm kiếm."
+    else:
+        notification = "Vui lòng chọn đầy đủ thông tin để kiểm tra danh sách học sinh."
+
+    return notification
 
 
 @app.route("/export", methods=["GET"])
@@ -165,11 +248,11 @@ def export():
             flash("Bạn không được phân công giảng dạy lớp học này.", "error")
             return redirect(url_for('input_scores'))
 
-        # Sử dụng hàm get_students_by_filter để lấy danh sách học sinh
+
         students = student_dao.get_students_by_filter(class_id=class_id, subject_id=subject_id, year_id=year_id)
 
         print("classes_dict:", classes_dict)  # In ra classes_dict
-        # In ra danh sách học sinh và class_id (đã sửa)
+
         for student in students:
             for student_class in student.classes:
                 print(f"Student {student.name()} - Class ID: {student_class.class_id}")
@@ -302,7 +385,7 @@ def export_scores():
                 for col_num, value in enumerate(df.columns.values):
                     worksheet.write(4, col_num, value)
 
-                # Định dạng tiêu đề và bảng
+
                 header_format = writer.book.add_format(
                     {'bold': True, 'text_wrap': True, 'valign': 'top', 'fg_color': '#D7E4BC', 'border': 1})
                 for col_num, value in enumerate(df.columns.values):
@@ -319,7 +402,7 @@ def export_scores():
 
 @app.route('/export_pdf', methods=['GET'])
 def export_pdf():
-    # Chuyển hướng nếu người dùng không có quyền
+
     if session.get('role') != models.UserRole.TEACHER.value:
         return redirect(url_for('index'))
 
@@ -431,6 +514,174 @@ def export_pdf():
         logger.error(f"Error exporting PDF: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
 
+# xuất excel cho export.html
+@app.route('/export_scores_export', methods=['GET'])
+@require_teacher_role
+def export_scores_export():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
+    try:
+        class_id = int(request.args.get("class_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+        # Kiểm tra phân công
+        if not check_assignment(assignments, class_id, subject_id, 1, year_id) and not check_assignment(assignments, class_id, subject_id, 2, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('export'))
+
+
+        class_name = class_dao.get_class_name(class_id)
+        year_name = year_dao.get_year_name(year_id)  # Hàm này phải có trong year_dao
+        subject_name = subject_dao.get_subject_name(subject_id)
+
+
+        students = student_dao.get_students_by_filter(class_id=class_id, subject_id=subject_id, year_id=year_id)
+        average_scores = {}
+        for semester_id in [1, 2]:
+            student_ids = [student.id for student in students]
+            semester_avg_scores = score_dao.calculate_average_scores(student_ids, semester_id, subject_id, year_id)
+            for student_id, avg_score in semester_avg_scores.items():
+                if student_id not in average_scores:
+                    average_scores[student_id] = {}
+                average_scores[student_id][semester_id] = avg_score
+
+        # Chuẩn bị dữ liệu cho Excel
+        data = []
+        for i, student in enumerate(students, 1):
+            class_name = ", ".join([class_dao.get_class_name(sc.class_id) for sc in student.classes])
+            data.append({
+                "STT": i,
+                "Họ tên": student.name(),
+                "Lớp": class_name,
+                "Điểm TB HK1": average_scores.get(student.id, {}).get(1, 0),
+                "Điểm TB HK2": average_scores.get(student.id, {}).get(2, 0),
+            })
+
+        # Xuất file Excel
+        df = pd.DataFrame(data)
+        output = BytesIO()
+        sheet_name = f"Điểm TB {year_name}"
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+
+            df.to_excel(writer, index=False, sheet_name=sheet_name, startrow=5)  # Bảng điểm bắt đầu từ dòng thứ 6
+            worksheet = writer.sheets[sheet_name]
+
+
+            worksheet.write(0, 0, 'Thông tin lớp học')  # Tiêu đề chính
+            worksheet.write(1, 0, f'Lớp: {class_name}')  # Tên lớp
+            worksheet.write(2, 0, f'Môn học: {subject_name}')  # Tên môn học
+            worksheet.write(3, 0, f'Năm học: {year_name}')  # Năm học
+
+
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(5, col_num, value)
+
+            # Ghi thông tin cuối sheet (nằm dưới dữ liệu)
+            row_end = len(data) + 7  # Dòng cuối của dữ liệu + khoảng cách
+            # worksheet.write(row_end, 0, f"Năm học: {year_name}")  # Ghi thông tin năm học ở cuối file
+
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name="export_average_scores.xlsx",
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    except Exception as e:
+        logger.error(f"Error exporting Excel from export.html: {str(e)}")
+        return f"Đã xảy ra lỗi: {str(e)}"
+
+
+# xuất file pdf cho export.html
+
+@app.route('/export_pdf_export', methods=['GET'])
+@require_teacher_role
+def export_pdf_export():
+    teacher_id = current_user.id
+    assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
+
+    try:
+        class_id = int(request.args.get("class_id"))
+        subject_id = int(request.args.get("subject_id"))
+        year_id = int(request.args.get("year_id"))
+
+
+        if not check_assignment(assignments, class_id, subject_id, 1, year_id) and not check_assignment(assignments, class_id, subject_id, 2, year_id):
+            flash("Bạn không được phân công giảng dạy lớp học này.", "error")
+            return redirect(url_for('export'))
+
+
+        students = student_dao.get_students_by_filter(class_id=class_id, subject_id=subject_id, year_id=year_id)
+        average_scores = {}
+        for semester_id in [1, 2]:
+            student_ids = [student.id for student in students]
+            semester_avg_scores = score_dao.calculate_average_scores(student_ids, semester_id, subject_id, year_id)
+            for student_id, avg_score in semester_avg_scores.items():
+                if student_id not in average_scores:
+                    average_scores[student_id] = {}
+                average_scores[student_id][semester_id] = avg_score
+
+
+        class_name = class_dao.get_class_name(class_id)
+        year_name = year_dao.get_year_name(year_id)  # Sử dụng hàm lấy tên năm học
+        subject_name = subject_dao.get_subject_name(subject_id)
+
+
+        data = []
+        for i, student in enumerate(students, 1):
+            class_name = ", ".join([class_dao.get_class_name(sc.class_id) for sc in student.classes])
+            data.append([
+                i,
+                student.name(),
+                class_name,
+                round(average_scores.get(student.id, {}).get(1, 0), 2),
+                round(average_scores.get(student.id, {}).get(2, 0), 2),
+            ])
+
+        # Đăng ký font hỗ trợ tiếng Việt
+        font_path = os.path.join(current_app.root_path, "templates/fonts/Roboto/Roboto-Regular.ttf")
+        pdfmetrics.registerFont(TTFont('Roboto', font_path))
+
+
+        styles = getSampleStyleSheet()
+        styles['Normal'].fontName = 'Roboto'
+        styles['Title'].fontName = 'Roboto'
+
+
+        pdf_data = [Paragraph("BẢNG ĐIỂM TRUNG BÌNH", styles['Title'])]
+        pdf_data.append(Spacer(1, 12))
+        pdf_data.append(Paragraph(f"Năm học: {year_name}", styles['Normal']))
+        pdf_data.append(Paragraph(f"Lớp: {class_name}", styles['Normal']))
+        pdf_data.append(Paragraph(f"Môn học: {subject_name}", styles['Normal']))
+        pdf_data.append(Spacer(1, 12))
+
+
+        table_data = [["STT", "Họ tên", "Lớp", "Điểm TB HK1", "Điểm TB HK2"]] + data
+
+        # Tạo bảng
+        table = Table(table_data, colWidths=[50, 200, 150, 100, 100])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Roboto'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ]))
+        pdf_data.append(table)
+
+        # Xuất file PDF
+        output = BytesIO()
+        doc = SimpleDocTemplate(output, pagesize=A4)
+        doc.build(pdf_data)
+
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name="export_average_scores.pdf", mimetype='application/pdf')
+
+    except Exception as e:
+        logger.error(f"Error exporting PDF from export.html: {str(e)}")
+        return f"Đã xảy ra lỗi: {str(e)}"
+
 
 @app.route("/class")
 # @require_employee_role
@@ -440,7 +691,7 @@ def edit_class():
     year_id = request.args.get('nam_hoc_id')
 
     students_without_class = student_dao.get_students_without_class()
-    # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
+
     if not class_id or not semester_id or not year_id:
         error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
         return render_template('staff/edit_class.html',
@@ -532,7 +783,7 @@ def edit_student(student_id):
             students = student_dao.get_students_by_class(class_id, semester_id, year_id)
             return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
-    # Render giao diện khi request là GET
+
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
@@ -684,13 +935,13 @@ def register_process():
         # Map role string to UserRole enum
         role_enum = models.UserRole.STAFF if role == 'staff' else models.UserRole.TEACHER
 
-        # Check if username already exists
+
         existing_user = auth_dao.get_user_by_username(username)
         if existing_user:
             return render_template('register.html', error='Tên người dùng đã tồn tại',
                                    username=username, email=email)
 
-        # Pass name to the add_user function
+
         new_user = auth_dao.add_user(username=username, email=email, password=password, role=role_enum, avatar=avatar,
                                      name=name)
 
