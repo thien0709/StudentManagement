@@ -1,15 +1,151 @@
-<nav class="navbar">
-    <img class="navbar-logo" src="./static/img/logo_edu.png" alt="Logo">
-    <ul>
-        <li><a href="">Tiếp nhận học sinh</a></li>
-        <li><a href="/assign">Phân công giảng dạy</a></li>
-        <li><a href="/class">Danh sách học sinh</a></li>
-        <li><a href="/input_scores">Nhập điểm</a></li>
+<nav id="sidebar" class="sidebar">
+    <a class="sidebar-brand" href="#">
+           <img class="navbar-logo" src="./static/img/logo_edu.png" alt="Logo">
+    </a>
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a class="sidebar-link active" href="#">
+                <i class="fa-solid fa-house"></i> <span>Trang chủ</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/assign">
+                <i class="fa-solid fa-chalkboard-user"></i> <span>Phân công giảng dạy</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/class">
+                <i class="fa-solid fa-users"></i> <span>Danh sách học sinh</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/input_scores">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Nhập điểm</span>
+            </a>
+        </li>
     </ul>
 </nav>
 
+<button class="toggle-btn" onclick="toggleSidebar()">
+    <i class="fa-solid fa-bars" id="toggle-icon"></i>
+</button>
+
 <style>
-.navbar-logo {
+/* CSS cho sidebar */
+.sidebar {
+    position: fixed;
+    padding-top: 65px;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 300px;
+    overflow-x: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    /* Hiệu ứng chuyển động */
+    transition: transform 0.3s ease;
+    transform: translateX(-100%);
+}
+
+.sidebar.show {
+    transform: translateX(0);
+    /*padding-top: 65px;*/
+}
+
+/* Kiểu dáng cho các phần tử bên trong sidebar */
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    border-radius: 20px;
+}
+
+.sidebar-brand i {
+    margin-right: 0.5rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    width: 100%;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s ease;
+    margin: 15px;
+    border-radius: 20px;
+}
+
+.sidebar-link i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-link:hover {
+    background-color: #f0f0f0;
+    border-radius: 20px;
+    color: #292c35;
+}
+
+.sidebar-link.active {
+    background-color: #007bff;
+    color: white;
+    border-radius: 20px;
+}
+
+.toggle-btn {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    top: 15px;
+    left: 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.toggle-btn.active {
+    background-color: #dc3545;
+    color: white;
+}
+
+
+#toggle-icon {
+    transition: transform 0.3s ease; /* Hiệu ứng xoay */
+}
+
+#toggle-icon.rotate {
+    transform: rotate(180deg); /* Xoay 180 độ */
+}
+  .navbar-logo {
     max-height: 70px;
     width: auto;
     border-radius: 8px;
@@ -44,3 +180,30 @@
     animation: logo-fade-in 0.5s ease-in-out;
 }
 </style>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("container");
+     const toggleBtn = document.querySelector(".toggle-btn");
+    const toggleIcon = document.getElementById("toggle-icon");
+
+    sidebar.classList.toggle("show");
+
+    mainContent.classList.toggle("shifted"); // Thêm/xóa class 'shifted' cho container
+
+  toggleIcon.classList.toggle("rotate");
+  toggleBtn.classList.toggle("active");
+
+    // Thay đổi icon khi sidebar mở hoặc đóng
+    setTimeout(() => {
+        if (sidebar.classList.contains("show")) {
+            toggleIcon.classList.remove("fa-bars");
+            toggleIcon.classList.add("fa-times");
+        } else {
+            toggleIcon.classList.remove("fa-times");
+            toggleIcon.classList.add("fa-bars");
+        }
+    }, 150); // Đặt timeout khớp 1 nửa thời gian hiệu ứng xoay (0.3s / 2)
+}
+</script>

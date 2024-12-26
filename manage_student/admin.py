@@ -25,13 +25,13 @@ class LogoutView(BaseView):
 
 # ModelView for managing regulations with custom column labels
 class RegulationsView(AuthenticatedView):
-    column_list = ('name', 'min_value', 'max_value', 'admin_id')
+    column_list = ('name', 'min_value', 'max_value')
     column_labels = {
         'name': 'Tên quy định',
         'min_value': 'Giá trị tối thiểu',
         'max_value': 'Giá trị tối đa',
     }
-    form_columns = ['name', 'min_value', 'max_value', 'admin_id']
+    form_columns = ['name', 'min_value', 'max_value']
     column_filters = ['name']
     # can_create = True
     # can_edit = True

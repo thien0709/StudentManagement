@@ -1,46 +1,86 @@
 {% extends 'layout/base.html' %}
 {% block content %}
-<body>
-<div class="container">
-    <div class="d-flex justify-content-center ">
-        <div class="card shadow p-4" style="width: 400px;">
-            <h1 class="text-center mb-4 text-primary">Assign Teaching Task</h1>
-            <form method="POST" action="/assign">
-                {{ form.hidden_tag() }}
-                <div class="form-group mb-3">
+<div class="container mt-4">
+    <!-- Button mở modal -->
+    <button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+        Add Teaching Assignment
+    </button>
 
-                    <div class="form-group mb-3">
-                        <label class="form-label">{{ form.teacher.label }}</label>
-                        {{ form.teacher(class="form-control") }}  <!-- Flask-WTF will populate the options here -->
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label">{{ form.subject.label }}</label>
-                        {{ form.subject(class="form-control") }}
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label">{{ form.classroom.label }}</label>
-                        {{ form.classroom(class="form-control") }}
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label">{{ form.semester.label }}</label>
-                        {{ form.semester(class="form-control") }}
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label">{{ form.year.label }}</label>
-                        {{ form.year(class="form-control") }}
-                    </div>
-
-                    <div class="text-center">
-                        {{ form.submit(class="btn btn-primary btn-block") }}
-                    </div>
+    <!-- Modal thêm assignment -->
+    <div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary" id="assignmentModalLabel">Add Teaching Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-            </form>
+                <div class="modal-body">
+                    <form method="POST" action="/assign">
+                        {{ form.hidden_tag() }}
+                        <div class="form-group mb-3">
+                            <label>{{ form.teacher.label }}</label>
+                            {{ form.teacher(class="form-control") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>{{ form.subject.label }}</label>
+                            {{ form.subject(class="form-control") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>{{ form.classroom.label }}</label>
+                            {{ form.classroom(class="form-control") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>{{ form.semester.label }}</label>
+                            {{ form.semester(class="form-control") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>{{ form.year.label }}</label>
+                            {{ form.year(class="form-control") }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Save Assignment</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Danh sách phân công -->
+    <div class="card shadow p-4">
+        <h2 class="text-primary">Teaching Assignments</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Teacher</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Semester</th>
+                    <th>Year</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    <td>{{ assignment.teacher_name }}</td>
+                    <td>{{ assignment.class_name }}</td>
+                    <td>{{ assignment.subject_name }}</td>
+                    <td>{{ assignment.semester_name }}</td>
+                    <td>{{ assignment.year_name }}</td>
+                    <td>
+                        <!-- Nút Xóa -->
+                        <form method="POST" action="/assign/{{ assignment.assignment_id }}/delete" style="display:inline;">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this assignment?')">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-</body>
 {% endblock %}

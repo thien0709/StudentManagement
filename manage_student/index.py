@@ -8,14 +8,15 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from io import BytesIO
-from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
+from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
+    teaching_assignment_dao
 from manage_student import app, login, models, admin
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.score_dao import logger
-from manage_student.dao.teaching_assignment_dao import TeachingAssignmentDAO, check_assignment
-from manage_student.decorator import require_teacher_role
+from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
+from manage_student.decorator import require_teacher_role, role_only
 from manage_student.form import TeachingTaskForm
-from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
 
 
 # from manage_student.decorator import require_employee_role
@@ -59,7 +60,6 @@ def input_scores():
     average_scores = {}
     notification = "Vui lòng chọn lớp, học kỳ, môn học và năm học để hiển thị danh sách sinh viên."  # Khởi tạo notification với thông báo mặc định
 
-    # POST request để lưu điểm
     if request.method == "POST":
         class_id = int(request.form.get("class_id"))
         semester_id = int(request.form.get("semester_id"))
@@ -684,15 +684,14 @@ def export_pdf_export():
 
 
 @app.route("/class")
-# @require_employee_role
+@role_only([UserRole.STAFF])
 def edit_class():
     class_id = request.args.get('lop_hoc_id')
-    semester_id = request.args.get('hoc_ky_id')
     year_id = request.args.get('nam_hoc_id')
 
     students_without_class = student_dao.get_students_without_class()
-
-    if not class_id or not semester_id or not year_id:
+    # Kiểm tra nếu không có đủ thông tin, thông báo lỗi và redirect
+    if not class_id or not year_id:
         error_message = "Vui lòng chọn đầy đủ lớp, học kỳ và năm học!"
         return render_template('staff/edit_class.html',
                                classes_list=class_dao.get_classes(),
@@ -702,11 +701,12 @@ def edit_class():
                                students_without_class = students_without_class,
                                error_message=error_message,
                                selected_class_id=class_id,
-                               selected_semester_id=semester_id,
                                selected_year_id=year_id)
 
     # Lấy danh sách học sinh theo bộ lọc lớp, học kỳ và năm học
-    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
+    students = student_dao.get_students_by_class(class_id, year_id)
+    for x in students:
+        print(x.name())
     students_without_class = student_dao.get_students_without_class()
     return render_template('staff/edit_class.html',
                            classes_list=class_dao.get_classes(),
@@ -715,9 +715,12 @@ def edit_class():
                            years=year_dao.get_years(),
                            students=students,
                            selected_class_id=class_id,
-                           selected_semester_id=semester_id,
                            selected_year_id=year_id)
 
+@app.route('/assign_to_class', methods=['POST'])
+def assign_to_class():
+    class_dao.assign_students_to_classes()
+    return redirect(url_for('edit_class'))
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
@@ -734,6 +737,7 @@ def edit_student(student_id):
 
         if action == 'edit':
             print("edit")
+            grade = request.form.get('grade')
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -743,20 +747,20 @@ def edit_student(student_id):
             phone = request.form.get('so_dien_thoai')
 
             updated_student = student_dao.update_student(
-                student_id, name, email, birthday, gender, address, phone
+                student_id, name, email, birthday, gender, address, phone,grade
             )
 
             if updated_student:
-                students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-                return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+                students = student_dao.get_students_by_class(class_id, year_id)
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
 
         elif action == 'delete':
             print("delete")
             student_dao.remove_student_from_class(student_id,class_id)
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+            students = student_dao.get_students_by_class(class_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
         elif action == 'add':
             print("add")
@@ -769,20 +773,20 @@ def edit_student(student_id):
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
             class_id = request.form.get('lop_hoc')
+            grade = request.form.get('grade')
 
-            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
+            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, grade)
 
             # Lấy lại danh sách học sinh sau khi thêm
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+            students = student_dao.get_students_by_class(class_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
         elif action == 'add_to_class':
             print("add_to_class")
             class_id = request.form.get('lop_hoc')
             student_dao.add_student_to_class(student_id, class_id)
-            students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
-
+            students = student_dao.get_students_by_class(class_id, year_id)
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
@@ -821,35 +825,48 @@ def assign_task():
     form.semester.choices = [(semester.id, semester.name) for semester in Semester.query.all()]
     form.year.choices = [(year.id, year.name) for year in Year.query.all()]
 
+    # Lấy danh sách phân công từ database thông qua DAO
+    assignments_info = get_all_assignments()
+
+    # Xử lý khi form được submit
     if form.validate_on_submit():
         teacher_id = form.teacher.data
-        subjects_id = form.subject.data  # Đổi từ `subject_id` thành `subjects_id`
-        class_id = form.classroom.data   # Đổi từ `classroom_id` thành `class_id`
+        subjects_id = form.subject.data
+        class_id = form.classroom.data
         semester_id = form.semester.data
-        years_id = form.year.data       # Đổi từ `year_id` thành `years_id`
+        years_id = form.year.data
 
-        new_assignment = TeachingAssignmentDAO.add_teaching_assignment(
+        # Thêm phân công mới vào database thông qua DAO
+        new_assignment = add_teaching_assignment(
             teacher_id, subjects_id, class_id, semester_id, years_id
         )
 
-        if new_assignment:
-            flash('Teaching assignment has been saved successfully!', 'success')
-        else:
-            flash('Failed to save the teaching assignment. Please try again.', 'danger')
-
+        flash('Teaching assignment has been saved successfully!', 'success')
         return redirect(url_for('assign_task'))
 
-    return render_template('/staff/teaching_assignment.html', form=form)
+    return render_template('/staff/teaching_assignment.html', form=form, assignments=assignments_info)
 
+
+@app.route('/assign/<int:assignment_id>/delete', methods=['POST'])
+def delete_assignment(assignment_id):
+    try:
+        # Sử dụng DAO để xóa assignment
+        success = teaching_assignment_dao.delete_teaching_assignment(assignment_id)
+        if success:
+            return redirect(url_for('assign_task'))
+        else:
+            return {"message": "Assignment not found!"}, 404
+    except Exception as e:
+        return {"message": f"Failed to delete assignment: {str(e)}"}, 500
 
 @app.route('/teaching_assignments')
 @require_teacher_role
 def teaching_assignments():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
-    # Tạo list chứa các dictionary, mỗi dictionary chứa thông tin về một phân công
     assignments_info = []
     for assignment in assignments:
+
         class_name = Class.query.get(assignment.class_id).name
         subject_name = Subject.query.get(assignment.subjects_id).name
         semester_name = Semester.query.get(assignment.semester_id).name
@@ -914,7 +931,7 @@ def load_user(user_id):
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
     if request.method == 'POST':
-        name = request.form.get('name')  # Retrieve the name from the form
+        name = request.form.get('name')
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')

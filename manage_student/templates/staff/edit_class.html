@@ -16,17 +16,6 @@
                 </select>
             </div>
             <div class="col">
-                <label for="hoc_ky" class="form-label">Học kỳ:</label>
-                <select id="hoc_ky" name="hoc_ky_id" class="form-select">
-                    <option value="">Chọn học kỳ</option>
-                    {% for hoc_ky in semesters %}
-                    <option value="{{ hoc_ky.id }}" {% if hoc_ky.id== selected_semester_id |int %} selected {% endif %}>
-                        {{ hoc_ky.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col">
                 <label for="nam_hoc" class="form-label">Năm học:</label>
                 <select id="nam_hoc" name="nam_hoc_id" class="form-select">
                     <option value="">Chọn năm học</option>
@@ -53,20 +42,22 @@
     <div class="row mb-2">
         <div class="col-3 d-flex justify-content-between align-items-center">
             <button type="button" id="addStudentBtn" class="btn btn-primary">Thêm học sinh</button>
-            <button type="button" id="assign_to_class" class="btn btn-primary">
-                Phân lớp tự động
-            </button>
+            <form action="/assign_to_class" method="POST">
+                <button type="submit" class="btn btn-primary">Phân lớp tự động</button>
+            </form>
+
         </div>
     </div>
     {% if students %}
     <div class="row mt-5">
         <div class="col-12">
-               <h5>Danh sách học sinh:</h5>
+            <h5>Danh sách học sinh:</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm">
                     <thead class="text-center">
                     <tr>
                         <th>STT</th>
+                        <th>Khối</th>
                         <th>Tên học sinh</th>
                         <th>Giới tính</th>
                         <th>Email</th>
@@ -81,14 +72,17 @@
                     <tr>
                         <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
                             <input type="hidden" name="lop_hoc" value="{{ selected_class_id }}">
-                            <input type="hidden" name="hoc_ky" value="{{ selected_semester_id }}">
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
-                            <td class ="text-center align-middle" >{{ loop.index }}</td>
+                            <td class="text-center align-middle">{{ loop.index }}</td>
+                            <td class="align-middle col-1">
+                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
                             <td class="align-middle">
                                 <input type="text" name="ten_hoc_sinh" value="{{ student.profile.name }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                          <td class="align-middle">
+                            <td class="align-middle">
                                 <div class="d-flex align-items-center">
                                     <div class="form-check me-3">
                                         <input type="radio" id="gioi_tinh_nam_{{ student.id }}" name="gioi_tinh"
@@ -104,20 +98,20 @@
                                     </div>
                                 </div>
                             </td>
-                               <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="email" name="email" value="{{ student.profile.email }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="date" name="ngay_sinh"
                                        value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                              <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="so_dien_thoai" value="{{ student.profile.phone }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                              <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="dia_chi" value="{{ student.profile.address }}"
                                        class="form-control form-control-sm" required>
                             </td>
@@ -154,6 +148,7 @@
                     <thead class="text-center">
                     <tr>
                         <th>STT</th>
+                        <th>Khối</th>
                         <th>Tên học sinh</th>
                         <th>Giới tính</th>
                         <th>Email</th>
@@ -168,14 +163,18 @@
                     <tr>
                         <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
                             <input type="hidden" name="lop_hoc" value="{{ selected_class_id }}">
-                            <input type="hidden" name="hoc_ky" value="{{ selected_semester_id }}">
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
                             <td class="text-center align-middle">{{ loop.index }}</td>
-                                  <td class="align-middle">
+                            <td class="align-middle col-1">
+                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+
+                            <td class="align-middle">
                                 <input type="text" name="ten_hoc_sinh" value="{{ student.profile.name }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                    <td class="align-middle">
+                            <td class="align-middle">
                                 <div class="d-flex">
                                     <div class="form-check me-3">
                                         <input type="radio" id="gioi_tinh_nam_{{ student.id }}_without_class"
@@ -193,20 +192,20 @@
                                     </div>
                                 </div>
                             </td>
-                                  <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="email" name="email" value="{{ student.profile.email }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                 <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="date" name="ngay_sinh"
                                        value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                  <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="so_dien_thoai" value="{{ student.profile.phone }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                  <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="dia_chi" value="{{ student.profile.address }}"
                                        class="form-control form-control-sm" required>
                             </td>
@@ -215,7 +214,8 @@
                                         class="btn btn-primary add-button me-2">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
-                                <button type="submit" name="action" value="add_to_class" class="btn btn-success add-button">
+                                <button type="submit" name="action" value="add_to_class"
+                                        class="btn btn-success add-button">
                                     <i class="fas fa-plus-circle"></i>
                                 </button>
                             </td>
@@ -243,7 +243,6 @@
         <form action="{{ url_for('edit_student', student_id=0) }}" method="POST" class="d-flex align-items-start mb-4">
             <div class="row w-100">
                     <input type="hidden" name="lop_hoc" value="{{selected_class_id}}">
-                        <input type="hidden" name="hoc_ky" value="{{selected_semester_id}}">
                         <input type="hidden" name="nam_hoc" value="{{selected_year_id}}">
                 <div class="col-md-2">
                     <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>

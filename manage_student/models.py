@@ -1,6 +1,6 @@
 from enum import Enum as PyEnum
 from datetime import datetime
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from sqlalchemy import (
     Column, String, Float, Integer, ForeignKey, Boolean, DateTime, Enum, Text, CheckConstraint
 )
@@ -108,8 +108,8 @@ class Class(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     amount = Column(Integer, default=0)
-    # grade = Column(Enum(Grade), default=Grade.K10)
-    # year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
+    grade = Column(Enum(Grade), default=Grade.K10)
+    year_id = Column(Integer, ForeignKey("year.id"), nullable=False)
     # teacher_id = Column(Integer, ForeignKey("teacher.id"))
 
     # n-n Một Class có nhiều Student
@@ -149,6 +149,20 @@ class TeachingAssignment(db.Model):
     class_id = Column(Integer, ForeignKey("class.id"), nullable=False)
     semester_id = Column(Integer, ForeignKey("semester.id"), nullable=False)
     years_id = Column(Integer, ForeignKey("year.id"), nullable=False)
+
+    def get_id(self):
+        return self.id
+    def get_teacher(self):
+        return self.teacher.name()
+    def get_subject(self):
+        return self.subject.name
+    def get_class(self):
+        return getattr(self, "class").name
+    def get_semester(self):
+        return self.semester.name
+    def get_year(self):
+        return self.year.name
+
 
 
 class StaffClass(db.Model):
@@ -208,6 +222,7 @@ class Regulation(db.Model):
     max_value = Column(Integer)
     # 1-n: Admin-Regulation
     admin_id = Column(Integer, ForeignKey("admin.id"), nullable=False)
+
 
 
 if __name__ == "__main__":
