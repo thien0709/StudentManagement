@@ -11,7 +11,7 @@ from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
     teaching_assignment_dao
 from manage_student import app, login, models, admin
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.score_dao import logger
 from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
 from manage_student.decorator import require_teacher_role, role_only
