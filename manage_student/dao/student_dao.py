@@ -106,7 +106,7 @@ def add_student(name, email, birthday, gender, address, phone, class_id, grade):
     return student
 
 
-def update_student( student_id, name, email, birthday, gender, address, phone):
+def update_student(student_id, name, email, birthday, gender, address, phone, grade):
     student = db.session.query(Student).filter_by(id=student_id).first()
 
     if student:
@@ -116,6 +116,8 @@ def update_student( student_id, name, email, birthday, gender, address, phone):
         student.profile.gender = gender
         student.profile.address = address
         student.profile.phone = phone
+        student.grade = grade
+
         db.session.commit()
         return student
     return None
@@ -185,18 +187,25 @@ def get_students_without_class():
         return []
 
 
-def add_student_to_class( student_id, class_id):
+def add_student_to_class(student_id, class_id):
     try:
         student = db.session.query(Student).filter_by(id=student_id).first()
 
         if not student:
             print("Học sinh không tồn tại.")
             return False
+
         class_instance = db.session.query(Class).filter_by(id=class_id).first()
 
         if not class_instance:
             print("Lớp học không tồn tại.")
             return False
+
+        # Kiểm tra grade của học sinh và lớp có khớp không
+        if student.grade != class_instance.grade:
+            print(f"Grade của học sinh ({student.grade}) không khớp với grade của lớp ({class_instance.grade}).")
+            return False
+
         existing_entry = db.session.query(StudentClass).filter_by(student_id=student_id, class_id=class_id).first()
 
         if existing_entry:

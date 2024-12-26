@@ -8,7 +8,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from io import BytesIO
-from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao
+from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
+    teaching_assignment_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user
 from manage_student.dao.score_dao import logger
@@ -486,6 +487,7 @@ def edit_student(student_id):
 
         if action == 'edit':
             print("edit")
+            grade = request.form.get('grade')
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -495,12 +497,12 @@ def edit_student(student_id):
             phone = request.form.get('so_dien_thoai')
 
             updated_student = student_dao.update_student(
-                student_id, name, email, birthday, gender, address, phone
+                student_id, name, email, birthday, gender, address, phone,grade
             )
 
             if updated_student:
                 students = student_dao.get_students_by_class(class_id, year_id)
-                return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
 
@@ -508,7 +510,7 @@ def edit_student(student_id):
             print("delete")
             student_dao.remove_student_from_class(student_id,class_id)
             students = student_dao.get_students_by_class(class_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
         elif action == 'add':
             print("add")
@@ -521,23 +523,24 @@ def edit_student(student_id):
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
             class_id = request.form.get('lop_hoc')
+            grade = request.form.get('grade')
 
-            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, 'K12')
+            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, grade)
 
             # Lấy lại danh sách học sinh sau khi thêm
             students = student_dao.get_students_by_class(class_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
         elif action == 'add_to_class':
             print("add_to_class")
             class_id = request.form.get('lop_hoc')
             student_dao.add_student_to_class(student_id, class_id)
             students = student_dao.get_students_by_class(class_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
     # Render giao diện khi request là GET
     # students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-    return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+    return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
 # @app.route("/delete_student/<int:student_id>", methods=['POST'])
 # def delete_student(student_id):
@@ -597,14 +600,26 @@ def assign_task():
     return render_template('/staff/teaching_assignment.html', form=form, assignments=assignments_info)
 
 
+@app.route('/assign/<int:assignment_id>/delete', methods=['POST'])
+def delete_assignment(assignment_id):
+    try:
+        # Sử dụng DAO để xóa assignment
+        success = teaching_assignment_dao.delete_teaching_assignment(assignment_id)
+        if success:
+            return redirect(url_for('assign_task'))
+        else:
+            return {"message": "Assignment not found!"}, 404
+    except Exception as e:
+        return {"message": f"Failed to delete assignment: {str(e)}"}, 500
+
 @app.route('/teaching_assignments')
 @require_teacher_role
 def teaching_assignments():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
-    # Tạo list chứa các dictionary, mỗi dictionary chứa thông tin về một phân công
     assignments_info = []
     for assignment in assignments:
+
         class_name = Class.query.get(assignment.class_id).name
         subject_name = Subject.query.get(assignment.subjects_id).name
         semester_name = Semester.query.get(assignment.semester_id).name
