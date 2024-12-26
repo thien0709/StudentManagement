@@ -16,17 +16,6 @@
                 </select>
             </div>
             <div class="col">
-                <label for="hoc_ky" class="form-label">Học kỳ:</label>
-                <select id="hoc_ky" name="hoc_ky_id" class="form-select">
-                    <option value="">Chọn học kỳ</option>
-                    {% for hoc_ky in semesters %}
-                    <option value="{{ hoc_ky.id }}" {% if hoc_ky.id== selected_semester_id |int %} selected {% endif %}>
-                        {{ hoc_ky.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col">
                 <label for="nam_hoc" class="form-label">Năm học:</label>
                 <select id="nam_hoc" name="nam_hoc_id" class="form-select">
                     <option value="">Chọn năm học</option>
@@ -52,15 +41,16 @@
 
     <div class="row mb-2">
         <div class="col-3 d-flex justify-content-between align-items-center">
-            <button type="button" id="assign_to_class" class="btn btn-primary">
-                Phân lớp tự động
-            </button>
+            <button type="button" id="addStudentBtn" class="btn btn-primary" onclick="redirectToStudentForm()" >Thêm học sinh</button>
+            <form action="/assign_to_class" method="POST">
+                <button type="submit" class="btn btn-primary">Phân lớp tự động</button>
+            </form>
         </div>
     </div>
     {% if students %}
     <div class="row mt-5">
         <div class="col-12">
-               <h5>Danh sách học sinh:</h5>
+            <h5>Danh sách học sinh:</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm">
                     <thead class="text-center">
@@ -80,14 +70,13 @@
                     <tr>
                         <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
                             <input type="hidden" name="lop_hoc" value="{{ selected_class_id }}">
-                            <input type="hidden" name="hoc_ky" value="{{ selected_semester_id }}">
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
-                            <td class ="text-center align-middle" >{{ loop.index }}</td>
+                            <td class="text-center align-middle">{{ loop.index }}</td>
                             <td class="align-middle">
                                 <input type="text" name="ten_hoc_sinh" value="{{ student.profile.name }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                          <td class="align-middle">
+                            <td class="align-middle">
                                 <div class="d-flex align-items-center">
                                     <div class="form-check me-3">
                                         <input type="radio" id="gioi_tinh_nam_{{ student.id }}" name="gioi_tinh"
@@ -103,20 +92,20 @@
                                     </div>
                                 </div>
                             </td>
-                               <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="email" name="email" value="{{ student.profile.email }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                                <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="date" name="ngay_sinh"
                                        value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                              <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="so_dien_thoai" value="{{ student.profile.phone }}"
                                        class="form-control form-control-sm" required>
                             </td>
-                              <td class="align-middle">
+                            <td class="align-middle">
                                 <input type="text" name="dia_chi" value="{{ student.profile.address }}"
                                        class="form-control form-control-sm" required>
                             </td>
@@ -141,190 +130,139 @@
         Không có học sinh trong danh sách.
     </div>
     {% endif %}
-
-
- <div id="newStudentContainer"></div>
-<div class="row mt-2">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <h5>Danh sách học sinh chưa có lớp:</h5>
-        <button type="button" id="addStudentBtn" class="btn btn-primary">Thêm học sinh</button>
-    </div>
-</div>
-
-{% if students_without_class %}
-<div class="table-responsive">
-    <table class="table table-bordered table-hover table-sm" style="margin-left: 0">
-        <thead class="text-center">
-            <tr>
-                <th>STT</th>
-                <th>Tên học sinh</th>
-                <th>Giới tính</th>
-                <th>Email</th>
-                <th>Ngày sinh</th>
-                <th>Số điện thoại</th>
-                <th>Địa chỉ</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students_without_class %}
-            <tr>
-                <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
-                    <input type="hidden" name="lop_hoc" value="{{ selected_class_id }}">
-                    <input type="hidden" name="hoc_ky" value="{{ selected_semester_id }}">
-                    <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
-                    <td class="text-center align-middle">{{ loop.index }}</td>
-                    <td class="align-middle">
-                        <input type="text" name="ten_hoc_sinh" value="{{ student.profile.name }}"
-                               class="form-control form-control-sm" required>
-                    </td>
-                    <td class="align-middle">
-                        <div class="d-flex">
-                            <div class="form-check me-3">
-                                <input type="radio" id="gioi_tinh_nam_{{ student.id }}_without_class"
-                                       name="gioi_tinh" value="1" {% if student.profile.gender == 1 %}checked{% endif %}
-                                       class="form-check-input">
-                                <label for="gioi_tinh_nam_{{ student.id }}" class="form-check-label">Nam</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="radio" id="gioi_tinh_nu_{{ student.id }}_without_class"
-                                       name="gioi_tinh" value="0" {% if student.profile.gender == 0 %}checked{% endif %}
-                                       class="form-check-input">
-                                <label for="gioi_tinh_nu_{{ student.id }}" class="form-check-label">Nữ</label>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="align-middle">
-                        <input type="email" name="email" value="{{ student.profile.email }}"
-                               class="form-control form-control-sm" required>
-                    </td>
-                    <td class="align-middle">
-                        <input type="date" name="ngay_sinh"
-                               value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}"
-                               class="form-control form-control-sm" required>
-                    </td>
-                    <td class="align-middle">
-                        <input type="text" name="so_dien_thoai" value="{{ student.profile.phone }}"
-                               class="form-control form-control-sm" required>
-                    </td>
-                    <td class="align-middle">
-                        <input type="text" name="dia_chi" value="{{ student.profile.address }}"
-                               class="form-control form-control-sm" required>
-                    </td>
-                    <td class="text-end d-flex">
-                        <button type="submit" name="action" value="edit"
-                                class="btn btn-primary add-button me-2">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <button type="submit" name="action" value="add_to_class" class="btn btn-success add-button">
-                            <i class="fas fa-plus-circle"></i>
-                        </button>
-                    </td>
-                </form>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% else %}
-<p class="text-center">Không có học sinh chưa có lớp.</p>
-{% endif %}
-
+    <div id="newStudentContainer"></div>
+    <div class="row mt-2">
+        <div class="col-12">
+            <h5>Danh sách học sinh chưa có lớp:</h5>
+            {% if students_without_class %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-sm" style="margin-left: 0">
+                    <thead class="text-center">
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên học sinh</th>
+                        <th>Giới tính</th>
+                        <th>Email</th>
+                        <th>Ngày sinh</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for student in students_without_class %}
+                    <tr>
+                        <form action="{{ url_for('edit_student', student_id=student.id) }}" method="POST">
+                            <input type="hidden" name="lop_hoc" value="{{ selected_class_id }}">
+                            <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
+                            <td class="text-center align-middle">{{ loop.index }}</td>
+                            <td class="align-middle">
+                                <input type="text" name="ten_hoc_sinh" value="{{ student.profile.name }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex">
+                                    <div class="form-check me-3">
+                                        <input type="radio" id="gioi_tinh_nam_{{ student.id }}_without_class"
+                                               name="gioi_tinh"
+                                               value="1" {% if student.profile.gender== 1 %}checked{% endif %}
+                                               class="form-check-input">
+                                        <label for="gioi_tinh_nam_{{ student.id }}" class="form-check-label">Nam</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="radio" id="gioi_tinh_nu_{{ student.id }}_without_class"
+                                               name="gioi_tinh"
+                                               value="0" {% if student.profile.gender== 0 %}checked{% endif %}
+                                               class="form-check-input">
+                                        <label for="gioi_tinh_nu_{{ student.id }}" class="form-check-label">Nữ</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <input type="email" name="email" value="{{ student.profile.email }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+                            <td class="align-middle">
+                                <input type="date" name="ngay_sinh"
+                                       value="{{ student.profile.birthday.strftime('%Y-%m-%d') }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+                            <td class="align-middle">
+                                <input type="text" name="so_dien_thoai" value="{{ student.profile.phone }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+                            <td class="align-middle">
+                                <input type="text" name="dia_chi" value="{{ student.profile.address }}"
+                                       class="form-control form-control-sm" required>
+                            </td>
+                            <td class="text-end d-flex ">
+                                <button type="submit" name="action" value="edit"
+                                        class="btn btn-primary add-button me-2">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button type="submit" name="action" value="add_to_class"
+                                        class="btn btn-success add-button">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center">Không có học sinh chưa có lớp.</p>
+            {% endif %}
         </div>
     </div>
 </div>
 <script>
 document.getElementById('addStudentBtn').addEventListener('click', function () {
-    // Ẩn nội dung chính, chỉ để lại header và sidebar nếu cần
-    document.querySelector('#container').style.display = 'none';
-    document.querySelector('body').classList.add('popup-active'); // Để đảm bảo popup-overlay có thể hiển thị
-
-    // Tải form popup từ server
-    fetch('/studentForm', {  // Gọi đến route Flask trả về form HTML
-        method: 'GET',
-    })
-    .then(response => response.text())
-    .then(data => {
-        // Chèn nội dung form vào body
-        document.body.insertAdjacentHTML('beforeend', data);
-
-        // Hiển thị popup
-        document.getElementById('popupForm').style.display = 'block';
-        document.getElementById('popupOverlay').style.display = 'block';
-
-        // Đóng popup khi nhấn nút "Đóng"
-        document.getElementById('closePopup').addEventListener('click', function () {
-            document.getElementById('popupForm').style.display = 'none';
-            document.getElementById('popupOverlay').style.display = 'none';
-            // Hiển thị lại content khi đóng popup
-            window.location.reload();
-        });
-
-        // Gửi dữ liệu form qua AJAX
-        document.getElementById("studentForm").addEventListener("submit", function (e) {
-            e.preventDefault(); // Ngăn reload trang
-
-            // Lấy dữ liệu form
-            const formData = new FormData(this);
-
-            // Gửi AJAX request đến route /studentForm với dữ liệu form
-            fetch("/studentForm", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === "success") {
-                    // Hiển thị thông báo thành công
-                    Swal.fire("Thành công!", data.message, "success").then(() => {
-                        // Sau khi hiển thị thông báo thành công, reset form và đóng cửa sổ popup
-                        document.getElementById("studentForm").reset();
-                        document.getElementById('popupForm').style.display = 'none';
-                        document.getElementById('popupOverlay').style.display = 'none';
-
-                        // Thêm học sinh mới vào bảng
-                        const studentRow = `
-                            <tr>
-                                <td class="text-center align-middle">${data.student.id}</td>
-                                <td class="align-middle">${data.student.fullName}</td>
-                                <td class="align-middle">${data.student.gender === 1 ? 'Nam' : 'Nữ'}</td>
-                                <td class="align-middle">${data.student.email}</td>
-                                <td class="align-middle">${data.student.dob}</td>
-                                <td class="align-middle">${data.student.phone}</td>
-                                <td class="align-middle">${data.student.address}</td>
-                                <td class="text-end d-flex">
-                                    <button class="btn btn-primary add-button me-2">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn btn-success add-button">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        document.querySelector('tbody').insertAdjacentHTML('beforeend', studentRow);
-                        window.location.reload();
-                    });
-                } else {
-                    Swal.fire("Lỗi!", data.message, "error");
-                }
-            })
-            .catch(error => {
-                console.error("Lỗi khi xử lý yêu cầu:", error);
-                Swal.fire("Lỗi!", "Đã xảy ra lỗi khi xử lý yêu cầu.", "error");
-            });
-        });
-    })
-    .catch(error => {
-        console.error("Lỗi khi tải cửa sổ popup:", error);
-    });
+    // Chuyển hướng đến trang nhập thông tin học sinh
+    window.location.href = '/studentForm';
 });
 
+// Cập nhật bảng sau khi thêm học sinh
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const newStudentData = params.get('newStudent');
+
+    if (newStudentData) {
+        try {
+            // Chuyển chuỗi JSON thành đối tượng
+            const student = JSON.parse(newStudentData);
+
+            // Thêm học sinh vào bảng
+            const studentRow = `
+                <tr>
+                    <td class="text-center align-middle">${student.id}</td>
+                    <td class="align-middle">${student.fullName}</td>
+                    <td class="align-middle">${student.gender === 1 ? 'Nam' : 'Nữ'}</td>
+                    <td class="align-middle">${student.email}</td>
+                    <td class="align-middle">${student.dob}</td>
+                    <td class="align-middle">${student.phone}</td>
+                    <td class="align-middle">${student.address}</td>
+                    <td class="text-end d-flex">
+                        <button class="btn btn-primary add-button me-2">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="btn btn-danger add-button">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            document.querySelector('tbody').insertAdjacentHTML('beforeend', studentRow);
+
+            // Hiển thị thông báo thành công
+            Swal.fire("Thành công!", "Đã thêm học sinh mới.", "success");
+        } catch (error) {
+            console.error("Lỗi khi xử lý dữ liệu học sinh mới:", error);
+            Swal.fire("Lỗi!", "Không thể cập nhật bảng học sinh.", "error");
+        }
+    }
+});
 function removeNewStudentForm(button) {
     button.closest('form').remove();
 }

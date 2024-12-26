@@ -1,4 +1,4 @@
-from flask import redirect
+from flask import redirect, render_template
 from flask_admin import Admin, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from manage_student.models import UserRole, Subject, Regulation, Class
@@ -25,13 +25,13 @@ class LogoutView(BaseView):
 
 # ModelView for managing regulations with custom column labels
 class RegulationsView(AuthenticatedView):
-    column_list = ('name', 'min_value', 'max_value', 'admin_id')
+    column_list = ('name', 'min_value', 'max_value')
     column_labels = {
         'name': 'Tên quy định',
         'min_value': 'Giá trị tối thiểu',
         'max_value': 'Giá trị tối đa',
     }
-    form_columns = ['name', 'min_value', 'max_value', 'admin_id']
+    form_columns = ['name', 'min_value', 'max_value']
     column_filters = ['name']
     # can_create = True
     # can_edit = True
@@ -50,12 +50,20 @@ class SubjectView(AuthenticatedView):
     column_filters = ['name']
 
 
+class ChartView(BaseView):
+    @expose('/')
+    def index(self):
+        # Bạn có thể truyền các dữ liệu cần thiết vào template ở đây, nếu cần
+        return render_template('admin/chartScreen.html')
+
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
+admin.add_view(ChartView(name='Biểu đồ'))
 admin.add_view(LogoutView(name='Đăng xuất'))
+
 
 # Future View Placeholder (Commented for Now)
 # admin.add_view(TeacherTeachingAssignmentView(TeachingAssignment, db.session, name="Phân công giáo viên"))

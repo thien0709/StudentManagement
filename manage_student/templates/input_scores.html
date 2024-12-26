@@ -76,6 +76,7 @@
             <table class="table mt-4">
                 <thead>
                 <tr>
+                    <th scope="col">STT</th>
                     <th scope="col">Tên sinh viên</th>
                     <th scope="col">Điểm 15 phút</th>
                     <th scope="col">Điểm 1 tiết</th>
@@ -86,6 +87,7 @@
                 <tbody>
                 {% for student in students %}
                 <tr>
+                    <td>{{ loop.index }}</td>
                     <td>{{ student.name() }}</td>
 
                     <td>
@@ -152,6 +154,7 @@
                 </tr>
                 {% endfor %}
                 </tbody>
+
             </table>
             <div class="text-center">
                 <button type="submit" class="btn btn-success">Lưu điểm</button>
@@ -163,6 +166,12 @@
                class="btn btn-success">Xuất điểm Excel</a>
             <a href="/export_pdf?class_id={{ class_id }}&semester_id={{ semester_id }}&subject_id={{ subject_id }}&year_id={{ year_id }}"
                class="btn btn-danger">Xuất điểm PDF</a>
+
+            <a href="/export?class_id={{ class_id }}&subject_id={{ subject_id }}&year_id={{ year_id }}"
+               class="btn btn-primary">
+                Chuyển đến xuất điểm tb
+            </a>
+
         </div>
 
         {% else %}
@@ -171,143 +180,143 @@
     </div>
 </div>
 <script>
-  const form = document.getElementById('filterForm');
-const assignmentMessage = document.getElementById('assignment-message');
+    const form = document.getElementById('filterForm');
+  const assignmentMessage = document.getElementById('assignment-message');
 
-form.addEventListener('change', function() {
-  const classId = document.getElementById('class').value;
-  const semesterId = document.getElementById('semester').value;
-  const subjectId = document.getElementById('subject').value;
-  const yearId = document.getElementById('year').value;
+  form.addEventListener('change', function() {
+    const classId = document.getElementById('class').value;
+    const semesterId = document.getElementById('semester').value;
+    const subjectId = document.getElementById('subject').value;
+    const yearId = document.getElementById('year').value;
 
-  if (classId && semesterId && subjectId && yearId) {
-    fetch(`/check_assignment?class_id=${classId}&semester_id=${semesterId}&subject_id=${subjectId}&year_id=${yearId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.assigned) {
-          assignmentMessage.innerHTML = ''; // Xóa thông báo nếu có
-          document.getElementById('score-table').style.display = 'block'; // Hiển thị bảng điểm
-        } else {
-          assignmentMessage.innerHTML = `
-              <div class="alert alert-danger">
-                Bạn không được phân công giảng dạy lớp học này.
-                Bạn có muốn xem <a href="{{ url_for('assign_task') }}">danh sách lớp học mà bạn được phân công</a>?
-              </div>
-            `;
-          document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
+    if (classId && semesterId && subjectId && yearId) {
+      fetch(`/check_assignment?class_id=${classId}&semester_id=${semesterId}&subject_id=${subjectId}&year_id=${yearId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.assigned) {
+            assignmentMessage.innerHTML = ''; // Xóa thông báo nếu có
+            document.getElementById('score-table').style.display = 'block'; // Hiển thị bảng điểm
+          } else {
+            assignmentMessage.innerHTML = `
+                <div class="alert alert-danger">
+                  Bạn không được phân công giảng dạy lớp học này.
+                  Bạn có muốn xem <a href="{{ url_for('assign_task') }}">danh sách lớp học mà bạn được phân công</a>?
+                </div>
+              `;
+            document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
+          }
+        });
+    } else {
+      assignmentMessage.innerHTML = ''; // Xóa thông báo nếu chưa chọn đủ thông tin
+      document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
+    }
+  });
+
+  // Nhận thông báo từ server và hiển thị
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorMessage = urlParams.get('error');
+  const infoMessage = urlParams.get('info');
+
+  if (errorMessage) {
+    assignmentMessage.innerHTML = `
+          <div class="alert alert-danger">${errorMessage}</div>
+        `;
+  }
+
+  if (infoMessage) {
+    assignmentMessage.innerHTML += `
+          <div class="alert alert-info">${infoMessage}</div>
+        `;
+  }
+
+  function addScoreColumn(scoreType, studentId) {
+    const container = document.getElementById(`score_${scoreType}_${studentId}`);
+    const inputs = container.querySelectorAll('input');
+
+    if (scoreType === '15_min' && inputs.length >= 5) {
+      alert("Tối đa 5 cột điểm 15 phút!");
+      return;
+    } else if (scoreType === '1_hour' && inputs.length >= 3) {
+      alert("Tối đa 3 cột điểm 1 tiết!");
+      return;
+    }
+
+    const newInput = document.createElement('input');
+    newInput.type = 'text'; // Thay đổi type thành text
+    newInput.name = `score_${scoreType}_${studentId}[]`;
+    newInput.classList.add('form-control');
+    newInput.classList.add(`score_${scoreType}`);
+    newInput.pattern = "[0-9]+([\.][0-9]+)?"; // Thêm pattern
+    newInput.step = "0.1"; // Thêm step
+    newInput.oninput = function () {
+      calculateAverage(studentId);
+    };
+    newInput.value = 0;
+    container.appendChild(newInput);
+
+    calculateAverage(studentId);
+  }
+
+  function removeScoreColumn(scoreType, studentId) {
+    const container = document.getElementById(`score_${scoreType}_${studentId}`);
+    const inputs = container.querySelectorAll('input');
+    if (inputs.length > 1) {
+      container.removeChild(inputs[inputs.length - 1]);
+      calculateAverage(studentId);
+    }
+  }
+
+  function calculateAverage(studentId) {
+    const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
+
+    const scoreInputs = row.querySelectorAll('.score_15_min, .score_1_hour, .final_exam');
+
+    scoreInputs.forEach(input => {
+      input.addEventListener('input', function() {
+        let score = parseFloat(this.value) || 0;
+        if (score < 0 || score > 10) {
+          alert("Điểm số phải nằm trong khoảng từ 0 đến 10.");
+          this.value = ''; // Xóa giá trị không hợp lệ
+          this.focus();
+          return;
+        }
+
+        // Tính toán điểm trung bình sau khi validate
+        let score15Min = 0;
+        row.querySelectorAll('.score_15_min').forEach(input => {
+          score15Min += parseFloat(input.value) || 0;
+        });
+
+        let score1Hour = 0;
+        row.querySelectorAll('.score_1_hour').forEach(input => {
+          score1Hour += parseFloat(input.value) || 0;
+        });
+
+        let finalExam = parseFloat(row.querySelector('.final_exam').value) || 0;
+
+        const totalWeight = row.querySelectorAll('.score_15_min').length * 1 +
+            row.querySelectorAll('.score_1_hour').length * 2 + 3;
+        let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
+        averageScore = averageScore.toFixed(2);
+
+        const averageScoreInput = document.getElementById(`average_score_${studentId}`);
+        averageScoreInput.value = averageScore;
+
+        const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
+        if (hiddenAverageInput) {
+          hiddenAverageInput.value = averageScore;
         }
       });
-  } else {
-    assignmentMessage.innerHTML = ''; // Xóa thông báo nếu chưa chọn đủ thông tin
-    document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
-  }
-});
-
-// Nhận thông báo từ server và hiển thị
-const urlParams = new URLSearchParams(window.location.search);
-const errorMessage = urlParams.get('error');
-const infoMessage = urlParams.get('info');
-
-if (errorMessage) {
-  assignmentMessage.innerHTML = `
-        <div class="alert alert-danger">${errorMessage}</div>
-      `;
-}
-
-if (infoMessage) {
-  assignmentMessage.innerHTML += `
-        <div class="alert alert-info">${infoMessage}</div>
-      `;
-}
-
-function addScoreColumn(scoreType, studentId) {
-  const container = document.getElementById(`score_${scoreType}_${studentId}`);
-  const inputs = container.querySelectorAll('input');
-
-  if (scoreType === '15_min' && inputs.length >= 5) {
-    alert("Tối đa 5 cột điểm 15 phút!");
-    return;
-  } else if (scoreType === '1_hour' && inputs.length >= 3) {
-    alert("Tối đa 3 cột điểm 1 tiết!");
-    return;
-  }
-
-  const newInput = document.createElement('input');
-  newInput.type = 'text'; // Thay đổi type thành text
-  newInput.name = `score_${scoreType}_${studentId}[]`;
-  newInput.classList.add('form-control');
-  newInput.classList.add(`score_${scoreType}`);
-  newInput.pattern = "[0-9]+([\.][0-9]+)?"; // Thêm pattern
-  newInput.step = "0.1"; // Thêm step
-  newInput.oninput = function () {
-    calculateAverage(studentId);
-  };
-  newInput.value = 0;
-  container.appendChild(newInput);
-
-  calculateAverage(studentId);
-}
-
-function removeScoreColumn(scoreType, studentId) {
-  const container = document.getElementById(`score_${scoreType}_${studentId}`);
-  const inputs = container.querySelectorAll('input');
-  if (inputs.length > 1) {
-    container.removeChild(inputs[inputs.length - 1]);
-    calculateAverage(studentId);
-  }
-}
-
-function calculateAverage(studentId) {
-  const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
-
-  const scoreInputs = row.querySelectorAll('.score_15_min, .score_1_hour, .final_exam');
-
-  scoreInputs.forEach(input => {
-    input.addEventListener('input', function() {
-      let score = parseFloat(this.value) || 0;
-      if (score < 0 || score > 10) {
-        alert("Điểm số phải nằm trong khoảng từ 0 đến 10.");
-        this.value = ''; // Xóa giá trị không hợp lệ
-        this.focus();
-        return;
-      }
-
-      // Tính toán điểm trung bình sau khi validate
-      let score15Min = 0;
-      row.querySelectorAll('.score_15_min').forEach(input => {
-        score15Min += parseFloat(input.value) || 0;
-      });
-
-      let score1Hour = 0;
-      row.querySelectorAll('.score_1_hour').forEach(input => {
-        score1Hour += parseFloat(input.value) || 0;
-      });
-
-      let finalExam = parseFloat(row.querySelector('.final_exam').value) || 0;
-
-      const totalWeight = row.querySelectorAll('.score_15_min').length * 1 +
-          row.querySelectorAll('.score_1_hour').length * 2 + 3;
-      let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
-      averageScore = averageScore.toFixed(2);
-
-      const averageScoreInput = document.getElementById(`average_score_${studentId}`);
-      averageScoreInput.value = averageScore;
-
-      const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
-      if (hiddenAverageInput) {
-        hiddenAverageInput.value = averageScore;
-      }
     });
-  });
-}
+  }
 
-window.onload = function () {
-  const rows = document.querySelectorAll('tbody tr');
-  rows.forEach(row => {
-    const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
-    calculateAverage(studentId);
-  });
-};
+  window.onload = function () {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
+      calculateAverage(studentId);
+    });
+  };
 </script>
 
 </body>

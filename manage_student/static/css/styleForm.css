@@ -93,6 +93,12 @@ body.dark .navbar {
 .checkbox:checked + .checkbox-label .ball {
     transform: translateX(24px);
 }
-        }
+/* Thêm vào CSS để làm nút lớn hơn */
+button.btn, a.btn {
+    font-size: 18px; /* Tăng kích thước font chữ */
+    padding: 12px 24px; /* Tăng padding (khoảng cách giữa nội dung và viền) */
+    min-width: 150px; /* Đảm bảo nút có độ rộng tối thiểu */
+}
+
 
 

@@ -4,22 +4,18 @@ from manage_student.models import Score, Student, Subject, StudentClass, Class, 
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
 
+    query = query.join(StudentClass, Student.id == StudentClass.student_id) \
+            .join(Class, Class.id == StudentClass.class_id)
     if class_id:
-        query = query.join(StudentClass, Student.id == StudentClass.student_id) \
-            .join(Class, Class.id == StudentClass.class_id) \
-            .filter(Class.id == class_id)
+        query = query.filter(Class.id == class_id)
 
-    if semester_id or year_id or subject_id:
-        student_class_alias = db.aliased(StudentClass)
-        query = query.join(student_class_alias, Student.id == student_class_alias.student_id) \
-            .join(TeachingAssignment, student_class_alias.class_id == TeachingAssignment.class_id)
-        if semester_id:
-            query = query.filter(TeachingAssignment.semester_id == semester_id)
-        if year_id:
-            query = query.filter(TeachingAssignment.years_id == year_id)
-        if subject_id:
-            query = query.filter(TeachingAssignment.subjects_id == subject_id)
-
+    query = query.join(TeachingAssignment, TeachingAssignment.class_id == Class.id)
+    if semester_id:
+        query = query.filter(TeachingAssignment.semester_id == semester_id)
+    if year_id:
+        query = query.filter(TeachingAssignment.years_id == year_id)
+    if subject_id:
+        query = query.filter(TeachingAssignment.subjects_id == subject_id)
 
     print(query.statement.compile(dialect=db.engine.dialect))
 
@@ -30,7 +26,7 @@ def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, yea
         return students
     except Exception as e:
         print(f"Lỗi khi truy vấn học sinh: {str(e)}")
-        return []
+        return
 
 
 
@@ -53,11 +49,21 @@ def get_students_by_teaching(class_id=None, semester_id=None, year_id=None):
 
     except Exception as e:
         print(f"Lỗi khi truy vấn học sinh: {str(e)}")
-        return []
+        return
 
 
-def get_students_by_class(class_id, semester_id, year_id):
+def get_students_by_class1(class_id, semester_id, year_id):
     return get_students_by_teaching(class_id=class_id, semester_id=semester_id, year_id=year_id)
+
+def get_students_by_class(class_id, year_id):
+    return (
+        db.session.query(Student)
+        .join(StudentClass, Student.id == StudentClass.student_id)
+        .join(Class, StudentClass.class_id == Class.id)
+        .filter(Class.id == class_id, Class.year_id == year_id)
+        .all()
+    )
+
 
 
 def count_students_by_class(class_id=None):
