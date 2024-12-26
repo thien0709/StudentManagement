@@ -56,21 +56,17 @@ a{
 /*.container-main{*/
 /*    height: 100%;*/
 /*}*/
-.navbar {
+.sidebar {
     position: fixed;
-    background: var(--lightNavbar);
+    background: var(--darkNavbar);
     height: 100%;
     width: 20%;
     display: flex;
     flex-direction: column;
 }
 
-.navbar img {
-    width: 100px;
-    height: 10%;
-}
 
-.navbar ul {
+.sidebar ul {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -118,7 +114,7 @@ body.dark {background-color: var(--darkBG);}
 
 body.dark h1, body.dark a {color: var(--lightText);}
 body.dark .sidebar{
-    background: var(--darkNavbar);
+    background: var(--lightNavbar);
 }
 .checkbox {
   opacity: 0;
