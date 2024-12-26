@@ -52,7 +52,6 @@ class SubjectView(AuthenticatedView):
 
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
-
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))

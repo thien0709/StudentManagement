@@ -9,7 +9,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from manage_student import app, login, models, db
+from manage_student import app, login, models, db, admin
 from manage_student.dao import auth_dao
 from manage_student.dao.class_dao import get_classes_by_grade
 from manage_student.dao.profile_dao import add_profile

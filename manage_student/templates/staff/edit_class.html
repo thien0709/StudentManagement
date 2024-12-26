@@ -234,7 +234,12 @@
     </div>
 </div>
 <script>
- document.getElementById('addStudentBtn').addEventListener('click', function () {
+document.getElementById('addStudentBtn').addEventListener('click', function () {
+    // Ẩn nội dung chính, chỉ để lại header và sidebar nếu cần
+    document.querySelector('#container').style.display = 'none';
+    document.querySelector('body').classList.add('popup-active'); // Để đảm bảo popup-overlay có thể hiển thị
+
+    // Tải form popup từ server
     fetch('/studentForm', {  // Gọi đến route Flask trả về form HTML
         method: 'GET',
     })
@@ -251,6 +256,7 @@
         document.getElementById('closePopup').addEventListener('click', function () {
             document.getElementById('popupForm').style.display = 'none';
             document.getElementById('popupOverlay').style.display = 'none';
+            // Hiển thị lại content khi đóng popup
             window.location.reload();
         });
 
@@ -302,6 +308,7 @@
                             </tr>
                         `;
                         document.querySelector('tbody').insertAdjacentHTML('beforeend', studentRow);
+                        window.location.reload();
                     });
                 } else {
                     Swal.fire("Lỗi!", data.message, "error");
