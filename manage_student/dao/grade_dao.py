@@ -33,10 +33,6 @@ def api_get_classes_by_grade(grade_name):
     except Exception as e:
         return jsonify({"error": f"Lỗi khi lấy lớp: {str(e)}"}), 500
 
-
-
-
-
 def api_get_class_amount(class_id):
     try:
         # Truy vấn lớp học theo class_id

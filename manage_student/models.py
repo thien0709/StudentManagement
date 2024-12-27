@@ -68,7 +68,7 @@ class User(db.Model, UserMixin):
         return self.role
 
 
-class Staff(User):
+class Staff(db.Model):
     __tablename__ = "staff"
     id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     # 1-n: Staff-StaffClass
