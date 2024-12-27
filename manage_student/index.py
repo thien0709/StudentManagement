@@ -740,6 +740,7 @@ def edit_student(student_id):
         if action == 'edit':
             print("edit")
             grade = request.form.get('grade')
+            print("grade",grade)
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')

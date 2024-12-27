@@ -1,5 +1,6 @@
 from manage_student import db
-from manage_student.models import Score, Student, Subject, StudentClass, Class, Profile, TeachingAssignment
+from manage_student.models import Score, Student, Subject, StudentClass, Class, Profile, TeachingAssignment, Grade
+
 
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
@@ -116,8 +117,8 @@ def update_student(student_id, name, email, birthday, gender, address, phone, gr
         student.profile.gender = gender
         student.profile.address = address
         student.profile.phone = phone
-        student.grade = grade
-
+        grade = int(grade)
+        student.grade = Grade(grade).name
         db.session.commit()
         return student
     return None
