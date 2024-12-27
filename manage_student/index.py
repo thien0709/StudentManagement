@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from flask import render_template, request, redirect, flash, url_for, current_app, session, jsonify
 from reportlab.lib.styles import getSampleStyleSheet
@@ -721,6 +722,7 @@ def edit_class():
 def assign_to_class():
     class_dao.assign_students_to_classes()
     return redirect(url_for('edit_class'))
+
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
@@ -927,10 +929,10 @@ def logout_process():
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
 
-
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
     if request.method == 'POST':
+        # Lấy dữ liệu từ form
         name = request.form.get('name')
         username = request.form.get('username')
         email = request.form.get('email')
@@ -938,45 +940,70 @@ def register_process():
         confirm_password = request.form.get('confirm_password')
         avatar = request.files.get('avatar')
         role = request.form.get('role')
+        birthday = request.form.get('birthday')  # Dữ liệu ngày sinh dạng chuỗi
+        gender = request.form.get('gender')  # Nam (1) hoặc Nữ (0)
+        address = request.form.get('address')
+        phone = request.form.get('phone')
 
-        # Validate passwords
+        # 1. Xác minh mật khẩu
         if password != confirm_password:
             return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
-        # Validate role
+        # 2. Xác minh vai trò
         if role not in ['staff', 'teacher']:
             return render_template('register.html', error='Vai trò không hợp lệ',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
-        # Map role string to UserRole enum
+        # 3. Chuyển đổi dữ liệu `role` thành enum
         role_enum = models.UserRole.STAFF if role == 'staff' else models.UserRole.TEACHER
 
+        # 4. Xác minh ngày sinh (nếu có)
+        birthday_date = None
+        if birthday:
+            try:
+                birthday_date = datetime.strptime(birthday, '%Y-%m-%d')  # Chuyển chuỗi thành kiểu datetime
+            except ValueError:
+                return render_template('register.html', error='Ngày sinh không hợp lệ',
+                                       username=username, email=email, name=name, address=address, phone=phone)
 
+        # 5. Chuyển đổi giới tính thành boolean
+        gender_bool = True if gender == '1' else False
+
+        # 6. Kiểm tra username đã tồn tại hay chưa
         existing_user = auth_dao.get_user_by_username(username)
         if existing_user:
             return render_template('register.html', error='Tên người dùng đã tồn tại',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
+        # 7. Thêm người dùng mới qua DAO
+        new_user = auth_dao.add_user(
+            username=username,
+            email=email,
+            role=role_enum,
+            password=password,  # Mã hóa mật khẩu đã được xử lý trong DAO
+            avatar=avatar,
+            name=name,
+            birthday=birthday_date,
+            gender=gender_bool,
+            address=address,
+            phone=phone
+        )
 
-        new_user = auth_dao.add_user(username=username, email=email, password=password, role=role_enum, avatar=avatar,
-                                     name=name)
-
+        # 8. Kiểm tra kết quả và xử lý
         if new_user:
+            login_user(new_user)  # Đăng nhập ngay sau khi đăng ký thành công
 
-            login_user(new_user)
-
+            # Điều hướng dựa trên vai trò của người dùng
             if new_user.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:
                 return redirect('/')
-
         else:
             return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
+    # Phương thức GET: Render form đăng ký
     return render_template('register.html')
-
-
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
