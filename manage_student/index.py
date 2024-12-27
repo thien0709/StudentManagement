@@ -22,7 +22,7 @@ from manage_student.dao.semester_dao import api_get_semesters
 from manage_student.dao.subject_dao import api_get_subjects
 from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
 from manage_student.dao.year_dao import api_get_years
-from manage_student.decorator import require_teacher_role, role_only, require_employee_role
+from manage_student.decorator import require_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
 
@@ -184,7 +184,7 @@ def get_average_scores():
 
 
 @app.route("/input_scores", methods=["GET", "POST"])
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def input_scores():
     # Hàm validate điểm
     def validate_scores(scores):
@@ -352,7 +352,7 @@ def input_scores():
         notification=notification,  # Truyền notification vào template
     )
 @app.route("/get_notification")
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def get_notification():
     class_id = request.args.get("class_id")
     semester_id = request.args.get("semester_id")
@@ -373,7 +373,7 @@ def get_notification():
 
 
 @app.route("/export", methods=["GET"])
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def export():
     # Lấy danh sách phân công giảng dạy của giáo viên
     teacher_id = current_user.id
@@ -440,7 +440,7 @@ from manage_student.dao import class_dao, semester_dao, subject_dao, year_dao, s
 
 
 @app.route('/export_scores', methods=['GET'])
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def export_scores():
     # Chuyển hướng nếu người dùng không có quyền
     if session.get('role') != models.UserRole.TEACHER.value:
@@ -671,7 +671,7 @@ def export_pdf():
 
 # xuất excel cho export.html
 @app.route('/export_scores_export', methods=['GET'])
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def export_scores_export():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
@@ -749,7 +749,7 @@ def export_scores_export():
 # xuất file pdf cho export.html
 
 @app.route('/export_pdf_export', methods=['GET'])
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def export_pdf_export():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
@@ -839,7 +839,7 @@ def export_pdf_export():
 
 
 @app.route("/class")
-@require_employee_role
+@require_role([UserRole.STAFF])
 def edit_class():
     class_id = request.args.get('lop_hoc_id')
     year_id = request.args.get('nam_hoc_id')
@@ -873,12 +873,12 @@ def edit_class():
                            selected_year_id=year_id)
 
 @app.route('/assign_to_class', methods=['POST'])
-@require_employee_role
+@require_role([UserRole.STAFF])
 def assign_to_class():
     class_dao.assign_students_to_classes()
     return redirect(url_for('edit_class'))
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
-@require_employee_role
+@require_role([UserRole.STAFF])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
@@ -941,14 +941,18 @@ def edit_student(student_id):
         elif action == 'add_to_class':
             print("add_to_class")
             class_id = request.form.get('lop_hoc')
-            student_dao.add_student_to_class(student_id, class_id)
-            students = student_dao.get_students_by_class(class_id, year_id)
+            message, success =  student_dao.add_student_to_class(student_id, class_id)
+            if success:
+                flash(message, 'success')
+            else:
+                flash(message, 'error')
             return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 @app.route('/assign', methods=['GET', 'POST'])
+@require_role([UserRole.STAFF, UserRole.TEACHER])
 def assign_task():
     form = TeachingTaskForm()
     form.teacher.choices = [(teacher.id, teacher.name()) for teacher in Teacher.query.all()]
@@ -980,7 +984,7 @@ def assign_task():
 
 
 @app.route('/assign/<int:assignment_id>/delete', methods=['POST'])
-@require_employee_role
+@require_role([UserRole.STAFF])
 def delete_assignment(assignment_id):
     try:
         # Sử dụng DAO để xóa assignment
@@ -992,8 +996,9 @@ def delete_assignment(assignment_id):
     except Exception as e:
         return {"message": f"Failed to delete assignment: {str(e)}"}, 500
 
+
 @app.route('/teaching_assignments')
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def teaching_assignments():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
@@ -1012,9 +1017,8 @@ def teaching_assignments():
         })
     return render_template('staff/teaching_assignment.html', assignments=assignments_info)
 
-
 @app.route("/check_assignment")
-@require_teacher_role
+@require_role([UserRole.TEACHER])
 def check_assignment_route():
     teacher_id = current_user.id
     assignments = TeachingAssignment.query.filter_by(teacher_id=teacher_id).all()
