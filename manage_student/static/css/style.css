@@ -116,6 +116,11 @@ body.dark h1, body.dark a {color: var(--lightText);}
 body.dark .sidebar{
     background: var(--lightNavbar);
 }
+body.dark .welcome-container {
+    background: linear-gradient(90deg, #1f1f1f, #2c2c2c); /* Gradient xám đậm */
+    color: #e0e0e0; /* Màu chữ sáng cho nền tối */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4); /* Đổ bóng đậm hơn */
+}
 .checkbox {
   opacity: 0;
   position: absolute;
