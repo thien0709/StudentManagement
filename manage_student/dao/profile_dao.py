@@ -30,3 +30,21 @@ def add_profile(name, email, birthday, gender, address, phone):
         print(f"Error while adding profile: {e}")
         db.session.rollback()
         return None
+
+
+def check_duplicate_profile(email, phone):
+    """
+    Kiểm tra xem email và số điện thoại có trùng lặp trong cơ sở dữ liệu không.
+    Trả về một dictionary chứa thông tin trùng lặp.
+    """
+    student_by_email = Profile.query.filter_by(email=email).first()
+    student_by_phone = Profile.query.filter_by(phone=phone).first()
+
+    if student_by_email and student_by_phone:
+        return {'status': 'duplicate', 'duplicateEmail': True, 'duplicatePhone': True}
+    elif student_by_email:
+        return {'status': 'duplicate', 'duplicateEmail': True}
+    elif student_by_phone:
+        return {'status': 'duplicate', 'duplicatePhone': True}
+
+    return {'status': 'ok'}

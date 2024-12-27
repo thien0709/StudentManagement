@@ -1,5 +1,8 @@
 
 import logging
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from manage_student import db
 from manage_student.models import Score, ExamType, Student, StudentClass
 
@@ -170,4 +173,42 @@ def count_students_passed(class_id, subject_id, semester_id, year_id):
     except Exception as e:
         logger.error(f"Error counting passed students: {str(e)}")
         return 0
+
+
+
+
+def get_average_scores_dao(class_id, subject_id, semester_id, year_id):
+    try:
+        # Lấy danh sách ID học sinh thuộc lớp
+        student_ids = db.session.query(Student.id).join(StudentClass).filter(StudentClass.class_id == class_id).all()
+        student_ids = [s[0] for s in student_ids]
+
+        if not student_ids:
+            return None, "Không tìm thấy học sinh nào"
+
+        # Lấy điểm của các học sinh trong danh sách
+        scores = Score.query.filter(
+            Score.student_id.in_(student_ids),
+            Score.subject_id == subject_id,
+            Score.semester_id == semester_id,
+            Score.year_id == year_id
+        ).all()
+
+        # Hàm tính trung bình cho từng loại điểm
+        def calculate_average(exam_type):
+            exam_scores = [score.score for score in scores if score.exam_type == exam_type]
+            return round(sum(exam_scores) / len(exam_scores), 2) if exam_scores else 0
+
+        avg_15_min = calculate_average(ExamType.EXAM_15P)
+        avg_1_hour = calculate_average(ExamType.EXAM_45P)
+        avg_final = calculate_average(ExamType.EXAM_FINAL)
+
+        return {
+            "average_15_min": avg_15_min,
+            "average_1_hour": avg_1_hour,
+            "average_final": avg_final
+        }, None
+
+    except SQLAlchemyError as e:
+        return None, str(e)
 

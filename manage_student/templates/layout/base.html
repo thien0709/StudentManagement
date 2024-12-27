@@ -12,28 +12,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/edtClass.css') }}"/>
-
-
 </head>
 <body>
-<div id ="left">
+<div id="left">
     {%block navbar%}
     {%include 'layout/navbar.html'%}
     {%endblock%}
 </div>
-<div id ="container">
+<div id="container">
     {%block header%}
     {%include 'layout/header.html'%}
     {%endblock%}
     {%block content%}
-    {%endblock%}
-</div>
-<div id="footer">
-    {%block footer%}
-    {%include 'layout/footer.html'%}
     {%endblock%}
 </div>
 <script>

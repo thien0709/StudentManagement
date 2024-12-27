@@ -1,20 +1,193 @@
-<div class="sidebar">
-    <div class="logo">
-        <img src="{{ url_for('static', filename='img/ht2.png') }}" alt="Logo">
-    </div>
-    <ul class="menu">
-        <li>
-            <i class="fas fa-user"></i> <span class="item-text">Cập nhật thông tin</span>
+<nav id="sidebar" class="sidebar">
+    <a class="sidebar-brand" href="#">
+           <img class="navbar-logo" src="./static/img/logo_edu.png" alt="Logo">
+    </a>
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a class="sidebar-link active" href="/">
+                <i class="fa-solid fa-house"></i> <span>Trang chủ</span>
+            </a>
         </li>
-        <li>
-            <i class="fas fa-pencil-alt"></i> <span class="item-text"><a href="/assign">Phân công</a></span>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/assign">
+                <i class="fa-solid fa-chalkboard-user"></i> <span>Phân công giảng dạy</span>
+            </a>
         </li>
-        <li>
-            <i class="fas fa-file-alt"></i> <span class="item-text"><a href="/class">Danh sách học sinh</a></span>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/class">
+                <i class="fa-solid fa-users"></i> <span>Danh sách học sinh</span>
+            </a>
         </li>
-        <li>
-            <i class="fas fa-chart-bar"></i> <span class="item-text"><a href="/chartscreen">Thống kê báo cáo</a></span>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/input_scores">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Nhập điểm</span>
+            </a>
         </li>
     </ul>
-</div>
+</nav>
 
+<button class="toggle-btn" onclick="toggleSidebar()">
+    <i class="fa-solid fa-bars" id="toggle-icon"></i>
+</button>
+
+<style>
+/* CSS cho sidebar */
+.sidebar {
+    position: fixed;
+    padding-top: 65px;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 300px;
+    overflow-x: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    /* Hiệu ứng chuyển động */
+    transition: transform 0.3s ease;
+    transform: translateX(-100%);
+}
+
+.sidebar.show {
+    transform: translateX(0);
+    /*padding-top: 65px;*/
+}
+
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    width: 100%;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s ease;
+    margin: 15px;
+    border-radius: 20px;
+}
+
+.sidebar-link i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-link:hover {
+    background-color: #f0f0f0;
+    border-radius: 20px;
+    color: #292c35;
+}
+
+/*.sidebar-link.active {*/
+/*    !*background-color: #007bff;*!*/
+/*    color: white;*/
+/*    border-radius: 20px;*/
+/*}*/
+
+.toggle-btn {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    top: 15px;
+    left: 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.toggle-btn.active {
+    background-color: #dc3545;
+    color: white;
+}
+
+
+#toggle-icon {
+    transition: transform 0.3s ease; /* Hiệu ứng xoay */
+}
+
+#toggle-icon.rotate {
+    transform: rotate(180deg); /* Xoay 180 độ */
+}
+  .navbar-logo {
+    max-height: 70px;
+    width: auto;
+    border-radius: 8px;
+    margin-right: 20px;
+    padding: 5px;
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 2px solid rgba(200, 200, 200, 0.8);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(255, 255, 255, 0.4) inset;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2), 0px 3px 6px rgba(255, 255, 255, 0.5) inset;
+    border-color: #007bff;
+    background: linear-gradient(135deg, #eaf4ff, #ffffff);
+}
+
+@keyframes logo-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.navbar-logo {
+    animation: logo-fade-in 0.5s ease-in-out;
+}
+</style>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("container");
+     const toggleBtn = document.querySelector(".toggle-btn");
+    const toggleIcon = document.getElementById("toggle-icon");
+
+    sidebar.classList.toggle("show");
+
+    mainContent.classList.toggle("shifted"); // Thêm/xóa class 'shifted' cho container
+
+  toggleIcon.classList.toggle("rotate");
+  toggleBtn.classList.toggle("active");
+
+    // Thay đổi icon khi sidebar mở hoặc đóng
+    setTimeout(() => {
+        if (sidebar.classList.contains("show")) {
+            toggleIcon.classList.remove("fa-bars");
+            toggleIcon.classList.add("fa-times");
+        } else {
+            toggleIcon.classList.remove("fa-times");
+            toggleIcon.classList.add("fa-bars");
+        }
+    }, 150); // Đặt timeout khớp 1 nửa thời gian hiệu ứng xoay (0.3s / 2)
+}
+</script>

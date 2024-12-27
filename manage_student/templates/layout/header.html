@@ -12,7 +12,6 @@
             </label>
         </div>
         <div class="avatar">
-            <img src="./static/img/avatar.png" alt="">
             {% if current_user.is_authenticated %}
             <a href="/"> <img src="{{ current_user.avatar }}" alt=""></a>
             <a href="/logout">Logout</a>
@@ -20,5 +19,7 @@
             <a href="/login"> <img src="./static/img/avatar.png" alt=""></a>
             {% endif %}
         </div>
+
+
     </div>
 </div>

@@ -49,19 +49,19 @@ class SubjectView(AuthenticatedView):
     form_columns = ['name', 'score_pass']
     column_filters = ['name']
 
-
-class ChartView(BaseView):
+class CustomAdminView(BaseView):
     @expose('/')
     def index(self):
-        # Bạn có thể truyền các dữ liệu cần thiết vào template ở đây, nếu cần
-        return render_template('admin/chartScreen.html')
+        # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
+        return self.render('/admin/chartScreen.html')
+
 
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
-admin.add_view(ChartView(name='Biểu đồ'))
+admin.add_view(CustomAdminView(name='Xem biểu đồ'))
 admin.add_view(LogoutView(name='Đăng xuất'))
 
 
