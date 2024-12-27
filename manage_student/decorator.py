@@ -12,7 +12,7 @@ def require_employee_role(f):
             flash('Vui lòng đăng nhập trước khi truy cập trang này.', 'error')
             return redirect(url_for('login'))
 
-        if session['role'] != UserRole.STAFF:
+        if session['role'] != UserRole.STAFF.value:
             flash('Bạn không có quyền vào trang này.', 'error')
             return redirect(url_for('index'))
 

@@ -948,31 +948,6 @@ def edit_student(student_id):
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
-# @app.route("/delete_student/<int:student_id>", methods=['POST'])
-# def delete_student(student_id):
-#     success = student_dao.delete_student(student_id)
-#
-#     if success:
-#         return redirect('/students')
-#     else:
-#         return "Không tìm thấy học sinh", 404
-
-
-# @app.route("/edit_subject", methods=['GET', 'POST'])
-# def edit_subject():
-#     if request.method == 'GET':
-#         # This renders the edit form when the user first visits the page
-#         return render_template('admin/subject.html')
-#
-#     elif request.method == 'POST':
-#         # Here you would process the data from the form submitted (e.g., save changes to the database)
-#         subject_name = request.form.get('subject_name')
-#         subject_code = request.form.get('subject_code')
-#         # More processing logic here, such as updating the subject in your database
-#
-#         # After processing, you may want to redirect or render a different template
-#         return redirect(url_for('subject_list'))  # Or another page after successful POST
-
 @app.route('/assign', methods=['GET', 'POST'])
 def assign_task():
     form = TeachingTaskForm()
