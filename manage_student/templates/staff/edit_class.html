@@ -52,6 +52,7 @@
     <div class="row mt-5">
         <div class="col-12">
             <h5>Danh sách học sinh:</h5>
+            <h5>Tổng số: {{ students|length }}</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm">
                     <thead class="text-center">
@@ -136,7 +137,6 @@
         Không có học sinh trong danh sách.
     </div>
     {% endif %}
-
 
     <div id="newStudentContainer"></div>
     <div class="row mt-2">
