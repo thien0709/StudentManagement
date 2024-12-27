@@ -8,19 +8,13 @@ from manage_student.models import UserRole
 def require_employee_role(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Kiểm tra đã đăng nhập chưa
         if 'role' not in session:
-            return jsonify({
-                "status": "error",
-                "message": "Vui lòng đăng nhập trước khi truy cập trang này."
-            }), 401  # 401 Unauthorized
+            flash('Vui lòng đăng nhập trước khi truy cập trang này.', 'error')
+            return redirect(url_for('login'))
 
-        # Kiểm tra xem người dùng có vai trò STAFF hay không
         if session['role'] != UserRole.STAFF:
-            return jsonify({
-                "status": "error",
-                "message": "Bạn không có quyền vào trang này."
-            }), 403  # 403 Forbidden
+            flash('Bạn không có quyền vào trang này.', 'error')
+            return redirect(url_for('index'))
 
         return f(*args, **kwargs)
 

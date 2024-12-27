@@ -87,7 +87,7 @@ def formStudent():
             return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
         except Exception as e:
             return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
-    return render_template("student_form.html")
+    return render_template("/staff/student_form.html")
 
 @app.route('/check_duplicate', methods=['POST'])
 def check_duplicate():
@@ -274,7 +274,7 @@ def input_scores():
                 notification = "Không có sinh viên nào phù hợp với tiêu chí tìm kiếm."  # Cập nhật notification nếu không có học sinh
 
             return render_template(
-                "input_scores.html",
+                "/teacher/input_scores.html",
                 classes=classes,
                 subjects=subjects,
                 semesters=semesters,
@@ -337,7 +337,7 @@ def input_scores():
             notification = "Không có sinh viên nào phù hợp với tiêu chí tìm kiếm." # Cập nhật notification nếu không có học sinh
 
     return render_template(
-        "input_scores.html",
+        "/teacher/input_scores.html",
         classes=classes,
         subjects=subjects,
         semesters=semesters,
@@ -422,7 +422,7 @@ def export():
                 average_scores[student_id][semester_id] = avg_score
 
     return render_template(
-        "export.html",
+        "/teacher/export.html",
         classes=classes,
         subjects=subjects,
         years=years,
@@ -839,7 +839,7 @@ def export_pdf_export():
 
 
 @app.route("/class")
-@role_only([UserRole.STAFF])
+@require_employee_role
 def edit_class():
     class_id = request.args.get('lop_hoc_id')
     year_id = request.args.get('nam_hoc_id')
@@ -873,10 +873,12 @@ def edit_class():
                            selected_year_id=year_id)
 
 @app.route('/assign_to_class', methods=['POST'])
+@require_employee_role
 def assign_to_class():
     class_dao.assign_students_to_classes()
     return redirect(url_for('edit_class'))
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
+@require_employee_role
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
 
