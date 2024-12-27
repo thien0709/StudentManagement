@@ -37,6 +37,10 @@ class RegulationsView(AuthenticatedView):
     # can_edit = True
     # can_delete = True
     # can_view_details = True
+    def on_model_change(self, form, model, is_created):
+        if is_created:
+            model.admin_id = current_user.id
+        return super().on_model_change(form, model, is_created)
 
 
 class SubjectView(AuthenticatedView):
@@ -49,6 +53,10 @@ class SubjectView(AuthenticatedView):
     form_columns = ['name', 'score_pass']
     column_filters = ['name']
 
+class CustomAdminView(BaseView):
+    @expose('/')
+    def index(self):
+        return self.render('/admin/test.html')
 
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
@@ -56,6 +64,7 @@ admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
+admin.add_view(CustomAdminView(name='Nội Dung Tùy Chỉnh'))
 admin.add_view(LogoutView(name='Đăng xuất'))
 
 # Future View Placeholder (Commented for Now)

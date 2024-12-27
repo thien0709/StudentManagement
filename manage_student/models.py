@@ -63,7 +63,7 @@ class User(db.Model, UserMixin):
         return self.role
 
 
-class Staff(User):
+class Staff(db.Model):
     __tablename__ = "staff"
     id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     # 1-n: Staff-StaffClass
@@ -72,7 +72,7 @@ class Staff(User):
     user = relationship("User", backref="staff", lazy=True, uselist=False)
 
 
-class Admin(User):
+class Admin(db.Model):
     __tablename__ = "admin"
     id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     # 1-n: Admin-Regulation
@@ -81,7 +81,7 @@ class Admin(User):
     user = relationship("User", backref="admin", lazy=True, uselist=False)
 
 
-class Teacher(User):
+class Teacher(db.Model):
     __tablename__ = "teacher"
     id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     # 1-n Một Teacher có nhiều TeachingAssignment

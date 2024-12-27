@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
 :root {
     --darkBG: #292c35;
@@ -11,6 +12,7 @@
 }
 
 body {
+    font-family: "Patrick Hand", cursive;
     width: 100vw;
     height: 100vh;
     background-color: var(--lightBG);
@@ -31,10 +33,12 @@ a{
 /*    height: 100%;*/
 /*}*/
 #container {
+    padding: 0 20px 20px 20px;
     transition: margin-left 0.3s ease;
     box-sizing: border-box;
 }
 #container.shifted {
+   padding: 0 20px 20px 20px;
     margin-left: 250px;
 }
 /*#footer {*/
@@ -52,21 +56,17 @@ a{
 /*.container-main{*/
 /*    height: 100%;*/
 /*}*/
-.navbar {
+.sidebar {
     position: fixed;
-    background: var(--lightNavbar);
+    background: var(--darkNavbar);
     height: 100%;
     width: 20%;
     display: flex;
     flex-direction: column;
 }
 
-.navbar img {
-    width: 100px;
-    height: 10%;
-}
 
-.navbar ul {
+.sidebar ul {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -114,7 +114,12 @@ body.dark {background-color: var(--darkBG);}
 
 body.dark h1, body.dark a {color: var(--lightText);}
 body.dark .sidebar{
-    background: var(--darkNavbar);
+    background: var(--lightNavbar);
+}
+body.dark .welcome-container {
+    background: linear-gradient(90deg, #1f1f1f, #2c2c2c); /* Gradient xám đậm */
+    color: #e0e0e0; /* Màu chữ sáng cho nền tối */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4); /* Đổ bóng đậm hơn */
 }
 .checkbox {
   opacity: 0;
