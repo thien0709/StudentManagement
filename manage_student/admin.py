@@ -1,4 +1,4 @@
-from flask import redirect
+from flask import redirect, render_template
 from flask_admin import Admin, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from manage_student.models import UserRole, Subject, Regulation, Class
@@ -56,16 +56,18 @@ class SubjectView(AuthenticatedView):
 class CustomAdminView(BaseView):
     @expose('/')
     def index(self):
-        return self.render('/admin/test.html')
+        # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
+        return self.render('/admin/chartScreen.html')
+
 
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
-
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
-admin.add_view(CustomAdminView(name='Nội Dung Tùy Chỉnh'))
+admin.add_view(CustomAdminView(name='Xem biểu đồ'))
 admin.add_view(LogoutView(name='Đăng xuất'))
+
 
 # Future View Placeholder (Commented for Now)
 # admin.add_view(TeacherTeachingAssignmentView(TeachingAssignment, db.session, name="Phân công giáo viên"))

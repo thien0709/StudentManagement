@@ -1,4 +1,4 @@
-from manage_student import db
+
 from manage_student.dao import regulation_dao, student_dao
 from manage_student.models import Student, Score, Subject, Semester, Class, Year, StudentClass, TeachingAssignment, \
     Grade
@@ -19,6 +19,7 @@ def get_classes():
         print(f"Lỗi khi truy vấn lớp học: {str(e)}")
         return []
 
+
 # Hàm lấy tên lớp học theo ID
 def get_class_name(class_id):
     try:
@@ -27,6 +28,9 @@ def get_class_name(class_id):
     except Exception as e:
         print(f"Lỗi khi truy vấn tên lớp học: {str(e)}")
         return None
+def assign_students_to_classes():
+    # Lấy danh sách học sinh chưa được phân lớp
+    unassigned_students = Student.query.filter(~Student.classes.any()).all()
 
 def get_classes_by_grade(grade):
     if grade:

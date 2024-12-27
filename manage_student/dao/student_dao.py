@@ -224,3 +224,5 @@ def add_student_to_class(student_id, class_id):
         db.session.rollback()
         print(f"Lỗi khi thêm học sinh vào lớp: {str(e)}")
         return False
+
+

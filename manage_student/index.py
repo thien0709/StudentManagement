@@ -13,8 +13,15 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
     teaching_assignment_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user , login_required
-from manage_student.dao.score_dao import logger
+
+from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
+    api_get_passed_count
+from manage_student.dao.profile_dao import add_profile, check_duplicate_profile
+from manage_student.dao.score_dao import logger, get_average_scores_dao
+from manage_student.dao.semester_dao import api_get_semesters
+from manage_student.dao.subject_dao import api_get_subjects
 from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
+from manage_student.dao.year_dao import api_get_years
 from manage_student.decorator import require_teacher_role, role_only, require_employee_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
@@ -27,6 +34,153 @@ def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
+
+
+from flask import jsonify, render_template, redirect, url_for
+from datetime import datetime
+
+
+@app.route("/studentForm", methods=["GET", "POST"])
+def formStudent():
+    if request.method == "POST":
+        # Lấy dữ liệu từ form hoặc JSON
+        if request.is_json:
+            data = request.get_json()
+            full_name = data.get("fullName")
+            email = data.get("email")
+            phone = data.get("phone")
+            dob = data.get("dob")
+            address = data.get("address")
+            gender = data.get("gender")
+        else:
+            full_name = request.form.get("fullName")
+            email = request.form.get("email")
+            phone = request.form.get("phone")
+            dob = request.form.get("dob")
+            address = request.form.get("address")
+            gender = request.form.get("gender")
+
+        # Kiểm tra nếu thiếu thông tin
+        if not all([full_name, email, phone, dob, address, gender]):
+            return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
+
+        # Kiểm tra tính hợp lệ của email
+        import re
+        email_pattern = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+        if not re.match(email_pattern, email):
+            return jsonify({"status": "error", "message": "Email không hợp lệ!"})
+
+        # Kiểm tra giới tính
+        if gender not in ['male', 'female']:
+            return jsonify({"status": "error", "message": "Giới tính không hợp lệ!"})
+
+        # Chuyển đổi ngày sinh từ chuỗi
+        try:
+            dob = datetime.strptime(dob, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
+
+        # Thêm hồ sơ vào cơ sở dữ liệu
+        try:
+            add_profile(full_name, email, dob, gender, address, phone)
+            # Trả về phản hồi thành công
+            return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
+    return render_template("student_form.html")
+
+@app.route('/check_duplicate', methods=['POST'])
+def check_duplicate():
+    data = request.get_json()
+
+    email = data.get('email')
+    phone = data.get('phone')
+
+    # Kiểm tra trùng lặp
+    result = check_duplicate_profile(email, phone)
+
+    # Trả về kết quả
+    return jsonify(result)# Thong ke bao cao
+@app.route("/chartscreen")
+def reportChart():
+    return render_template("1.html")
+
+
+# Lay hoc ki
+@app.route('/api/semesters', methods=['GET'])
+def api_get_semesters_route():
+    return api_get_semesters()
+
+
+# Lay nam hoc
+
+@app.route('/api/years', methods=['GET'])
+def api_get_years_route():
+    return api_get_years()
+
+
+# Lay mon hoc
+
+@app.route('/api/subjects', methods=['GET'])
+def api_get_subjects_route():
+    return api_get_subjects()
+
+
+# Route lấy tất cả các khối (Grade)
+@app.route('/get_grades', methods=['GET'])
+def get_grades_route():
+    return api_get_grades()
+
+
+@app.route('/get_classes_by_grades', methods=['GET'])
+def get_classes_route():
+    grade = request.args.get('grade')  # Lấy tham số 'grade' từ query string
+    if grade:
+        return api_get_classes_by_grade(grade)
+    else:
+        return jsonify({"error": "Không có khối học được chọn"}), 400
+
+
+# Route lấy sĩ số (số học sinh) theo lớp
+@app.route('/get_class_amount/<class_id>', methods=['GET'])
+def get_class_amount_route(class_id):
+    return api_get_class_amount(class_id)
+
+
+@app.route('/get_passed_count', methods=['GET'])
+def get_passed_count_route():
+    class_id = request.args.get('class_id', type=int)
+    subject_id = request.args.get('subject_id', type=int)
+    semester_id = request.args.get('semester_id', type=int)
+    year_id = request.args.get('year_id', type=int)
+
+    # Kiểm tra tham số đầu vào
+    if not all([class_id, subject_id, semester_id, year_id]):
+        return jsonify({'error': 'Missing or invalid parameters'}), 400
+
+    return api_get_passed_count(class_id, subject_id, semester_id, year_id)
+
+
+# route tính điểm trung bình của các loại điểm trong môn học để vẽ chart
+@app.route('/api/average_scores', methods=['GET'])
+def get_average_scores():
+    class_id = request.args.get('class_id', type=int)
+    subject_id = request.args.get('subject_id', type=int)
+    semester_id = request.args.get('semester_id', type=int)
+    year_id = request.args.get('year_id', type=int)
+
+    try:
+        # Gọi hàm trong score_dao.py
+        result, error = get_average_scores_dao(class_id, subject_id, semester_id, year_id)
+        if error:
+            status_code = 404 if error == "Không tìm thấy học sinh nào" else 500
+            return jsonify({"error": error}), status_code
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Lỗi trong route /api/average_scores: {str(e)}")
+        return jsonify({"error": "Lỗi máy chủ nội bộ"}), 500
 
 
 @app.route("/input_scores", methods=["GET", "POST"])
@@ -722,7 +876,6 @@ def edit_class():
 def assign_to_class():
     class_dao.assign_students_to_classes()
     return redirect(url_for('edit_class'))
-
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 def edit_student(student_id):
     student = student_dao.get_student_by_id(student_id)
@@ -740,7 +893,6 @@ def edit_student(student_id):
         if action == 'edit':
             print("edit")
             grade = request.form.get('grade')
-            print("grade",grade)
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -1005,7 +1157,6 @@ def register_process():
             return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
-    # Phương thức GET: Render form đăng ký
     return render_template('register.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
