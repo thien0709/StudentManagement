@@ -58,7 +58,7 @@ a{
 /*}*/
 .sidebar {
     position: fixed;
-    background: var(--darkNavbar);
+    background: var(--lightNavbar);
     height: 100%;
     width: 20%;
     display: flex;
@@ -113,13 +113,24 @@ a{
 body.dark {background-color: var(--darkBG);}
 
 body.dark h1, body.dark a {color: var(--lightText);}
-body.dark .sidebar{
-    background: var(--lightNavbar);
+body.dark .sidebar {
+    background-color: var(--darkNavbar);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .sidebar-link {
+    color: #e0e0e0; /* Màu chữ sáng */
+}
+
+body.dark .sidebar-link:hover {
+    background-color: #333333; /* Màu nền khi hover ở theme tối */
+    color: #ffffff; /* Màu chữ khi hover ở theme tối */
+    border-radius: 20px;
 }
 body.dark .welcome-container {
-    background: linear-gradient(90deg, #1f1f1f, #2c2c2c); /* Gradient xám đậm */
+    background: linear-gradient(90deg, #1f1f1f, #2c2c2c);
     color: #e0e0e0; /* Màu chữ sáng cho nền tối */
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4); /* Đổ bóng đậm hơn */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4);
 }
 .checkbox {
   opacity: 0;

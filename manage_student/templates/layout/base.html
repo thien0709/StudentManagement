@@ -28,10 +28,25 @@
     {%endblock%}
 </div>
 <script>
-    const checkbox = document.getElementById("checkbox")
-    checkbox.addEventListener("change", () => {
-        document.body.classList.toggle("dark")
-    })
+const checkbox = document.getElementById("checkbox");
+
+// Kiểm tra trạng thái theme trong localStorage khi tải trang
+if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+    checkbox.checked = true; // Đặt trạng thái checkbox
+}
+
+// Lắng nghe sự kiện thay đổi trạng thái của checkbox
+checkbox.addEventListener("change", () => {
+    if (checkbox.checked) {
+        document.body.classList.add("dark");
+        localStorage.setItem("theme", "dark"); // Lưu trạng thái là dark
+    } else {
+        document.body.classList.remove("dark");
+        localStorage.setItem("theme", "light"); // Lưu trạng thái là light
+    }
+});
+
 </script>
 </body>
 </html>
