@@ -1,97 +1,131 @@
-
 {% extends 'layout/base.html' %}
 {% block content %}
 <div class="welcome-container">
     {% if username %}
+    <!-- Khi người dùng đã đăng nhập -->
     <div class="welcome-header">
         <h1>Welcome back, {{ username }}</h1>
         <p>Hệ thống QUẢN LÝ HỌC SINH đã sẵn sàng để sử dụng.</p>
-       <p class="welcome-message">Chúc bạn một ngày làm việc hiệu quả và vui vẻ!</p>
+        <p class="welcome-message">Chúc bạn một ngày làm việc hiệu quả và vui vẻ!</p>
     </div>
+    {% else %}
+    <!-- Khi người dùng chưa đăng nhập -->
+    <div class="welcome-header">
+        <h1>Welcome, User</h1>
+        <p>Hệ thống QUẢN LÝ HỌC SINH đã sẵn sàng để sử dụng.</p>
+        <p class="welcome-message">Vui lòng đăng nhập để trải nghiệm đầy đủ các tính năng.</p>
+    </div>
+    {% endif %}
     <div class="welcome-illustration">
         <img src="static/img/illustration.png" alt="Illustration" />
     </div>
-    {% endif %}
 </div>
 
 <style>
-    .welcome-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(90deg, #004aad, #0066cc);
-        color: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 20px auto;
-        max-width: 900px;
-        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease-in-out;
-    }
+/* Welcome Container */
+.welcome-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(145deg, #f5f5f5, #e8f4ff);
+    color: var(--darkText);
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px auto;
+    max-width: 900px;
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    position: relative;
+}
 
-    .welcome-container:hover {
-        transform: scale(1.02);
+body.dark .welcome-container {
+    background: linear-gradient(145deg, #1e1e1e, #2d2d2d);
+    color: var(--lightText);
+    box-shadow: 0px 12px 35px rgba(0, 0, 0, 0.7);
+}
+
+
+.welcome-header h1 {
+    font-size: 3.2em;
+    margin: 0;
+    color: #ff7043;
+    text-shadow: 1px 1px 3px rgba(255, 112, 67, 0.6);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+body.dark .welcome-header h1 {
+    color: #ffa726;
+    text-shadow: 1px 1px 5px rgba(255, 167, 38, 0.8);
+}
+
+/* Welcome Description */
+.welcome-header p {
+    font-size: 1.2em;
+    margin-top: 10px;
+    line-height: 1.6;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+body.dark .welcome-header p {
+    color: #ccc;
+}
+
+
+.welcome-message {
+    font-size: 1.5em;
+    margin-top: 20px;
+    font-style: italic;
+    font-weight: bold;
+    line-height: 1.6;
+    text-align: center;
+    color: #ff5722;
+    background: linear-gradient(90deg, #ff9a8b, #ff6f61);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+body.dark .welcome-message {
+    color: #ffa726;
+    text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.3);
+}
+
+
+/* Welcome Illustration */
+.welcome-illustration img {
+    max-width: 240px;
+    height: auto;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .welcome-illustration img {
+    box-shadow: 0px 6px 15px rgba(255, 255, 255, 0.1);
+}
+
+.welcome-illustration img:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .welcome-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
     }
 
     .welcome-header {
-        max-width: 60%;
-    }
-
-    .welcome-header h1 {
-        font-size: 3em;
-        margin: 0;
-        transition: color 0.3s ease-in-out;
-    }
-
-    .welcome-header h1:hover {
-        color: #ffcc00;
-    }
-
-    .welcome-header p {
-        font-size: 1.2em;
-        margin-top: 15px;
-        line-height: 1.5;
-    }
-
-    .welcome-actions {
-        margin-top: 20px;
+        max-width: 100%;
     }
 
     .welcome-illustration img {
         max-width: 200px;
-        height: auto;
-        border-radius: 10px;
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
-
-    .welcome-illustration img:hover {
-        transform: scale(1.1);
-        box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .welcome-message {
-    font-size: 1.1em;
-    margin-top: 15px;
-    color: #ffd700;
-    font-style: italic;
-    opacity: 0.9;
-    line-height: 1.4;
 }
-
-
-    @media (max-width: 768px) {
-        .welcome-container {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .welcome-header {
-            max-width: 100%;
-        }
-
-        .welcome-illustration img {
-            max-width: 150px;
-        }
-    }
 </style>
 {% endblock %}
