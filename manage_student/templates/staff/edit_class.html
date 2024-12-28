@@ -45,13 +45,13 @@
             <form action="/assign_to_class" method="POST">
                 <button type="submit" class="btn btn-primary">Phân lớp tự động</button>
             </form>
-
         </div>
     </div>
     {% if students %}
     <div class="row mt-5">
         <div class="col-12">
             <h5>Danh sách học sinh:</h5>
+            <h5>Tổng số: {{ students|length }}</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm">
                     <thead class="text-center">
@@ -75,7 +75,7 @@
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
                             <td class="text-center align-middle">{{ loop.index }}</td>
                             <td class="align-middle col-1">
-                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                <input type="text" name="grade" value="{{ student.grade.value }}"
                                        class="form-control form-control-sm" required>
                             </td>
                             <td class="align-middle">
@@ -137,7 +137,6 @@
     </div>
     {% endif %}
 
-
     <div id="newStudentContainer"></div>
     <div class="row mt-2">
         <div class="col-12">
@@ -166,7 +165,7 @@
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
                             <td class="text-center align-middle">{{ loop.index }}</td>
                             <td class="align-middle col-1">
-                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                <input type="text" name="grade" value="{{ student.grade.value }}"
                                        class="form-control form-control-sm" required>
                             </td>
 
@@ -230,69 +229,55 @@
             {% endif %}
         </div>
     </div>
-
 </div>
 <script>
-    document.getElementById('addStudentBtn').addEventListener('click', function () {
-        let lop_hoc_id = document.getElementById('lop_hoc').value;
-        if (!lop_hoc_id) {
-            alert("Vui lòng chọn lớp học!");
-            return;
-        }
-    var formHtml = `
-        <form action="{{ url_for('edit_student', student_id=0) }}" method="POST" class="d-flex align-items-start mb-4">
-            <div class="row w-100">
-                    <input type="hidden" name="lop_hoc" value="{{selected_class_id}}">
-                        <input type="hidden" name="nam_hoc" value="{{selected_year_id}}">
-                <div class="col-md-2">
-                    <label for="ten_hoc_sinh" class="form-label">Tên học sinh:</label>
-                    <input type="text" id="ten_hoc_sinh" name="ten_hoc_sinh" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-                    <div class="row mb-2">
-                        <label class="form-label">Giới tính:</label>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div class="form-check me-3">
-                            <input type="radio" id="gioi_tinh_nam" name="gioi_tinh" value="1" class="form-check-input" required>
-                            <label for="gioi_tinh_nam" class="form-check-label">Nam</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="radio" id="gioi_tinh_nu" name="gioi_tinh" value="0" class="form-check-input" required>
-                            <label for="gioi_tinh_nu" class="form-check-label">Nữ</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <label for="email" class="form-label">Email:</label>
-                    <input type="email" id="email" name="email" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-                    <label for="ngay_sinh" class="form-label">Ngày sinh:</label>
-                    <input type="date" id="ngay_sinh" name="ngay_sinh" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-                    <label for="so_dien_thoai" class="form-label">Số điện thoại:</label>
-                    <input type="text" id="so_dien_thoai" name="so_dien_thoai" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label for="dia_chi" class="form-label">Địa chỉ:</label>
-                    <input type="text" id="dia_chi" name="dia_chi" class="form-control" required>
-                </div>
-            </div>
-            <input type="hidden" name="lop_hoc" value="${lop_hoc_id}">
-            <div class="d-flex flex-column ms-3 mt-2">
-                <button type="submit" name="action" value="add" class="btn btn-primary mb-2 w-100">Thêm</button>
-            </div>
-        </form>
-    `;
-
-    // Đưa form vào container
-    document.getElementById('newStudentContainer').innerHTML = formHtml;
+document.getElementById('addStudentBtn').addEventListener('click', function () {
+    // Chuyển hướng đến trang nhập thông tin học sinh
+    window.location.href = '/staff/studentForm';
 });
 
-    function removeNewStudentForm(button) {
-        button.closest('form').remove();
+// Cập nhật bảng sau khi thêm học sinh
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const newStudentData = params.get('newStudent');
+
+    if (newStudentData) {
+        try {
+            // Chuyển chuỗi JSON thành đối tượng
+            const student = JSON.parse(newStudentData);
+
+            // Thêm học sinh vào bảng
+            const studentRow = `
+                <tr>
+                    <td class="text-center align-middle">${student.id}</td>
+                    <td class="align-middle">${student.fullName}</td>
+                    <td class="align-middle">${student.gender === 1 ? 'Nam' : 'Nữ'}</td>
+                    <td class="align-middle">${student.email}</td>
+                    <td class="align-middle">${student.dob}</td>
+                    <td class="align-middle">${student.phone}</td>
+                    <td class="align-middle">${student.address}</td>
+                    <td class="text-end d-flex">
+                        <button class="btn btn-primary add-button me-2">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="btn btn-danger add-button">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            document.querySelector('tbody').insertAdjacentHTML('beforeend', studentRow);
+
+            // Hiển thị thông báo thành công
+            Swal.fire("Thành công!", "Đã thêm học sinh mới.", "success");
+        } catch (error) {
+            console.error("Lỗi khi xử lý dữ liệu học sinh mới:", error);
+            Swal.fire("Lỗi!", "Không thể cập nhật bảng học sinh.", "error");
+        }
     }
+});
+function removeNewStudentForm(button) {
+    button.closest('form').remove();
+}
 </script>
 {% endblock %}

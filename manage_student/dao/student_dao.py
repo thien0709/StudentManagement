@@ -1,5 +1,8 @@
+from flask import flash
+
 from manage_student import db
-from manage_student.models import Score, Student, Subject, StudentClass, Class, Profile, TeachingAssignment
+from manage_student.models import Score, Student, Subject, StudentClass, Class, Profile, TeachingAssignment, Grade
+
 
 def get_students_by_filter(class_id=None, semester_id=None, subject_id=None, year_id=None):
     query = db.session.query(Student)
@@ -116,8 +119,8 @@ def update_student(student_id, name, email, birthday, gender, address, phone, gr
         student.profile.gender = gender
         student.profile.address = address
         student.profile.phone = phone
-        student.grade = grade
-
+        grade = int(grade)
+        student.grade = Grade(grade).name
         db.session.commit()
         return student
     return None
@@ -186,40 +189,34 @@ def get_students_without_class():
         print(f"Lỗi khi truy vấn học sinh chưa có lớp: {str(e)}")
         return []
 
-
+# Dao Layer
 def add_student_to_class(student_id, class_id):
     try:
         student = db.session.query(Student).filter_by(id=student_id).first()
 
         if not student:
-            print("Học sinh không tồn tại.")
-            return False
+            return "Học sinh không tồn tại.", False
 
         class_instance = db.session.query(Class).filter_by(id=class_id).first()
 
         if not class_instance:
-            print("Lớp học không tồn tại.")
-            return False
+            return "Lớp học không tồn tại.", False
 
-        # Kiểm tra grade của học sinh và lớp có khớp không
         if student.grade != class_instance.grade:
-            print(f"Grade của học sinh ({student.grade}) không khớp với grade của lớp ({class_instance.grade}).")
-            return False
+            return "Học sinh không thuộc khối này.", False
 
         existing_entry = db.session.query(StudentClass).filter_by(student_id=student_id, class_id=class_id).first()
 
         if existing_entry:
-            print("Học sinh đã có trong lớp.")
-            return False
+            return "Học sinh đã có trong lớp.", False
 
         new_student_class = StudentClass(student_id=student_id, class_id=class_id)
         db.session.add(new_student_class)
         db.session.commit()
 
-        print("Thêm học sinh vào lớp thành công.")
-        return True
+        return "Thêm học sinh vào lớp thành công.", True
 
     except Exception as e:
         db.session.rollback()
-        print(f"Lỗi khi thêm học sinh vào lớp: {str(e)}")
-        return False
+        return f"Lỗi khi thêm học sinh vào lớp: {str(e)}", False
+

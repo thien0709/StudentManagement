@@ -1,0 +1,104 @@
+.form-container {
+            background-color: var(--formColor); /* Màu nền trắng nhạt */
+            padding: 20px;
+            border-radius: 8px; /* Bo góc cho form */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng bóng mờ */
+
+        }
+        body.dark {
+    background-color: var(--darkBG);
+    color: var(--lightText); /* Màu chữ của toàn bộ body khi ở chế độ tối */
+}
+input.form-control {
+    font-size: 18px; /* Tăng kích thước chữ */
+    padding: 10px; /* Tăng kích thước padding của các ô nhập */
+    width: 100%; /* Đảm bảo các input chiếm toàn bộ chiều rộng của container */
+}
+
+/* Đảm bảo các label cũng căn chỉnh đẹp */
+label {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Điều chỉnh form */
+.form-group {
+    margin-bottom: 20px; /* Tăng khoảng cách giữa các trường nhập */
+}
+/* Căn giữa các nút */
+.button-container {
+    display: flex;
+    justify-content: center; /* Căn giữa các phần tử trong container */
+    gap: 10px; /* Thêm khoảng cách giữa các nút */
+}
+
+/* Thay đổi kích thước nút */
+.btn-lg {
+    padding: 15px 30px;
+    font-size: 18px;
+    width: 150px; /* Tùy chỉnh chiều rộng của nút */
+}
+
+body.dark h1, body.dark a {
+    color: var(--lightText); /* Màu chữ cho h1 và a trong chế độ tối */
+}
+
+/* Cập nhật màu chữ cho label */
+body.dark label {
+    color: var(--lightText); /* Màu chữ của label khi ở chế độ tối */
+}
+
+/* Cập nhật màu chữ cho label khi ở chế độ sáng */
+body:not(.dark) label {
+    color: var(--darkText); /* Màu chữ của label khi ở chế độ sáng */
+}
+
+body.dark .navbar {
+    background: var(--darkNavbar);
+}
+
+.checkbox {
+    opacity: 0;
+    position: absolute;
+}
+
+.checkbox-label {
+    background-color: #111;
+    width: 50px;
+    height: 26px;
+    border-radius: 50px;
+    position: relative;
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fa-moon { color: var(--buttonColor); }
+
+.fa-sun { color: var(--buttonColor); }
+
+.checkbox-label .ball {
+    background-color: var(--lightBG);
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    transition: transform 0.2s linear;
+}
+
+.checkbox:checked + .checkbox-label .ball {
+    transform: translateX(24px);
+}
+/* Thêm vào CSS để làm nút lớn hơn */
+button.btn, a.btn {
+    font-size: 18px; /* Tăng kích thước font chữ */
+    padding: 12px 24px; /* Tăng padding (khoảng cách giữa nội dung và viền) */
+    min-width: 150px; /* Đảm bảo nút có độ rộng tối thiểu */
+}
+
+
+

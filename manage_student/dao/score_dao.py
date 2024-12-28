@@ -1,10 +1,13 @@
-from manage_student import db
-from manage_student.models import Score, ExamType
+
 import logging
+
+from sqlalchemy.exc import SQLAlchemyError
+
+from manage_student import db
+from manage_student.models import Score, ExamType, Student, StudentClass
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
 
 def get_scores_by_filter(semester_id, subject_id, year_id):
     """Lấy điểm của học sinh dựa trên bộ lọc.
@@ -107,3 +110,105 @@ def save_student_scores(student_id, score_15_min_list, score_1_hour_list, final_
         db.session.rollback()
         logger.error(f"Error saving scores: {str(e)}")
         return f"Đã xảy ra lỗi: {str(e)}"
+
+
+
+def calculate_average_scores(student_ids, semester_id=None, subject_id=None, year_id=None):
+    average_scores = {}
+    for student_id in student_ids:
+        query = Score.query.filter_by(student_id=student_id)
+        if semester_id:
+            query = query.filter_by(semester_id=semester_id)
+        if subject_id:
+            query = query.filter_by(subject_id=subject_id)
+        if year_id:
+            query = query.filter_by(year_id=year_id)
+        scores = query.all()
+
+        # Phân loại điểm và trọng số
+        score_15_min = sum([score.score for score in scores if score.exam_type == ExamType.EXAM_15P]) or 0
+        score_1_hour = sum([score.score for score in scores if score.exam_type == ExamType.EXAM_45P]) or 0
+        final_exam = next((score.score for score in scores if score.exam_type == ExamType.EXAM_FINAL), 0)
+
+        weight_15_min = len([score for score in scores if score.exam_type == ExamType.EXAM_15P])
+        weight_1_hour = len([score for score in scores if score.exam_type == ExamType.EXAM_45P]) * 2
+        weight_final = 3 if any(score.exam_type == ExamType.EXAM_FINAL for score in scores) else 0
+        total_weight = weight_15_min + weight_1_hour + weight_final
+
+        # Tính điểm trung bình
+        if total_weight == 0:
+            average_score = 0
+        else:
+            average_score = (score_15_min + score_1_hour * 2 + final_exam * 3) / total_weight
+
+        # Lưu kết quả
+        average_scores[student_id] = round(average_score, 2)
+
+    return average_scores
+
+
+def count_students_passed(class_id, subject_id, semester_id, year_id):
+    try:
+        # Lấy danh sách học sinh trong lớp cụ thể thông qua bảng trung gian StudentClass
+        student_ids = db.session.query(Student.id).join(StudentClass).filter(StudentClass.class_id == class_id).all()
+        student_ids = [s[0] for s in student_ids]  # Chuyển đổi kết quả thành danh sách ID
+
+        if not student_ids:
+            return 0  # Nếu không có học sinh trong lớp
+
+        # Tính điểm trung bình cho từng học sinh
+        average_scores = calculate_average_scores(
+            student_ids=student_ids,
+            semester_id=semester_id,
+            subject_id=subject_id,
+            year_id=year_id,
+        )
+
+        # Đếm số học sinh đạt điểm >= 5
+        passed_count = sum(1 for score in average_scores.values() if score >= 5)
+
+        logger.debug(f"Number of students passed: {passed_count}")
+        return passed_count
+
+    except Exception as e:
+        logger.error(f"Error counting passed students: {str(e)}")
+        return 0
+
+
+
+
+def get_average_scores_dao(class_id, subject_id, semester_id, year_id):
+    try:
+        # Lấy danh sách ID học sinh thuộc lớp
+        student_ids = db.session.query(Student.id).join(StudentClass).filter(StudentClass.class_id == class_id).all()
+        student_ids = [s[0] for s in student_ids]
+
+        if not student_ids:
+            return None, "Không tìm thấy học sinh nào"
+
+        # Lấy điểm của các học sinh trong danh sách
+        scores = Score.query.filter(
+            Score.student_id.in_(student_ids),
+            Score.subject_id == subject_id,
+            Score.semester_id == semester_id,
+            Score.year_id == year_id
+        ).all()
+
+        # Hàm tính trung bình cho từng loại điểm
+        def calculate_average(exam_type):
+            exam_scores = [score.score for score in scores if score.exam_type == exam_type]
+            return round(sum(exam_scores) / len(exam_scores), 2) if exam_scores else 0
+
+        avg_15_min = calculate_average(ExamType.EXAM_15P)
+        avg_1_hour = calculate_average(ExamType.EXAM_45P)
+        avg_final = calculate_average(ExamType.EXAM_FINAL)
+
+        return {
+            "average_15_min": avg_15_min,
+            "average_1_hour": avg_1_hour,
+            "average_final": avg_final
+        }, None
+
+    except SQLAlchemyError as e:
+        return None, str(e)
+

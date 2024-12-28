@@ -10,7 +10,6 @@ Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 greenlet==3.1.1
-importlib_metadata==8.5.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==3.0.2
@@ -26,6 +25,7 @@ SQLAlchemy==2.0.36
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
+WTForms==3.1.2
 Werkzeug==3.0.6
 WTForms==3.1.2
 XlsxWriter==3.2.0

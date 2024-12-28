@@ -86,3 +86,5 @@ def get_all_assignments():
         })
 
     return result
+
+
