@@ -51,6 +51,7 @@
     <div class="row mt-5">
         <div class="col-12">
             <h5>Danh sách học sinh:</h5>
+            <h5>Tổng số: {{ students|length }}</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-sm">
                     <thead class="text-center">
@@ -74,7 +75,7 @@
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
                             <td class="text-center align-middle">{{ loop.index }}</td>
                             <td class="align-middle col-1">
-                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                <input type="text" name="grade" value="{{ student.grade.value }}"
                                        class="form-control form-control-sm" required>
                             </td>
                             <td class="align-middle">
@@ -135,6 +136,10 @@
         Không có học sinh trong danh sách.
     </div>
     {% endif %}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1325677d2a39d943b8c2ac921dea6c44fad7d108
     <div id="newStudentContainer"></div>
     <div class="row mt-2">
         <div class="col-12">
@@ -163,7 +168,7 @@
                             <input type="hidden" name="nam_hoc" value="{{ selected_year_id }}">
                             <td class="text-center align-middle">{{ loop.index }}</td>
                             <td class="align-middle col-1">
-                                <input type="text" name="khoi" value="{{ student.grade.value }}"
+                                <input type="text" name="grade" value="{{ student.grade.value }}"
                                        class="form-control form-control-sm" required>
                             </td>
 

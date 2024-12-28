@@ -10,7 +10,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 
-from manage_student import app, login, models, admin
+from manage_student import app, login, models
 from manage_student.dao import auth_dao, teaching_assignment_dao
 from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
     api_get_passed_count
@@ -21,7 +21,7 @@ from manage_student.dao.semester_dao import api_get_semesters
 from manage_student.dao.subject_dao import api_get_subjects
 from manage_student.dao.teaching_assignment_dao import check_assignment, get_all_assignments, add_teaching_assignment
 from manage_student.dao.year_dao import api_get_years
-from manage_student.decorator import require_teacher_role, role_only
+from manage_student.decorator import require_teacher_role, role_only, require_employee_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
 
@@ -89,6 +89,7 @@ def formStudent():
             return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
     return render_template("student_form.html")
 
+
 @app.route('/check_duplicate', methods=['POST'])
 def check_duplicate():
     data = request.get_json()
@@ -100,10 +101,12 @@ def check_duplicate():
     result = check_duplicate_profile(email, phone)
 
     # Trả về kết quả
-    return jsonify(result)# Thong ke bao cao
+    return jsonify(result)  # Thong ke bao cao
+
+
 @app.route("/chartscreen")
 def reportChart():
-    return render_template("1.html")
+    return render_template("chartScreen.html")
 
 
 # Lay hoc ki
@@ -895,6 +898,7 @@ def edit_student(student_id):
         if action == 'edit':
             print("edit")
             grade = request.form.get('grade')
+            print("grade", grade)
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -1005,6 +1009,7 @@ def assign_task():
 
 
 @app.route('/assign/<int:assignment_id>/delete', methods=['POST'])
+@require_employee_role
 def delete_assignment(assignment_id):
     try:
         # Sử dụng DAO để xóa assignment
@@ -1088,6 +1093,7 @@ def load_user(user_id):
 @app.route("/register", methods=['GET', 'POST'])
 def register_process():
     if request.method == 'POST':
+        # Lấy dữ liệu từ form
         name = request.form.get('name')
         username = request.form.get('username')
         email = request.form.get('email')
@@ -1095,41 +1101,73 @@ def register_process():
         confirm_password = request.form.get('confirm_password')
         avatar = request.files.get('avatar')
         role = request.form.get('role')
+        birthday = request.form.get('birthday')  # Dữ liệu ngày sinh dạng chuỗi
+        gender = request.form.get('gender')  # Nam (1) hoặc Nữ (0)
+        address = request.form.get('address')
+        phone = request.form.get('phone')
 
-        # Validate passwords
+        # 1. Xác minh mật khẩu
         if password != confirm_password:
             return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
-        # Validate role
+        # 2. Xác minh vai trò
         if role not in ['staff', 'teacher']:
             return render_template('register.html', error='Vai trò không hợp lệ',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
-        # Map role string to UserRole enum
+        # 3. Chuyển đổi dữ liệu `role` thành enum
         role_enum = models.UserRole.STAFF if role == 'staff' else models.UserRole.TEACHER
 
+        # 4. Xác minh ngày sinh (nếu có)
+        birthday_date = None
+        if birthday:
+            try:
+                birthday_date = datetime.strptime(birthday, '%Y-%m-%d')  # Chuyển chuỗi thành kiểu datetime
+            except ValueError:
+                return render_template('register.html', error='Ngày sinh không hợp lệ',
+                                       username=username, email=email, name=name, address=address, phone=phone)
+
+        # 5. Chuyển đổi giới tính thành boolean
+        gender_bool = True if gender == '1' else False
+
+        # 6. Kiểm tra username đã tồn tại hay chưa
         existing_user = auth_dao.get_user_by_username(username)
         if existing_user:
             return render_template('register.html', error='Tên người dùng đã tồn tại',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
         new_user = auth_dao.add_user(username=username, email=email, password=password, role=role_enum, avatar=avatar,
                                      name=name)
 
+        # 7. Thêm người dùng mới qua DAO
+        new_user = auth_dao.add_user(
+            username=username,
+            email=email,
+            role=role_enum,
+            password=password,  # Mã hóa mật khẩu đã được xử lý trong DAO
+            avatar=avatar,
+            name=name,
+            birthday=birthday_date,
+            gender=gender_bool,
+            address=address,
+            phone=phone
+        )
+
+        # 8. Kiểm tra kết quả và xử lý
         if new_user:
+            login_user(new_user)  # Đăng nhập ngay sau khi đăng ký thành công
 
-            login_user(new_user)
-
+            # Điều hướng dựa trên vai trò của người dùng
             if new_user.role == models.UserRole.ADMIN:
                 return redirect('/admin')
             else:
                 return redirect('/')
-
         else:
             return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
-                                   username=username, email=email)
+                                   username=username, email=email, name=name, address=address, phone=phone)
 
+    # Phương thức GET: Render form đăng ký
     return render_template('register.html')
 
 

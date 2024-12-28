@@ -37,6 +37,10 @@ class RegulationsView(AuthenticatedView):
     # can_edit = True
     # can_delete = True
     # can_view_details = True
+    def on_model_change(self, form, model, is_created):
+        if is_created:
+            model.admin_id = current_user.id
+        return super().on_model_change(form, model, is_created)
 
 
 class SubjectView(AuthenticatedView):
@@ -54,6 +58,7 @@ class CustomAdminView(BaseView):
     def index(self):
         # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
         return self.render('/admin/chartScreen.html')
+
 
 
 # Initialize the Flask-Admin interface

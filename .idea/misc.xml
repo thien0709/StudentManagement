@@ -4,6 +4,7 @@
     <option name="sdkName" value="Python 3.9 (saleapp)" />
   </component>
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10" project-jdk-type="Python SDK" />
 =======
@@ -12,6 +13,9 @@
 =======
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (venv)" project-jdk-type="Python SDK" />
 >>>>>>> 7992eb9bd9f8573180a7979bde3ce02f8547c88a
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (StudentManagement) (2)" project-jdk-type="Python SDK" />
+>>>>>>> 1325677d2a39d943b8c2ac921dea6c44fad7d108
   <component name="PyCharmProfessionalAdvertiser">
     <option name="shown" value="true" />
   </component>

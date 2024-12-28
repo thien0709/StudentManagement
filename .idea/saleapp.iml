@@ -9,12 +9,16 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
 <<<<<<< HEAD
+<<<<<<< HEAD
  Updated upstream
     <orderEntry type="jdk" jdkName="Python 3.10" jdkType="Python SDK" />
  Stashed changes
 =======
     <orderEntry type="jdk" jdkName="Python 3.13 (venv)" jdkType="Python SDK" />
 >>>>>>> 7992eb9bd9f8573180a7979bde3ce02f8547c88a
+=======
+    <orderEntry type="jdk" jdkName="Python 3.12 (StudentManagement) (2)" jdkType="Python SDK" />
+>>>>>>> 1325677d2a39d943b8c2ac921dea6c44fad7d108
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

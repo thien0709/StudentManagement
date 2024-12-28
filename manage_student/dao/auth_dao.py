@@ -1,4 +1,4 @@
-from manage_student.models import User, UserRole, Profile
+from manage_student.models import User, UserRole, Profile, Teacher, Staff, Admin
 from manage_student import app, db
 import hashlib
 import cloudinary.uploader
@@ -24,7 +24,6 @@ def get_user_by_username(username):
     user = db.session.query(User).filter_by(username=username).first()
     return user
 
-
 def add_user(username, email, role, password, avatar=None, name=None, birthday=None, gender=None, address=None, phone=None):
     # Tạo đối tượng Profile
     profile = Profile(
@@ -37,7 +36,7 @@ def add_user(username, email, role, password, avatar=None, name=None, birthday=N
     )
 
     # Mã hóa mật khẩu
-    hashed_password = hashlib.md5(password.encode('utf-8')).hexdigest()  # không cần str() ở đây
+    hashed_password = hashlib.md5(password.encode('utf-8')).hexdigest()
 
     # Tải lên avatar nếu có
     avatar_url = None
@@ -57,15 +56,27 @@ def add_user(username, email, role, password, avatar=None, name=None, birthday=N
         profile=profile
     )
 
-    # Thêm người dùng vào cơ sở dữ liệu
     try:
         db.session.add(user)
+        db.session.flush()
+
+        if role == UserRole.ADMIN:
+            admin = Admin(user=user)
+            db.session.add(admin)
+        elif role == UserRole.STAFF:
+            staff = Staff(user=user)
+            db.session.add(staff)
+        elif role == UserRole.TEACHER:
+            teacher = Teacher(user=user)
+            db.session.add(teacher)
+
         db.session.commit()
         return user
     except Exception as e:
         db.session.rollback()
         print(f"Error adding user: {e}")
         return None
+
 
 #
 # def add_user(name, username, password, avatar=None):
