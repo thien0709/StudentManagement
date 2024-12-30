@@ -1,12 +1,15 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biểu đồ và Thống kê</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!--<!DOCTYPE html>-->
+<!--<html lang="vi">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Biểu đồ và Thống kê</title>-->
+<!--    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<!--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .section-title {
             font-size: 24px;
@@ -131,6 +134,25 @@ canvas {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+     //Hien thi lỗi sai
+    function showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: message,
+            confirmButtonText: 'Đóng'
+        });
+    }
+
+    // Hàm hiển thị thông báo cảnh báo bằng Swal
+    function showWarning(message) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cảnh báo',
+            text: message,
+            confirmButtonText: 'Đóng'
+        });
+    }
     // Hàm tải danh sách khối
     function loadGrades() {
         fetch('/get_grades')
@@ -145,7 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     gradeSelect.appendChild(option);
                 });
             })
-            .catch(error => console.error("Lỗi khi tải danh sách khối:", error));
+            .catch(error => {
+                console.error("Lỗi khi tải danh sách khối:", error);
+                showError("Không thể tải danh sách khối. Vui lòng thử lại sau.");
+            });
     }
 
     // Hàm tải danh sách lớp dựa trên khối đã chọn
@@ -166,7 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 classSelect.disabled = false;
             })
-            .catch(error => console.error("Lỗi khi tải danh sách lớp:", error));
+             .catch(error => {
+                console.error("Lỗi khi tải danh sách lớp:", error);
+                showError("Không thể tải danh sách lớp. Vui lòng thử lại sau.");
+            });
     }
 
     // Hàm lấy sĩ số của lớp
@@ -185,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 console.error("Lỗi khi lấy sĩ số:", error);
-                siSoField.value = "Lỗi kết nối!";
+                showError("Không thể lấy sĩ số lớp. Vui lòng thử lại sau.");
             });
     }
 
@@ -437,7 +465,7 @@ async function getPassedCount(class_id, subject_id, semester_id, year_id) {
 
         // Kiểm tra dữ liệu đầu vào
         if (!class_id || !subject_id || !semester_id || !year_id) {
-            console.warn("Thiếu tham số để vẽ biểu đồ.");
+             showError("Thiếu dữ liệu để xem báo cáo");
             return;
         }
 
@@ -463,16 +491,14 @@ async function getPassedCount(class_id, subject_id, semester_id, year_id) {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    console.error(data.error);
+                     showError("Thiếu điểm để vẽ biểu đồ");
                     return;
                 }
                 drawBarChart(data);
             })
-            .catch(error => console.error("Lỗi khi lấy dữ liệu biểu đồ:", error));
              let canvas = document.getElementById('pie-chart');
              console.log(canvas.width, canvas.height);
             console.log("classSize:", classSize, "passedCount:", passedCount);
     });
 });
 </script>
-</html>

@@ -40,8 +40,8 @@
     {% endif %}
 
     <div class="row mb-2">
-        <div class="col-3 d-flex justify-content-between align-items-center">
-            <button type="button" id="addStudentBtn" class="btn btn-primary" onclick="redirectToStudentForm()" >Thêm học sinh</button>
+        <div class="d-flex justify-content-between align-items-center w-auto">
+            <button type="button" id="addStudentBtn" class="btn btn-primary me-2">Thêm học sinh</button>
             <form action="/assign_to_class" method="POST">
                 <button type="submit" class="btn btn-primary">Phân lớp tự động</button>
             </form>
@@ -136,10 +136,6 @@
         Không có học sinh trong danh sách.
     </div>
     {% endif %}
-<<<<<<< HEAD
-=======
-
->>>>>>> 1325677d2a39d943b8c2ac921dea6c44fad7d108
     <div id="newStudentContainer"></div>
     <div class="row mt-2">
         <div class="col-12">
@@ -236,7 +232,7 @@
 <script>
 document.getElementById('addStudentBtn').addEventListener('click', function () {
     // Chuyển hướng đến trang nhập thông tin học sinh
-    window.location.href = '/studentForm';
+    window.location.href = '/staff/studentForm';
 });
 
 // Cập nhật bảng sau khi thêm học sinh
@@ -253,6 +249,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const studentRow = `
                 <tr>
                     <td class="text-center align-middle">${student.id}</td>
+                    <td class="align-middle">
+                        <input type="text" name="grade" value="${student.grade}" class="form-control form-control-sm" required>
+                    </td>
                     <td class="align-middle">${student.fullName}</td>
                     <td class="align-middle">${student.gender === 1 ? 'Nam' : 'Nữ'}</td>
                     <td class="align-middle">${student.email}</td>
