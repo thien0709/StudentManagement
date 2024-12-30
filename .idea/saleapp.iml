@@ -10,4 +10,16 @@
     <orderEntry type="jdk" jdkName="Python 3.12 (StudentManagement) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="GOOGLE" />
+    <option name="myDocStringFormat" value="Google" />
+  </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/manage_student/templates" />
+      </list>
+    </option>
+  </component>
 </module>

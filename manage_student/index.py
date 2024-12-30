@@ -649,7 +649,7 @@ def export_pdf():
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Roboto'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Roboto'),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
@@ -950,6 +950,25 @@ def edit_student(student_id):
 
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+
+@app.route('/list_class')
+def list_class():
+    classes = Class.query.all()
+    return render_template('/staff/list_class.html', classes=classes)
+
+@app.route('/delete_class/<int:class_id>', methods=['DELETE'])
+def delete_class(class_id):
+    try:
+        # Gọi DAO để thực hiện xóa lớp
+        success = class_dao.delete_class(class_id)
+        if success:
+            return jsonify({"message": "Class đã được xóa thành công!"}), 200
+        else:
+            # Trả về lỗi nếu khối chỉ còn một lớp
+            return jsonify({"error": "Không thể xóa lớp này vì mỗi khối phải có tối thiểu 1 lớp!"}), 400
+    except Exception as e:
+        # Xử lý các lỗi khác
+        return jsonify({"error": f"Đã xảy ra lỗi: {str(e)}"}), 500
 
 @app.route('/assign', methods=['GET', 'POST'])
 @require_role([UserRole.STAFF, UserRole.TEACHER])

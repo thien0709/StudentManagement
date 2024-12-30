@@ -1,0 +1,112 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+    <style>
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: darkred;
+        }
+    </style>
+    <script>
+function deleteClass(classId) {
+    // Hiển thị hộp thoại xác nhận với SweetAlert2
+    Swal.fire({
+        title: "Bạn có chắc muốn xóa lớp này không?",
+        text: "Hành động này không thể hoàn tác!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Xóa",
+        cancelButtonText: "Hủy"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Gửi yêu cầu DELETE nếu người dùng xác nhận
+            fetch(`/delete_class/${classId}`, {
+                method: 'DELETE',
+            })
+            .then(response => {
+                // Kiểm tra nếu phản hồi thành công
+                if (response.ok) {
+                    return response.json();  // Nếu thành công, trả về thông báo thành công
+                } else {
+                    // Nếu không thành công, trả về lỗi
+                    return response.json().then(data => {
+                        throw new Error(data.error || "Không thể xóa lớp");
+                    });
+                }
+            })
+            .then(data => {
+                // Nếu xóa thành công
+                Swal.fire({
+                    title: "Thành công!",
+                    text: data.message || "Lớp đã được xóa thành công!",
+                    icon: "success",
+                    confirmButtonText: "OK"
+                }).then(() => {
+                    location.reload(); // Tải lại trang sau khi đóng thông báo
+                });
+            })
+            .catch(error => {
+                // Nếu có lỗi, hiển thị thông báo lỗi
+                Swal.fire({
+                    title: "Lỗi!",
+                    text: error.message || "Có lỗi xảy ra khi xóa lớp.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            });
+        }
+    });
+}
+
+    </script>
+
+    <h1 style="text-align: center;">Danh Sách Lớp</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Tên Lớp</th>
+                <th>Khối</th>
+                <th>Năm</th>
+                <th>Số Lượng Học Sinh</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cls in classes %}
+            <tr>
+                <td>{{ cls.name }}</td>
+                <td>{{ cls.grade }}</td>
+                <td>{{ cls.year_id }}</td>
+                <td>{{ cls.amount }}</td>
+                <td>
+                    <button onclick="deleteClass({{ cls.id }})">Xóa</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
