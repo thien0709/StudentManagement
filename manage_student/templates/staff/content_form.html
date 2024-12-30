@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Lấy dữ liệu khối và điền vào dropdown
-    fetch('/get_valueGrade')
+    fetch('/get_grades')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Lỗi kết nối mạng: ' + response.statusText);
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
             data.forEach(grade => {
                 const option = document.createElement('option');
                 option.value = grade; // Giá trị khối là số (giá trị của Enum)
-                option.textContent = 'K' + grade; // Hiển thị tên khối (K10, K11, K12)
+                option.textContent = grade; // Hiển thị tên khối (K10, K11, K12)
                 gradeDropdown.appendChild(option);
             });
         })

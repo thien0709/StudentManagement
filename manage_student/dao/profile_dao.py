@@ -26,9 +26,10 @@ def add_profile(name, email, birthday, gender, address, phone, grade):
         db.session.commit()  # Commit để lưu Profile vào cơ sở dữ liệu
         print("Profile added successfully.")
 
-        # Chuyển grade từ string sang giá trị Enum nếu cần
+        # Kiểm tra xem grade có phải là chuỗi và chuyển đổi nếu cần
         if isinstance(grade, str):
-            grade = Grade[grade]  # Giả sử bạn truyền giá trị grade dưới dạng chuỗi, ví dụ: 'K10'
+            # Chuyển grade từ chuỗi thành giá trị Enum
+            grade = Grade[grade]  # Ví dụ: 'K10' -> Grade.K10
 
         # Tạo đối tượng Student (sử dụng thông tin Profile và thêm grade)
         student = Student(profile=profile, grade=grade)  # Kết nối Profile và Student, và thêm grade

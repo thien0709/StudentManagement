@@ -15,15 +15,7 @@ def api_get_grades():
         return jsonify({"error": f"Lỗi khi lấy khối: {str(e)}"}), 500
 
 
-def api_get_grades2():
-    try:
-        # Lấy tất cả tên của các giá trị trong Enum Grade
-        grades = [grade.value for grade in Grade]
-        # Trả về danh sách khối học dưới dạng JSON
-        return jsonify(grades)
-    except Exception as e:
-        # Nếu có lỗi, trả về thông báo lỗi
-        return jsonify({"error": f"Lỗi khi lấy khối: {str(e)}"}), 500
+
 
 def api_get_classes_by_grade(grade_name):
     try:

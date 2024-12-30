@@ -53,6 +53,9 @@ canvas {
         {
         margin-left: 100px;
         }
+#grade {
+    margin-bottom: 20px;
+}
 
     </style>
 </head>
@@ -61,7 +64,7 @@ canvas {
     <div class="row">
         <!-- Phần chọn thông tin lớp -->
         <div class="col-md-12">
-            <h2 class="section-title">Thông tin lớp</h2>
+            <h2 class="section-title">Thống kê điểm số của lớp</h2>
             <form>
                 <div class="row">
                     <!-- Dropdown tên lớp -->
@@ -134,25 +137,6 @@ canvas {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-     //Hien thi lỗi sai
-    function showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Lỗi',
-            text: message,
-            confirmButtonText: 'Đóng'
-        });
-    }
-
-    // Hàm hiển thị thông báo cảnh báo bằng Swal
-    function showWarning(message) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cảnh báo',
-            text: message,
-            confirmButtonText: 'Đóng'
-        });
-    }
     // Hàm tải danh sách khối
     function loadGrades() {
         fetch('/get_grades')

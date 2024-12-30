@@ -13,7 +13,7 @@ from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, seme
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
-    api_get_passed_count, api_get_grades2
+    api_get_passed_count
 from manage_student.dao.profile_dao import add_profile, check_duplicate_profile
 from manage_student.dao.score_dao import logger, get_average_scores_dao
 from manage_student.dao.semester_dao import api_get_semesters
@@ -40,6 +40,8 @@ from datetime import datetime
 
 
 @app.route("/staff/studentForm", methods=["GET", "POST"])
+@require_role([UserRole.STAFF])
+
 def formStudent():
     if request.method == "POST":
         # Lấy dữ liệu từ form hoặc JSON
@@ -64,6 +66,9 @@ def formStudent():
         # Kiểm tra nếu thiếu thông tin
         if not all([full_name, email, phone, dob, address, gender, grade]):
             return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
+
+        if session.get('role') != models.UserRole.STAFF.value:
+            return redirect(url_for('index'))
 
         # Kiểm tra tính hợp lệ của email
         import re
@@ -107,10 +112,6 @@ def check_duplicate():
     return jsonify(result)  # Thong ke bao cao
 
 
-@app.route("/chartscreen")
-def reportChart():
-    return render_template("chartScreen.html")
-
 
 # Lay hoc ki
 @app.route('/api/semesters', methods=['GET'])
@@ -139,9 +140,7 @@ def get_grades_route():
 
 
 
-@app.route('/get_valueGrade', methods=['GET'])
-def get_grades_route2():
-    return api_get_grades2()
+
 
 @app.route('/get_classes_by_grades', methods=['GET'])
 def get_classes_route():
@@ -1055,6 +1054,7 @@ def login_process():
 
             # Chuyển hướng dựa trên vai trò
             if u.role == models.UserRole.ADMIN:
+                flash("Chào mừng bạn đến trang quản trị.", "success")
                 return redirect('/admin')
             elif u.role == models.UserRole.TEACHER:
                 return redirect('/input_scores')
@@ -1075,6 +1075,20 @@ def logout_process():
 @login.user_loader
 def load_user(user_id):
     return auth_dao.get_user_by_id(user_id)
+
+@app.route("/admin", methods=['GET', 'POST'])
+@require_role([UserRole.ADMIN])
+def ath_admin():
+    # Kiểm tra lại vai trò trong session để đảm bảo tính an toàn
+    if session.get('role') != UserRole.ADMIN.value:
+        flash("Bạn không có quyền truy cập vào trang quản trị.", "error")
+        return redirect(url_for('index'))
+    # Nếu quyền hợp lệ, tiếp tục logic xử lý trang admin
+    flash("Chào mừng bạn đến trang quản trị.", "success")
+    return redirect(url_for('admin.index'))
+
+
+
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -1145,6 +1159,7 @@ def register_process():
 
             # Điều hướng dựa trên vai trò của người dùng
             if new_user.role == models.UserRole.ADMIN:
+                flash("Chào mừng bạn đến trang quản trị.", "success")
                 return redirect('/admin')
             else:
                 return redirect('/')
