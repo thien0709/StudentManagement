@@ -74,15 +74,10 @@ def assign_students_to_classes():
 
 
 def delete_class(class_id):
-    """Xóa lớp và các liên kết liên quan"""
-    # Lấy đối tượng Class
     cls = Class.query.get(class_id)
     if cls:
         grade_count = Class.query.filter_by(grade=cls.grade).count()
-
-        # Không cho phép xóa nếu khối chỉ còn 1 lớp
-        if grade_count <= 1:
-            # Trả về lỗi nếu khối chỉ còn 1 lớp
+        if grade_count <= regulation_dao.get_min_class_in_grade():
             raise ValueError("Không thể xóa lớp này vì khối phải có tối thiểu 1 lớp!")
 
         # Xóa các liên kết với StudentClass

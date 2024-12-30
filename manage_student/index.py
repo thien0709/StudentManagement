@@ -952,11 +952,13 @@ def edit_student(student_id):
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
 @app.route('/list_class')
+@require_role([UserRole.STAFF])
 def list_class():
     classes = Class.query.all()
     return render_template('/staff/list_class.html', classes=classes)
 
 @app.route('/delete_class/<int:class_id>', methods=['DELETE'])
+@require_role([UserRole.STAFF])
 def delete_class(class_id):
     try:
         # Gọi DAO để thực hiện xóa lớp
@@ -1101,12 +1103,12 @@ def register_process():
 
         # 1. Xác minh mật khẩu
         if password != confirm_password:
-            return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
+            return render_template('admin/register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 2. Xác minh vai trò
         if role not in ['staff', 'teacher']:
-            return render_template('register.html', error='Vai trò không hợp lệ',
+            return render_template('admin/register.html', error='Vai trò không hợp lệ',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 3. Chuyển đổi dữ liệu `role` thành enum
@@ -1118,7 +1120,7 @@ def register_process():
             try:
                 birthday_date = datetime.strptime(birthday, '%Y-%m-%d')  # Chuyển chuỗi thành kiểu datetime
             except ValueError:
-                return render_template('register.html', error='Ngày sinh không hợp lệ',
+                return render_template('admin/register.html', error='Ngày sinh không hợp lệ',
                                        username=username, email=email, name=name, address=address, phone=phone)
 
         # 5. Chuyển đổi giới tính thành boolean
@@ -1127,7 +1129,7 @@ def register_process():
         # 6. Kiểm tra username đã tồn tại hay chưa
         existing_user = auth_dao.get_user_by_username(username)
         if existing_user:
-            return render_template('register.html', error='Tên người dùng đã tồn tại',
+            return render_template('admin/register.html', error='Tên người dùng đã tồn tại',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 7. Thêm người dùng mới qua DAO
@@ -1154,9 +1156,9 @@ def register_process():
             else:
                 return redirect('/')
         else:
-            return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
+            return render_template('admin/register.html', error='Đã có lỗi xảy ra khi đăng ký.',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
-    return render_template('register.html')
+    return render_template('admin/register.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

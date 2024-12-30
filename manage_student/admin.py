@@ -33,10 +33,16 @@ class RegulationsView(AuthenticatedView):
     }
     form_columns = ['name', 'min_value', 'max_value']
     column_filters = ['name']
-    # can_create = True
-    # can_edit = True
-    # can_delete = True
-    # can_view_details = True
+
+    can_delete = False
+    can_create = False
+
+    form_widget_args = {
+        'name': {
+            'readonly': True
+        }
+    }
+
     def on_model_change(self, form, model, is_created):
         if is_created:
             model.admin_id = current_user.id
@@ -59,6 +65,11 @@ class CustomAdminView(BaseView):
         # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
         return self.render('/admin/chartScreen.html')
 
+class UserAdd(BaseView):
+    @expose('/')
+    def index(self):
+        # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
+        return self.render('/admin/register.html')
 
 # Initialize the Flask-Admin interface
 admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
@@ -66,6 +77,7 @@ admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
 admin.add_view(CustomAdminView(name='Xem biểu đồ'))
+admin.add_view(UserAdd(name='Thêm người dùng'))
 admin.add_view(LogoutView(name='Đăng xuất'))
 
 
