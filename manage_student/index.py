@@ -11,7 +11,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
-    teaching_assignment_dao
+    teaching_assignment_dao, regulation_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
@@ -36,7 +36,7 @@ def index():
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
 
-@app.route("/studentForm", methods=["GET", "POST"])
+@app.route("/staff/studentForm", methods=["GET", "POST"])
 @require_role([UserRole.STAFF])
 def formStudent():
     if request.method == "POST":
@@ -70,8 +70,8 @@ def formStudent():
                 (today.month, today.day) < (dob_date.month, dob_date.day)
             )
 
-            min_age = get_min_age()
-            max_age = get_max_age()
+            min_age = regulation_dao.get_min_age()
+            max_age = regulation_dao.get_max_age()
 
             if age < min_age or age > max_age:
                 return jsonify({
