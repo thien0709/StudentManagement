@@ -238,119 +238,139 @@ class Regulation(db.Model):
 
 if __name__ == "__main__":
     with app.app_context():
-        pass
-          #db.create_all()
-        # # Profile
-        # Tạo các hồ sơ mẫu
-        # profile1 = Profile(name="Duy Khang", email="emily.davis@example.com", birthday=datetime(1992, 4, 15),
-        #                    gender=False, address="101 Willow St", phone="5551237890")
-        # profile2 = Profile(name="Lê Tân", email="frank.wilson@example.com", birthday=datetime(1980, 12, 25),
-        #                    gender=True, address="202 Birch Ave", phone="5559876543")
-        # profile3 = Profile(name="Trắng Thiên", email="grace.miller@example.com", birthday=datetime(1987, 7, 10),
-        #                    gender=False, address="303 Pine Lane", phone="5556781234")
-        # profile4 = Profile(name="Hoàng Danh", email="harry.potter@example.com", birthday=datetime(1991, 6, 30),
-        #                    gender=True, address="404 Elm Dr", phone="5554321987")
-        # profile5 = Profile(name="Huy Đức", email="ivy.thompson@example.com", birthday=datetime(1990, 2, 20),
-        #                    gender=False, address="505 Maple Blvd", phone="5557654321")
-        #
-        #
-        # # Thêm các hồ sơ vào session
-        # db.session.add_all(
-        #     [profile1, profile2, profile3, profile4, profile5])
-        #
-        # # Lưu thay đổi vào cơ sở dữ liệu
-        # db.session.commit()
-        #
-        # # Users
-        # user1 = User(username="staff", password="pass1", role=UserRole.STAFF, profile=profile1)
-        # user2 = User(username="teacher", password="pass2", role=UserRole.TEACHER, profile=profile2)
-        # user3 = User(username="admin", password="pass3", role=UserRole.ADMIN, profile=profile3)
-        #
-        # db.session.add_all([user1, user2, user3])
-        # db.session.commit()
-        #
-        # # Staff, Admin, Teacher
-        # staff1 = Staff(id=user1.id, user=user1)
-        # teacher1 = Teacher(id=user2.id, user=user2)
-        # admin1 = Admin(id=user3.id, user=user3)
-        #
-        # db.session.add_all([staff1,teacher1,admin1])
-        # db.session.commit()
+        # pass
+        db.create_all()
+        # Profile
+        admin_profile = Profile(name="Nguyễn Minh", email="admin@example.com", birthday=datetime(1990, 5, 20),
+                                gender=True, address="404 Elm St", phone="5552345678")
+        teacher_profile = Profile(name="Phạm Hồng", email="user@example.com", birthday=datetime(1995, 9, 15),
+                               gender=False, address="505 Maple Ave", phone="5553456789")
+        staff_profile = Profile(name="Trần Văn", email="staff@example.com", birthday=datetime(1983, 3, 30),
+                                gender=True, address="606 Oak Blvd", phone="5554567890")
+
+
+        student1 = Profile(name="Duy Khang", email="emily.davis@example.com", birthday=datetime(1992, 4, 15),
+                           gender=False, address="101 Willow St", phone="5551237890")
+        student2 = Profile(name="Lê Tân", email="frank.wilson@example.com", birthday=datetime(1980, 12, 25),
+                           gender=True, address="202 Birch Ave", phone="5559876543")
+        student3 = Profile(name="Trắng Thiên", email="grace.miller@example.com", birthday=datetime(1987, 7, 10),
+                           gender=False, address="303 Pine Lane", phone="5556781234")
+        student4 = Profile(name="Hoàng Danh", email="harry.potter@example.com", birthday=datetime(1991, 6, 30),
+                           gender=True, address="404 Elm Dr", phone="5554321987")
+        student5 = Profile(name="Huy Đức", email="ivy.thompson@example.com", birthday=datetime(1990, 2, 20),
+                           gender=False, address="505 Maple Blvd", phone="5557654321")
+        student6 = Profile(name="Nguyễn Hoàng", email="student6@example.com", birthday=datetime(1993, 11, 22),
+                           gender=True, address="707 Cedar St", phone="5555678901")
+        student7 = Profile(name="Võ Minh", email="student7@example.com", birthday=datetime(1994, 8, 15),
+                           gender=False, address="808 Walnut Ave", phone="5556789012")
+        student8 = Profile(name="Lê Hoa", email="student8@example.com", birthday=datetime(1996, 3, 5),
+                           gender=False, address="909 Chestnut Blvd", phone="5557890123")
+        student9 = Profile(name="Phan Anh", email="student9@example.com", birthday=datetime(1992, 1, 10),
+                           gender=True, address="1010 Spruce Ln", phone="5558901234")
+        student10 = Profile(name="Trần Duy", email="student10@example.com", birthday=datetime(1998, 7, 25),
+                            gender=True, address="1111 Ash Dr", phone="5559012345")
+
+        # Thêm các hồ sơ vào session
+        profiles = [ admin_profile, teacher_profile, staff_profile, student1, student2,
+                    student3, student4, student5, student6, student7, student8, student9, student10]
+        db.session.add_all(profiles)
+        db.session.commit()
+
+        # Users
+        user1 = User(username="staff", password="e10adc3949ba59abbe56e057f20f883e", role=UserRole.STAFF, profile=staff_profile)
+        user2 = User(username="teacher", password="e10adc3949ba59abbe56e057f20f883e", role=UserRole.TEACHER, profile=teacher_profile)
+        user3 = User(username="admin", password="e10adc3949ba59abbe56e057f20f883e", role=UserRole.ADMIN, profile=admin_profile)
+
+        db.session.add_all([user1, user2, user3])
+        db.session.commit()
+
+        # Staff, Admin, Teacher
+        staff = Staff(user=user1)
+        teacher = Teacher( user=user2)
+        admin = Admin(user=user3)
+        db.session.add_all([staff,teacher,admin])
+        db.session.commit()
 
         #Subjects
-        # subject1 = Subject(name="Mathematics")
-        # subject2 = Subject(name="Science")
-        # subject3 = Subject(name="History")
-        #
-        # db.session.add_all([subject1, subject2, subject3])
-        # db.session.commit()
-        #
-        # #Semesters and Years
-        # semester1 = Semester(name="First Semester")
-        # semester2 = Semester(name="Second Semester")
-        # year1 = Year(name="2024-2025")
-        # year2 = Year(name="2023-2024")
-        # db.session.add_all([semester1, semester2, year1, year2])
-        # db.session.commit()
-        #
+        subject1 = Subject(name="Mathematics" , score_pass=5.0)
+        subject2 = Subject(name="Science", score_pass=5.0)
+        subject3 = Subject(name="History", score_pass=5.0)
+
+        db.session.add_all([subject1, subject2, subject3])
+        db.session.commit()
+
+        #Semesters and Years
+        semester1 = Semester(name="First Semester")
+        semester2 = Semester(name="Second Semester")
+        year1 = Year(name="2024-2025")
+        year2 = Year(name="2023-2024")
+        db.session.add_all([semester1, semester2, year1, year2])
+        db.session.commit()
+
         # #Classes
-        # classes = [
-        #     Class(name="10a3", amount=25,year_id=1 ),
-        #     Class(name="10a4", amount=28,year_id=1 ),
-        #     Class(name="10a5", amount=20,year_id=1 ),
-        #     Class(name="10a6", amount=30,year_id=2 ),
-        #     Class(name="10a7", amount=32,year_id=2 )
-        # ]
-        #
-        # # Thêm tất cả các lớp vào cơ sở dữ liệu
-        # db.session.add_all(classes)
-        # db.session.commit()
-        #
-        # # Students
-        # student1 = Student(id=1, grade=Grade.K10)  # Profile ID 1
-        # student2 = Student(id=2, grade=Grade.K11)  # Profile ID 2
-        # student3 = Student(id=3, grade=Grade.K12)  # Profile ID 3
-        # student4 = Student(id=4, grade=Grade.K10)  # Profile ID 4
-        # student5 = Student(id=5, grade=Grade.K11)  # Profile ID 5
-        #
-        # # Thêm các đối tượng Student vào cơ sở dữ liệu
-        # db.session.add_all(
-        #     [student1, student2, student3, student4, student5])
-        #
-        # db.session.commit()
-        #
-        # # Tạo các đối tượng StudentClass để liên kết Student với các lớp học
-        # student_class1 = StudentClass(class_id=1, student_id=1)  # Student ID
-        # student_class2 = StudentClass(class_id=2, student_id=1)  # Student ID
-        # student_class3 = StudentClass(class_id=3, student_id=2)  # Student ID
-        # student_class4 = StudentClass(class_id=3, student_id=3)  # Student ID
-        # student_class5 = StudentClass(class_id=4, student_id=4)  # Student ID
-        # student_class6 = StudentClass(class_id=5, student_id=2)  # Student ID
-        # student_class7 = StudentClass(class_id=1, student_id=1)  # Student ID
-        #
-        # # Thêm tất cả các bản ghi vào cơ sở dữ liệu
-        # db.session.add_all([student_class1, student_class2, student_class3, student_class4, student_class5,
-        #                     student_class6, student_class7])
-        # db.session.commit()
-        #
+        classes = [
+            Class(name="10a1", amount=0,grade=Grade.K10,year_id=1 ),
+            Class(name="11a1", amount=0,grade=Grade.K11,year_id=1 ),
+            Class(name="12a1", amount=0,grade=Grade.K12 ,year_id=1 ),
+        ]
+
+        # Thêm tất cả các lớp vào cơ sở dữ liệu
+        db.session.add_all(classes)
+        db.session.commit()
+
+        # Students
+        student1 = Student(id=4, grade=Grade.K10)
+        student2 = Student(id=5, grade=Grade.K11)
+        student3 = Student(id=6, grade=Grade.K12)
+        student4 = Student(id=7, grade=Grade.K10)
+        student5 = Student(id=8, grade=Grade.K11)
+        student6 = Student(id=9, grade=Grade.K10)
+        student7 = Student(id=10, grade=Grade.K11)
+        student8 = Student(id=11, grade=Grade.K12)
+        student9 = Student(id=12, grade=Grade.K10)
+        student10 = Student(id=13, grade=Grade.K11)
+
+        # Thêm các đối tượng Student vào cơ sở dữ liệu
+        db.session.add_all(
+            [student1, student2, student3, student4, student5, student6, student7, student8, student9, student10])
+
+        db.session.commit()
+
+        # Tạo các đối tượng StudentClass để liên kết Student với các lớp học
+        student_class1 = StudentClass(class_id=1, student_id=4)
+        student_class2 = StudentClass(class_id=2, student_id=5)
+        student_class3 = StudentClass(class_id=3, student_id=6)
+        student_class4 = StudentClass(class_id=1, student_id=7)
+        student_class5 = StudentClass(class_id=2, student_id=8)
+        student_class6 = StudentClass(class_id=1, student_id=9)
+        student_class7 = StudentClass(class_id=2, student_id=10)
+        student_class8 = StudentClass(class_id=3, student_id=11)
+        student_class9 = StudentClass(class_id=1, student_id=12)
+        student_class10 = StudentClass(class_id=2, student_id=13)
+
+        # Thêm tất cả các bản ghi vào cơ sở dữ liệu
+        db.session.add_all([student_class1, student_class2, student_class3, student_class4, student_class5,
+                            student_class6, student_class7, student_class8, student_class9, student_class10])
+        db.session.commit()
+
         # TeachingAssignments
-        # teaching_assignment1 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=1, semester_id=1, years_id=1)
-        # teaching_assignment2 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=2, semester_id=2, years_id=1)
-        # teaching_assignment3 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=3, semester_id=2, years_id=1)
-        # teaching_assignment4 = TeachingAssignment(teacher_id=2, subjects_id=1,
-        #                                           class_id=4, semester_id=2, years_id=1)
-        # teaching_assignment5 = TeachingAssignment(teacher_id=1, subjects_id=1,
-        #                                           class_id=5, semester_id=2, years_id=1)
-        # teaching_assignment6 = TeachingAssignment(teacher_id=1, subjects_id=1,
-        #                                           class_id=1, semester_id=2, years_id=1)
-        # teaching_assignment7 = TeachingAssignment(teacher_id=1, subjects_id=1,
-        #                                           class_id=1, semester_id=2, years_id=1)
-        # db.session.add_all([teaching_assignment1, teaching_assignment2, teaching_assignment3, teaching_assignment4,
-        #                     teaching_assignment5, teaching_assignment6, teaching_assignment7])
-        # db.session.commit()
+        teaching_assignment1 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[1].id, semester_id=1, years_id=1)
+        teaching_assignment2 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[2].id, semester_id=2, years_id=1)
+        teaching_assignment3 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[1].id, semester_id=2, years_id=1)
+        teaching_assignment4 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[1].id, semester_id=2, years_id=1)
+        teaching_assignment5 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[2].id, semester_id=2, years_id=1)
+        teaching_assignment6 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[2].id, semester_id=2, years_id=1)
+        teaching_assignment7 = TeachingAssignment(teacher_id=teacher.id, subjects_id=subject1.id,
+                                                  class_id=classes[1].id, semester_id=2, years_id=1)
+        db.session.add_all([teaching_assignment1, teaching_assignment2, teaching_assignment3, teaching_assignment4,
+                            teaching_assignment5, teaching_assignment6, teaching_assignment7])
+        db.session.commit()
 
         #StaffClasses
         # staff_class1 = StaffClass(staff_id=1, class_id=1, time=datetime.now())
@@ -359,21 +379,23 @@ if __name__ == "__main__":
         # db.session.add_all([staff_class1, staff_class2])
         # db.session.commit()
         #
-        # #Scores
-        # score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=1, subject_id=1,
-        #                semester_id=1, year_id=1)
-        # score2 = Score(score=7.0, exam_type=ExamType.EXAM_45P, student_id=2, subject_id=1,
-        #                semester_id=1, year_id=1)
-        # score3 = Score(score=7.0, exam_type=ExamType.EXAM_15P, student_id=2, subject_id=1,
-        #                  semester_id=1, year_id=1)
-        #
-        #
-        # db.session.add_all([score1, score2, score3])
-        # db.session.commit()
+        #Scores
+        score1 = Score(score=8.5, exam_type=ExamType.EXAM_FINAL, student_id=student1.id, subject_id=1,
+                       semester_id=1, year_id=1)
+        score2 = Score(score=7.0, exam_type=ExamType.EXAM_45P, student_id=student1.id, subject_id=1,
+                       semester_id=1, year_id=1)
+        score3 = Score(score=7.0, exam_type=ExamType.EXAM_15P, student_id=student1.id, subject_id=1,
+                         semester_id=1, year_id=1)
+        db.session.add_all([score1, score2, score3])
+        db.session.commit()
 
-        #Regulations
-        # regulation1 = Regulation(name="Attendance Policy", min_value=75, max_value=100,
-        #                          admin_id=3)
-        #
-        # db.session.add(regulation1)
-        # db.session.commit()
+        # Regulations
+        regulation1 = Regulation(name="Sĩ số lớp", min_value=30, max_value=40,
+                                 admin_id=1)
+
+        regulation2 = Regulation(name="Số lớp tối thiểu", min_value=1, max_value=10,
+                                 admin_id=1)
+        regulation3 = Regulation(name="Độ tuổi", min_value=1, max_value=10,
+                                 admin_id=1)
+        db.session.add_all([regulation1, regulation2, regulation3])
+        db.session.commit()

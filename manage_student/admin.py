@@ -1,7 +1,7 @@
 from flask import redirect, render_template
 from flask_admin import Admin, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
-from manage_student.models import UserRole, Subject, Regulation, Class
+from manage_student.models import UserRole, Subject, Regulation, Class, User
 from manage_student import app, db
 from flask_login import logout_user, current_user
 
@@ -65,6 +65,19 @@ class CustomAdminView(BaseView):
         # Nội dung HTML sẽ được hiển thị ngay trong trang quản trị Flask-Admin
         return self.render('/admin/chartScreen.html')
 
+
+class UserView(ModelView):
+    column_list = ('id', 'username', 'role', 'profile', 'avatar')
+    column_labels = {
+        'id': 'ID',
+        'username': 'Tên người dùng',
+        'role': 'Vai trò',
+        'profile': 'Hồ sơ',
+        'avatar': 'Ảnh đại diện'
+    }
+    form_columns = ['username', 'password', 'role', 'avatar', 'profile']
+    column_filters = ['username', 'role']
+
 class UserAdd(BaseView):
     @expose('/')
     def index(self):
@@ -76,6 +89,7 @@ admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
+admin.add_view(UserView(User, db.session, name="Danh sách người dùng"))
 admin.add_view(CustomAdminView(name='Xem biểu đồ'))
 admin.add_view(UserAdd(name='Thêm người dùng'))
 admin.add_view(LogoutView(name='Đăng xuất'))

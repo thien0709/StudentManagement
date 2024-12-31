@@ -28,9 +28,6 @@ def get_class_name(class_id):
     except Exception as e:
         print(f"Lỗi khi truy vấn tên lớp học: {str(e)}")
         return None
-def assign_students_to_classes():
-    # Lấy danh sách học sinh chưa được phân lớp
-    unassigned_students = Student.query.filter(~Student.classes.any()).all()
 
 def get_classes_by_grade(grade):
     if grade:

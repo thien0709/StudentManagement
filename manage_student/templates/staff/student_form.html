@@ -1,4 +1,266 @@
-{%extends 'layout/base.html'%}
-{%block content%}
-{%include '/staff/content_form.html'%}
-{%endblock%}
+{% extends 'layout/base.html' %}
+{% block content %}
+    <script>
+        <script>
+ document.addEventListener('DOMContentLoaded', function () {
+     const form = document.querySelector('form');
+     form.addEventListener('submit', function (event) {
+         event.preventDefault(); // Ngăn chặn gửi biểu mẫu mặc định
+
+         // Lấy dữ liệu từ biểu mẫu
+         const fullName = document.getElementById('fullName').value;
+         const email = document.getElementById('email').value;
+         const phone = document.getElementById('phone').value;
+         const dob = document.getElementById('dob').value;
+         const address = document.getElementById('address').value;
+         const gender = document.querySelector('input[name="gender"]:checked')?.value;
+         const grade = document.getElementById('grade').value; // Lấy giá trị khối
+
+         // Kiểm tra tính hợp lệ của các trường
+         if (!fullName || !email || !phone || !dob || !address || !gender || !grade) {
+             Swal.fire({
+                 icon: 'warning',
+                 title: 'Lỗi',
+                 text: 'Vui lòng điền đầy đủ thông tin.',
+             });
+             return;
+         }
+
+         // Kiểm tra email hợp lệ
+         const emailPattern = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+         if (!emailPattern.test(email)) {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Lỗi',
+                 text: 'Email không hợp lệ!',
+             });
+             return;
+         }
+
+         // Kiểm tra số điện thoại (không nhiều hơn 10 số)
+         if (phone.length > 10) {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Lỗi',
+                 text: 'Số điện thoại không được dài hơn 10 chữ số!',
+             });
+             return;
+         }
+
+         // Kiểm tra tuổi hợp lệ
+         const today = new Date();
+         const birthDate = new Date(dob);
+         const age = today.getFullYear() - birthDate.getFullYear();
+         const monthDiff = today.getMonth() - birthDate.getMonth();
+         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+             age--; // Nếu chưa đến sinh nhật thì trừ đi 1 tuổi
+         }
+
+         if (age < 15 || age > 20) {
+             Swal.fire({
+                 icon: 'info',
+                 title: 'Lỗi',
+                 text: 'Tuổi của học sinh không hợp lệ',
+             });
+             return;
+         }
+
+         // Gửi yêu cầu kiểm tra thông tin đã có trong database
+         fetch('/check_duplicate', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json'
+             },
+             body: JSON.stringify({ email, phone })
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.status === 'duplicate') {
+                 let duplicateMessage = '';
+                 if (data.duplicateEmail) {
+     duplicateMessage += 'Email ';
+                 }
+                 if (data.duplicatePhone) {
+                     duplicateMessage += 'Số điện thoại ';
+                 }
+                 Swal.fire({
+                     icon: 'error',
+                     title: 'Lỗi',
+                     text: `Thông tin học sinh đã có : ${duplicateMessage}`,
+                 });
+                 return;
+             }
+
+             // Nếu không trùng lặp, gửi dữ liệu
+             const userData = {
+                 fullName: fullName,
+                 email: email,
+                 phone: phone,
+                 dob: dob,
+                 address: address,
+                 gender: gender,
+                 grade: grade // Giá trị khối (số của Enum)
+             };
+
+             fetch('/staff/studentForm', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify(userData)
+             })
+             .then(response => response.json())
+             .then(data => {
+                 if (data.status === 'success') {
+                     Swal.fire({
+                         icon: 'success',
+                         title: 'Thành Công',
+                         text: data.message,
+                     }).then(() => {
+                         window.location.href = '/class'; // Chuyển hướng đến trang 'class'
+                     });
+                 } else {
+                     Swal.fire({
+                         icon: 'error',
+                         title: 'Lỗi',
+                         text: data.message,
+                     });
+                 }
+             })
+             .catch(error => {
+                 Swal.fire({
+                     icon: 'error',
+                     title: 'Lỗi',
+                     text: 'Đã xảy ra lỗi khi gửi dữ liệu.',
+                 });
+             });
+         })
+         .catch(error => {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Lỗi',
+                 text: 'Đã xảy ra lỗi khi kiểm tra thông tin trùng lặp.',
+             });
+         });
+     });
+
+     // Lấy dữ liệu khối và điền vào dropdown
+     fetch('/get_valueGrade')
+         .then(response => {
+             if (!response.ok) {
+                 throw new Error('Lỗi kết nối mạng: ' + response.statusText);
+             }
+             return response.json(); // Phân tích dữ liệu JSON
+         })
+         .then(data => {
+             const gradeDropdown = document.getElementById('grade');
+             gradeDropdown.innerHTML = '<option value="" disabled selected>Chọn khối</option>';
+
+             // Điền dropdown với dữ liệu khối
+             data.forEach(grade => {
+                 const option = document.createElement('option');
+ option.value = grade; // Giá trị khối là số (giá trị của Enum)
+                 option.textContent = 'K' + grade; // Hiển thị tên khối (K10, K11, K12)
+                 gradeDropdown.appendChild(option);
+             });
+         })
+         .catch(error => {
+             console.error('Lỗi khi lấy dữ liệu khối:', error);
+         });
+ });
+    </script>
+    {#</head>#}
+    {#<body>#}
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Bổ sung hồ sơ</h2>
+        <form id="studentForm">
+            <!-- Họ và Tên và Email -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="fullName" class="form-label">Họ và Tên</label>
+                    <div class="input-group">
+                        <div class="input-group-text"><i class="fas fa-user"></i></div>
+                        <input type="text" class="form-control" id="fullName" placeholder="Nhập họ và tên" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group">
+                        <div class="input-group-text"><i class="fas fa-envelope"></i></div>
+                        <input type="email" class="form-control" id="email" placeholder="Nhập email" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Số Điện Thoại và Ngày Sinh -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Số Điện Thoại</label>
+                    <div class="input-group">
+                        <div class="input-group-text"><i class="fas fa-phone-alt"></i></div>
+                        <input type="tel" class="form-control" id="phone" placeholder="Nhập số điện thoại" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="dob" class="form-label">Ngày Sinh</label>
+                    <div class="input-group">
+                        <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                        <input type="date" class="form-control" id="dob" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Địa Chỉ và Giới Tính -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="address" class="form-label">Địa Chỉ</label>
+                    <div class="input-group">
+                        <div class="input-group-text"><i class="fas fa-map-marker-alt"></i></div>
+                        <input type="text" class="form-control" id="address" placeholder="Nhập địa chỉ" required>
+                    </div>
+                </div>
+
+                <!-- Địa Chỉ và Giới Tính -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="address" class="form-label">Địa Chỉ</label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="fas fa-map-marker-alt"></i></div>
+                            <input type="text" class="form-control" id="address" placeholder="Nhập địa chỉ" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="me-3">
+                            <label class="form-label">Giới Tính</label><br>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="genderMale" value="male">
+                                <label class="form-check-label" for="genderMale">Nam</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="genderFemale"
+                                       value="female">
+                                <label class="form-check-label" for="genderFemale">Nữ</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="grade" class="form-label">Khối</label>
+                            <select class="form-control" id="grade" style="color: black;">
+                                <option value="" disabled selected style="color: black;">Chọn khối</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- Nút Save và Close -->
+            <div class="row">
+                <div class="col-12 d-flex justify-content-center gap-3">
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                    <a href="/class" class="btn btn-secondary">Đóng</a>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}
