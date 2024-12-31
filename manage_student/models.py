@@ -241,33 +241,33 @@ if __name__ == "__main__":
         # pass
         db.create_all()
         # Profile
-        admin_profile = Profile(name="Nguyễn Minh", email="admin@example.com", birthday=datetime(1990, 5, 20),
+        admin_profile = Profile(name="Nguyễn Minh", email="admin@example.com", birthday=datetime(2005, 5, 20),
                                 gender=True, address="404 Elm St", phone="5552345678")
-        teacher_profile = Profile(name="Phạm Hồng", email="user@example.com", birthday=datetime(1995, 9, 15),
+        teacher_profile = Profile(name="Phạm Hồng", email="user@example.com", birthday=datetime(2004, 9, 15),
                                gender=False, address="505 Maple Ave", phone="5553456789")
-        staff_profile = Profile(name="Trần Văn", email="staff@example.com", birthday=datetime(1983, 3, 30),
+        staff_profile = Profile(name="Trần Văn", email="staff@example.com", birthday=datetime(2005, 3, 30),
                                 gender=True, address="606 Oak Blvd", phone="5554567890")
 
 
-        student1 = Profile(name="Duy Khang", email="emily.davis@example.com", birthday=datetime(1992, 4, 15),
+        student1 = Profile(name="Duy Khang", email="emily.davis@example.com", birthday=datetime(2006, 4, 15),
                            gender=False, address="101 Willow St", phone="5551237890")
-        student2 = Profile(name="Lê Tân", email="frank.wilson@example.com", birthday=datetime(1980, 12, 25),
+        student2 = Profile(name="Lê Tân", email="frank.wilson@example.com", birthday=datetime(2005, 12, 25),
                            gender=True, address="202 Birch Ave", phone="5559876543")
-        student3 = Profile(name="Trắng Thiên", email="grace.miller@example.com", birthday=datetime(1987, 7, 10),
+        student3 = Profile(name="Trắng Thiên", email="grace.miller@example.com", birthday=datetime(2004, 7, 10),
                            gender=False, address="303 Pine Lane", phone="5556781234")
-        student4 = Profile(name="Hoàng Danh", email="harry.potter@example.com", birthday=datetime(1991, 6, 30),
+        student4 = Profile(name="Hoàng Danh", email="harry.potter@example.com", birthday=datetime(2005, 6, 30),
                            gender=True, address="404 Elm Dr", phone="5554321987")
-        student5 = Profile(name="Huy Đức", email="ivy.thompson@example.com", birthday=datetime(1990, 2, 20),
+        student5 = Profile(name="Huy Đức", email="ivy.thompson@example.com", birthday=datetime(2006, 2, 20),
                            gender=False, address="505 Maple Blvd", phone="5557654321")
-        student6 = Profile(name="Nguyễn Hoàng", email="student6@example.com", birthday=datetime(1993, 11, 22),
+        student6 = Profile(name="Nguyễn Hoàng", email="student6@example.com", birthday=datetime(2005, 11, 22),
                            gender=True, address="707 Cedar St", phone="5555678901")
-        student7 = Profile(name="Võ Minh", email="student7@example.com", birthday=datetime(1994, 8, 15),
+        student7 = Profile(name="Võ Minh", email="student7@example.com", birthday=datetime(2005, 8, 15),
                            gender=False, address="808 Walnut Ave", phone="5556789012")
-        student8 = Profile(name="Lê Hoa", email="student8@example.com", birthday=datetime(1996, 3, 5),
+        student8 = Profile(name="Lê Hoa", email="student8@example.com", birthday=datetime(2007, 3, 5),
                            gender=False, address="909 Chestnut Blvd", phone="5557890123")
-        student9 = Profile(name="Phan Anh", email="student9@example.com", birthday=datetime(1992, 1, 10),
+        student9 = Profile(name="Phan Anh", email="student9@example.com", birthday=datetime(2006, 1, 10),
                            gender=True, address="1010 Spruce Ln", phone="5558901234")
-        student10 = Profile(name="Trần Duy", email="student10@example.com", birthday=datetime(1998, 7, 25),
+        student10 = Profile(name="Trần Duy", email="student10@example.com", birthday=datetime(2005, 7, 25),
                             gender=True, address="1111 Ash Dr", phone="5559012345")
 
         # Thêm các hồ sơ vào session
