@@ -36,7 +36,6 @@
 </button>
 
 <style>
-/* CSS cho sidebar */
 .sidebar {
     position: fixed;
     padding-top: 65px;
@@ -50,29 +49,18 @@
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
-    /* Hiệu ứng chuyển động */
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
     transform: translateX(-100%);
+    background: linear-gradient(135deg, #f8f9fa, #e4e9f2);
+    color: #292c35;
 }
+
 
 .sidebar.show {
     transform: translateX(0);
-    /*padding-top: 65px;*/
 }
 
-
-.sidebar-nav {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    flex-direction: column;
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
+/* Sidebar Item */
 .sidebar-item {
     width: 100%;
 }
@@ -82,29 +70,34 @@
     align-items: center;
     padding: 0.75rem 1.5rem;
     text-decoration: none;
-    color: var(--darkText);
-    transition: background-color 0.2s ease;
+    color: #292c35; /* Màu chữ */
+    font-weight: 500;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
     margin: 15px;
-    border-radius: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+
+.sidebar-link:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 
 .sidebar-link i {
     margin-right: 0.75rem;
     width: 20px;
     text-align: center;
+    color: #4b5563;
+    transition: color 0.3s ease;
 }
 
-.sidebar-link:hover {
-    background-color: #f0f0f0;
-    border-radius: 20px;
-    color: #292c35;
+.sidebar-link:hover i {
+    color: #1d4ed8;
 }
 
-/*.sidebar-link.active {*/
-/*    !*background-color: #007bff;*!*/
-/*    color: white;*/
-/*    border-radius: 20px;*/
-/*}*/
 
 .toggle-btn {
     position: fixed;
@@ -112,36 +105,53 @@
     height: 50px;
     top: 15px;
     left: 15px;
-    background-color: #007bff;
+    background-color: #3b82f6;
     color: white;
     border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px; /* Bo góc nhẹ */
     cursor: pointer;
     z-index: 1001;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+
+.toggle-btn:hover {
+    background-color: #2563eb;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
 
 .toggle-btn.active {
-    background-color: #dc3545;
+    background-color: #ef4444 !important;
     color: white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 
-#toggle-icon {
-    transition: transform 0.3s ease; /* Hiệu ứng xoay */
+.toggle-btn i {
+    font-size: 20px;
+    transition: transform 0.3s ease, color 0.3s ease;
 }
 
-#toggle-icon.rotate {
-    transform: rotate(180deg); /* Xoay 180 độ */
+
+.toggle-btn.active i {
+    transform: rotate(180deg);
+    color: #ffffff;
 }
-  .navbar-logo {
+
+
+
+.navbar-logo {
     max-height: 70px;
     width: auto;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-right: 20px;
-    padding: 5px;
-    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    padding: 8px;
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
     border: 2px solid rgba(200, 200, 200, 0.8);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(255, 255, 255, 0.4) inset;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -150,24 +160,58 @@
 .navbar-logo:hover {
     transform: scale(1.1);
     box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2), 0px 3px 6px rgba(255, 255, 255, 0.5) inset;
-    border-color: #007bff;
-    background: linear-gradient(135deg, #eaf4ff, #ffffff);
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #e0f2fe, #f0fdfa);
 }
 
-@keyframes logo-fade-in {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+
+body.dark .sidebar {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: #f0f0f0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.7);
 }
 
-.navbar-logo {
-    animation: logo-fade-in 0.5s ease-in-out;
+body.dark .sidebar-link {
+    color: #e5e7eb;
+    background-color: transparent;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: none;
 }
+
+body.dark .sidebar-link:hover {
+    background-color: #374151;
+    color: #60a5fa;
+}
+
+body.dark .sidebar-link i {
+    color: #9ca3af;
+}
+
+body.dark .sidebar-link:hover i {
+    color: #60a5fa;
+}
+
+body.dark .toggle-btn {
+    background-color: #4b5563;
+    color: #e5e7eb;
+}
+
+body.dark .toggle-btn.active {
+    background-color: #f87171;
+    color: #ffffff;
+}
+
+body.dark .navbar-logo {
+    background: linear-gradient(135deg, #374151, #4b5563);
+    border-color: #6b7280;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5), 0px 2px 4px rgba(255, 255, 255, 0.2) inset;
+}
+
+body.dark .navbar-logo:hover {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    border-color: #60a5fa;
+}
+
 </style>
 
 <script>

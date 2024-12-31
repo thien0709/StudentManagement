@@ -707,7 +707,6 @@ def export_scores_export():
             data.append({
                 "STT": i,
                 "Họ tên": student.name(),
-                "Lớp": class_name,
                 "Điểm TB HK1": average_scores.get(student.id, {}).get(1, 0),
                 "Điểm TB HK2": average_scores.get(student.id, {}).get(2, 0),
             })
