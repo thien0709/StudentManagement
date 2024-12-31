@@ -395,7 +395,7 @@ if __name__ == "__main__":
 
         regulation2 = Regulation(name="Số lớp tối thiểu", min_value=1, max_value=10,
                                  admin_id=1)
-        regulation3 = Regulation(name="Độ tuổi", min_value=1, max_value=10,
+        regulation3 = Regulation(name="Độ tuổi", min_value=15, max_value=20,
                                  admin_id=1)
         db.session.add_all([regulation1, regulation2, regulation3])
         db.session.commit()

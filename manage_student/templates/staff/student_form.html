@@ -56,7 +56,7 @@
              age--; // Nếu chưa đến sinh nhật thì trừ đi 1 tuổi
          }
 
-         if (age < 15 || age > 20) {
+         if (age < regulation_dao.get || age > 20) {
              Swal.fire({
                  icon: 'info',
                  title: 'Lỗi',
@@ -145,12 +145,12 @@
      });
 
      // Lấy dữ liệu khối và điền vào dropdown
-     fetch('/get_valueGrade')
+     fetch('/get_grades')
          .then(response => {
              if (!response.ok) {
                  throw new Error('Lỗi kết nối mạng: ' + response.statusText);
              }
-             return response.json(); // Phân tích dữ liệu JSON
+             return response.json();
          })
          .then(data => {
              const gradeDropdown = document.getElementById('grade');
@@ -159,7 +159,7 @@
              // Điền dropdown với dữ liệu khối
              data.forEach(grade => {
                  const option = document.createElement('option');
- option.value = grade; // Giá trị khối là số (giá trị của Enum)
+                 option.value = grade; // Giá trị khối là số (giá trị của Enum)
                  option.textContent = 'K' + grade; // Hiển thị tên khối (K10, K11, K12)
                  gradeDropdown.appendChild(option);
              });
@@ -210,16 +210,6 @@
                 </div>
             </div>
 
-            <!-- Địa Chỉ và Giới Tính -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="address" class="form-label">Địa Chỉ</label>
-                    <div class="input-group">
-                        <div class="input-group-text"><i class="fas fa-map-marker-alt"></i></div>
-                        <input type="text" class="form-control" id="address" placeholder="Nhập địa chỉ" required>
-                    </div>
-                </div>
-
                 <!-- Địa Chỉ và Giới Tính -->
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -250,9 +240,6 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-
 
             <!-- Nút Save và Close -->
             <div class="row">

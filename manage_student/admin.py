@@ -17,10 +17,6 @@ class AuthenticatedView(ModelView):
             return False
         return True
 
-    def inaccessible_callback(self, name, **kwargs):
-        flash("Bạn không có quyền truy cập. Bạn sẽ được chuyển về trang chủ.", "error")
-        return redirect(url_for('index'))
-
 
 # Logout functionality integrated into Flask-Admin
 class LogoutView(BaseView):
@@ -29,17 +25,6 @@ class LogoutView(BaseView):
         logout_user()
         flash("Đăng xuất thành công.", "success")
         return redirect('/login')
-
-    def is_accessible(self):
-        if not current_user.is_authenticated:
-            flash("Vui lòng đăng nhập để truy cập!", "error")
-            return False
-        return True
-
-    def inaccessible_callback(self, name, **kwargs):
-        flash("Bạn không có quyền truy cập. Bạn sẽ được chuyển về trang chủ.", "error")
-        return redirect(url_for('index'))
-
 
 # ModelView for managing regulations with custom column labels
 class RegulationsView(AuthenticatedView):
@@ -109,6 +94,8 @@ class UserView(ModelView):
         'profile': 'Hồ sơ',
         'avatar': 'Ảnh đại diện'
     }
+    can_delete = False
+    can_create = False
     form_columns = ['username', 'password', 'role', 'avatar', 'profile']
     column_filters = ['username', 'role']
 
@@ -124,7 +111,7 @@ admin = Admin(app, name='Quản lý học sinh', template_mode='bootstrap4')
 # Add views to the admin interface
 admin.add_view(SubjectView(Subject, db.session, name="Danh sách môn học"))
 admin.add_view(RegulationsView(Regulation, db.session, name="Chỉnh sửa quy định"))
-admin.add_view(UserView(User, db.session, name="Danh sách người dùng"))
 admin.add_view(CustomAdminView(name='Xem biểu đồ'))
+admin.add_view(UserView(User, db.session, name="Danh sách người dùng"))
 admin.add_view(UserAdd(name='Thêm người dùng'))
 admin.add_view(LogoutView(name='Đăng xuất'))

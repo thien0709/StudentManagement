@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 from flask import render_template, request, redirect, flash, url_for, current_app, session, jsonify
 from reportlab.lib.styles import getSampleStyleSheet
@@ -10,12 +11,13 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
-    teaching_assignment_dao, regulation_dao
+    teaching_assignment_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
     api_get_passed_count
 from manage_student.dao.profile_dao import add_profile, check_duplicate_profile
+from manage_student.dao.regulation_dao import get_min_age, get_max_age
 from manage_student.dao.score_dao import logger, get_average_scores_dao
 from manage_student.dao.semester_dao import api_get_semesters
 from manage_student.dao.student_dao import add_student
@@ -33,8 +35,7 @@ def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
-
-@app.route("/staff/studentForm", methods=["GET", "POST"])
+@app.route("/studentForm", methods=["GET", "POST"])
 @require_role([UserRole.STAFF])
 def formStudent():
     if request.method == "POST":
@@ -47,7 +48,7 @@ def formStudent():
             dob = data.get("dob")
             address = data.get("address")
             gender = data.get("gender")
-            grade = data.get("grade")  # Lấy giá trị grade từ form hoặc JSON
+            grade = data.get("grade")
         else:
             full_name = request.form.get("fullName")
             email = request.form.get("email")
@@ -55,38 +56,36 @@ def formStudent():
             dob = request.form.get("dob")
             address = request.form.get("address")
             gender = request.form.get("gender")
-            grade = request.form.get("grade")  # Lấy grade từ form
+            grade = request.form.get("grade")
 
+        if session.get("role") != models.UserRole.STAFF.value:
+            return redirect(url_for("index"))
 
-        print(full_name, email, phone, dob, address, gender, grade)
-        # Kiểm tra nếu thiếu thông tin
-        if not all([full_name, email, phone, dob, address, gender, grade]):
-            return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
-
-        if session.get('role') != models.UserRole.STAFF.value:
-            return redirect(url_for('index'))
-
-        # Kiểm tra tính hợp lệ của email
-        email_pattern = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-        if not re.match(email_pattern, email):
-            return jsonify({"status": "error", "message": "Email không hợp lệ!"})
-
-        # Kiểm tra giới tính
-        if gender not in ['male', 'female']:
-            return jsonify({"status": "error", "message": "Giới tính không hợp lệ!"})
-
-        # Chuyển đổi ngày sinh từ chuỗi
+        # Kiểm tra tuổi
         try:
-            dob = datetime.strptime(dob, "%Y-%m-%d")
+            dob_date = datetime.strptime(dob, "%Y-%m-%d")
+            today = datetime.today()
+            age = today.year - dob_date.year - (
+                (today.month, today.day) < (dob_date.month, dob_date.day)
+            )
+
+            min_age = get_min_age()
+            max_age = get_max_age()
+
+            if age < min_age or age > max_age:
+                return jsonify({
+                    "status": "warning",
+                    "message": f"Tuổi của học sinh không hợp lệ (Chỉ chấp nhận từ {min_age} đến {max_age} tuổi)."
+                })
+
+            # Thêm hồ sơ vào cơ sở dữ liệu
+            add_profile(full_name, email, dob, gender, address, phone, grade)
+            return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
         except ValueError:
-            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
-
-        # Thêm hồ sơ vào cơ sở dữ liệu
-        try:
-            student_dao.add_student(full_name, email, dob, gender, address, phone, grade)
-            return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"}), 200
+            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ."})
         except Exception as e:
-            return jsonify({"status": "error", "message": f"Đã xảy ra lỗi khi thêm hồ sơ: {str(e)}"}), 500
+            return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
+
     return render_template("/staff/student_form.html")
 
 @app.route('/check_duplicate', methods=['POST'])
@@ -647,7 +646,7 @@ def export_pdf():
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Roboto'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Roboto'),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
@@ -707,6 +706,7 @@ def export_scores_export():
             data.append({
                 "STT": i,
                 "Họ tên": student.name(),
+                "Lớp": class_name,
                 "Điểm TB HK1": average_scores.get(student.id, {}).get(1, 0),
                 "Điểm TB HK2": average_scores.get(student.id, {}).get(2, 0),
             })
@@ -874,7 +874,6 @@ def edit_class():
 def assign_to_class():
     class_dao.assign_students_to_classes()
     return redirect(url_for('edit_class'))
-
 @app.route("/edit_student/<int:student_id>", methods=['GET', 'POST'])
 @require_role([UserRole.STAFF])
 def edit_student(student_id):
@@ -1097,6 +1096,7 @@ def ath_admin():
 
 
 @app.route("/register", methods=['GET', 'POST'])
+@require_role([UserRole.ADMIN])
 def register_process():
     if request.method == 'POST':
         # Lấy dữ liệu từ form
