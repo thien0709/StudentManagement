@@ -17,7 +17,6 @@ from flask_login import login_user, logout_user, current_user , login_required
 from manage_student.dao.grade_dao import api_get_grades, api_get_classes_by_grade, api_get_class_amount, \
     api_get_passed_count
 from manage_student.dao.profile_dao import add_profile, check_duplicate_profile
-from manage_student.dao.regulation_dao import get_min_age, get_max_age
 from manage_student.dao.score_dao import logger, get_average_scores_dao
 from manage_student.dao.semester_dao import api_get_semesters
 from manage_student.dao.student_dao import add_student
@@ -27,14 +26,16 @@ from manage_student.dao.year_dao import api_get_years
 from manage_student.decorator import require_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole, Grade
-from flask import jsonify, render_template, redirect, url_for
-from datetime import datetime
+
+
+# from manage_student.decorator import require_employee_role
 
 @app.route("/")
 def index():
     if current_user.is_authenticated:
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
+
 @app.route("/studentForm", methods=["GET", "POST"])
 @require_role([UserRole.STAFF])
 def formStudent():
@@ -63,7 +64,7 @@ def formStudent():
 
         # Kiểm tra tuổi
         try:
-            dob_date = datetime.strptime(dob, "%Y-%m-%d")
+            dob_date = datetime.strptime(dob, "%Y-%m-%d")  # Chuyển đổi chuỗi thành datetime
             today = datetime.today()
             age = today.year - dob_date.year - (
                 (today.month, today.day) < (dob_date.month, dob_date.day)
