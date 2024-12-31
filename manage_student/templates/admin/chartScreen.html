@@ -1,0 +1,469 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+    <style>
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            margin-top: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            font-size: 16px;
+        }
+        .btn {
+            font-size: 16px;
+        }
+        .chart-container {
+            display: flex; /* Đặt hai biểu đồ trên cùng một dòng */
+            justify-content: space-around; /* Căn đều khoảng cách giữa các biểu đồ */
+            align-items: center; /* Căn giữa theo trục dọc */
+        }
+
+        .chart-box {
+            margin: 0 20px;
+            flex: 1; /* Giúp các biểu đồ chia đều khoảng trống */
+            text-align: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info-box {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #pie-chart
+        {
+        margin-left: 100px;
+        }
+
+    </style>
+<div class="container">
+    <div class="row">
+        <!-- Phần chọn thông tin lớp -->
+        <div class="col-md-12">
+            <h2 class="section-title">Thông tin lớp</h2>
+            <form>
+                <div class="row">
+                    <!-- Dropdown tên lớp -->
+                    <div class="col-md-4 form-group">
+                        <label for="grade">Khối</label>
+                        <select class="form-control" id="grade">
+                            <option value="" disabled selected>Chọn khối</option>
+                        </select>
+                        <div class="cod-md-4 form-group">
+                            <label for="class-name">Tên lớp</label>
+                            <select class="form-control" id="class-name" disabled>
+                                <option value="" disabled selected>Chọn lớp</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Học kỳ -->
+                    <div class="col-md-4 form-group">
+                        <label for="semester">Học kỳ</label>
+                        <select class="form-control" id="semester"></select>
+                    </div>
+                    <!-- Năm học -->
+                    <div class="col-md-4 form-group">
+                        <label for="year">Năm học</label>
+                        <select class="form-control" id="year"></select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Môn học -->
+                    <div class="col-md-4 form-group">
+                        <label for="subject">Môn học</label>
+                        <select class="form-control" id="subject"></select>
+                    </div>
+                    <!-- Sĩ số -->
+                    <div class="col-md-4 form-group">
+                        <label for="si-so">Sĩ số</label>
+                        <input type="number" class="form-control" id="si-so"
+                               placeholder="Sĩ số sẽ được hiển thị tự động" readonly>
+                    </div>
+                    <!-- Số lượng đạt -->
+                    <div class="col-md-4 form-group">
+                        <label for="so-luong-dat">Số lượng đạt</label>
+                        <input type="number" class="form-control" id="so-luong-dat" placeholder="Nhập số lượng đạt"
+                               readonly>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Phần biểu đồ và thông tin tỷ lệ đạt -->
+        <div class="col-md-12">
+            <div class="chart-container">
+                <!-- Biểu đồ thống kê điểm môn học -->
+                <div class="chart-box">
+                    <h4 class="section-title">
+                        Thống kê điểm môn <span id="subject-name">[Chọn môn học]</span>
+                    </h4>
+                    <canvas id="bar-chart"></canvas>
+                </div>
+                <!-- Biểu đồ tỷ lệ đạt -->
+                <div class="chart-box">
+                    <h4 class="section-title">Tỷ lệ đạt</h4>
+                    <canvas id="pie-chart" width="410" height="410" ></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Hàm tải danh sách khối
+    function loadGrades() {
+        fetch('/get_grades')
+            .then(response => response.json())
+            .then(data => {
+                const gradeSelect = document.getElementById('grade');
+                gradeSelect.innerHTML = '<option value="" disabled selected>Chọn khối</option>';
+                data.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    gradeSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Lỗi khi tải danh sách khối:", error));
+    }
+
+    // Hàm tải danh sách lớp dựa trên khối đã chọn
+    function loadClassesByGrade(selectedGrade) {
+        const classSelect = document.getElementById('class-name');
+        classSelect.innerHTML = '<option value="" disabled selected>Đang tải...</option>';
+        classSelect.disabled = true;
+
+        fetch(`/get_classes_by_grades?grade=${selectedGrade}`)
+            .then(response => response.json())
+            .then(data => {
+                classSelect.innerHTML = '<option value="" disabled selected>Chọn lớp</option>';
+                data.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.id;
+                    option.textContent = cls.name;
+                    classSelect.appendChild(option);
+                });
+                classSelect.disabled = false;
+            })
+            .catch(error => console.error("Lỗi khi tải danh sách lớp:", error));
+    }
+
+    // Hàm lấy sĩ số của lớp
+    function loadClassSize(selectedClassId) {
+        const siSoField = document.getElementById('si-so');
+
+        if (!selectedClassId) {
+            siSoField.value = "Lớp chưa chọn!";
+            return;
+        }
+        siSoField.value = "Đang tải...";
+        fetch(`/get_class_amount/${selectedClassId}`)
+            .then(response => response.json())
+            .then(data => {
+                siSoField.value = data.amount !== undefined ? data.amount : "Không tìm thấy!";
+            })
+            .catch(error => {
+                console.error("Lỗi khi lấy sĩ số:", error);
+                siSoField.value = "Lỗi kết nối!";
+            });
+    }
+
+    // Hàm tính số lượng đạt
+    function fetchPassedCount() {
+        const class_id = document.getElementById('class-name').value;
+        const subject_id = document.getElementById('subject').value;
+        const semester_id = document.getElementById('semester').value;
+        const year_id = document.getElementById('year').value;
+
+        if (!class_id || !subject_id || !semester_id || !year_id) {
+            console.warn("Thiếu tham số để tính số lượng đạt.");
+            document.getElementById('so-luong-dat').value = "Vui lòng chọn đầy đủ các tham số.";
+            return;
+        }
+
+        const soLuongDatField = document.getElementById('so-luong-dat');
+        soLuongDatField.value = "Đang tải...";
+        fetch(`/get_passed_count?class_id=${class_id}&subject_id=${subject_id}&semester_id=${semester_id}&year_id=${year_id}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Lỗi từ máy chủ');
+                return response.json();
+            })
+            .then(data => {
+                soLuongDatField.value = data.passed_count !== undefined ? data.passed_count : "Không có dữ liệu!";
+            })
+            .catch(error => {
+                console.error("Lỗi khi lấy số lượng đạt:", error);
+                soLuongDatField.value = "Lỗi!";
+            });
+    }
+
+    // Hàm tải danh sách học kỳ
+    function loadSemesters() {
+        fetch('/api/semesters')
+            .then(response => response.json())
+            .then(data => {
+                const semesterSelect = document.getElementById('semester');
+                data.semesters.forEach(semester => {
+                    const option = document.createElement('option');
+                    option.value = semester.id;
+                    option.textContent = semester.name;
+                    semesterSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Lỗi khi tải danh sách học kỳ:", error));
+    }
+
+    // Hàm tải danh sách năm học
+    function loadYears() {
+        fetch('/api/years')
+            .then(response => response.json())
+            .then(data => {
+                const yearSelect = document.getElementById('year');
+                data.years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year.id;
+                    option.textContent = year.name;
+                    yearSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Lỗi khi tải danh sách năm học:", error));
+    }
+
+    // Hàm tải danh sách môn học
+    function loadSubjects() {
+        fetch('/api/subjects')
+            .then(response => response.json())
+            .then(data => {
+                const subjectSelect = document.getElementById('subject');
+                const subjectNameSpan = document.getElementById('subject-name');
+
+                data.subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    subjectSelect.appendChild(option);
+                });
+
+                subjectSelect.addEventListener('change', () => {
+                    const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+                    subjectNameSpan.textContent = selectedOption.value
+                        ? selectedOption.textContent
+                        : "[Chọn môn học]";
+                });
+            })
+            .catch(error => console.error("Lỗi khi tải danh sách môn học:", error));
+    }
+
+    // Gắn sự kiện và gọi các hàm
+    document.getElementById('grade').addEventListener('change', function () {
+        loadClassesByGrade(this.value);
+    });
+
+    document.getElementById('class-name').addEventListener('change', function () {
+        loadClassSize(this.value);
+    });
+
+    ['class-name', 'subject', 'semester', 'year'].forEach(id => {
+        document.getElementById(id).addEventListener('change', fetchPassedCount);
+    });
+
+    // Gọi các hàm khởi tạo dữ liệu
+    loadGrades();
+    loadSemesters();
+    loadYears();
+    loadSubjects();
+});
+// Hàm vẽ pie chart dựa vào sĩ số và số lượng đạt
+function drawPieChart(classSize, passedCount) {
+    // Kiểm tra dữ liệu hợp lệ
+    if (classSize <= 0 || passedCount < 0 || passedCount > classSize) {
+        console.error("Dữ liệu không hợp lệ để vẽ biểu đồ.");
+        return;
+    }
+
+    const notPassedCount = classSize - passedCount; // Số lượng không đạt
+
+    // Lấy canvas để vẽ biểu đồ
+    const ctx = document.getElementById('pie-chart').getContext('2d');
+
+    // Kiểm tra xem biểu đồ đã tồn tại hay chưa, nếu có thì hủy nó đi
+    if (window.pieChart) {
+        window.pieChart.destroy();  // Hủy biểu đồ cũ
+    }
+
+    // Vẽ biểu đồ mới
+    window.pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Đạt', 'Không đạt'],
+            datasets: [{
+                data: [passedCount, notPassedCount],
+                backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            const total = classSize;
+                            const value = tooltipItem.raw;
+                            const percentage = ((value / total) * 100).toFixed(2);
+                            return `${tooltipItem.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Hàm vẽ bar chart dựa trên điểm trung bình
+function drawBarChart(data) {
+    // Kiểm tra dữ liệu hợp lệ
+    if (!data || data.average_15_min === undefined || data.average_1_hour === undefined || data.average_final === undefined) {
+        console.error("Dữ liệu không hợp lệ để vẽ biểu đồ.");
+        return;
+    }
+
+    // Lấy canvas để vẽ biểu đồ
+    const ctx = document.getElementById('bar-chart').getContext('2d');
+
+    // Kiểm tra xem biểu đồ đã tồn tại hay chưa, nếu có thì hủy nó đi
+    if (window.barChart) {
+        window.barChart.destroy();  // Hủy biểu đồ cũ
+    }
+
+    // Vẽ biểu đồ mới
+    window.barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['15 phút', '1 giờ', 'Cuối kỳ'],
+            datasets: [{
+                label: 'Điểm trung bình',
+                data: [data.average_15_min, data.average_1_hour, data.average_final],
+                backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(75, 192, 192, 0.6)', 'rgba(255, 206, 86, 0.6)'],
+                borderColor: ['rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)', 'rgba(255, 206, 86, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10,
+                    title: {
+                        display: true,
+                        text: 'Điểm trung bình'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+}
+
+// Hàm lấy sĩ số lớp
+async function getClassSize(class_id) {
+    try {
+        const response = await fetch(`/get_class_amount/${class_id}`);
+        if (!response.ok) {
+            throw new Error("Lỗi khi lấy sĩ số.");
+        }
+        const classData = await response.json();
+        return classData.amount; // Trả về sĩ số
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+// Hàm lấy số lượng đạt
+async function getPassedCount(class_id, subject_id, semester_id, year_id) {
+    try {
+        const response = await fetch(`/get_passed_count?class_id=${class_id}&subject_id=${subject_id}&semester_id=${semester_id}&year_id=${year_id}`);
+        if (!response.ok) {
+            throw new Error("Lỗi khi lấy số lượng đạt.");
+        }
+        const passedData = await response.json();
+        return passedData.passed_count; // Trả về số lượng đạt
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+// Khi thay đổi lớp hoặc các dropdown khác, vẽ lại pie chart và bar chart
+['class-name', 'subject', 'semester', 'year'].forEach(id => {
+    document.getElementById(id).addEventListener('change', async function () {
+        const class_id = document.getElementById('class-name').value;
+        const subject_id = document.getElementById('subject').value;
+        const semester_id = document.getElementById('semester').value;
+        const year_id = document.getElementById('year').value;
+
+        // Kiểm tra dữ liệu đầu vào
+        if (!class_id || !subject_id || !semester_id || !year_id) {
+            console.warn("Thiếu tham số để vẽ biểu đồ.");
+            return;
+        }
+
+        // Lấy sĩ số lớp
+        const classSize = await getClassSize(class_id);
+        if (classSize === null) {
+            console.error("Không thể lấy dữ liệu sĩ số.");
+            return;
+        }
+
+        // Lấy số lượng đạt
+        const passedCount = await getPassedCount(class_id, subject_id, semester_id, year_id);
+        if (passedCount === null) {
+            console.error("Không thể lấy dữ liệu số lượng đạt.");
+            return;
+        }
+
+        // Vẽ biểu đồ tròn
+        drawPieChart(classSize, passedCount);
+
+        // Lấy dữ liệu điểm trung bình và vẽ biểu đồ cột
+        fetch(`/api/average_scores?class_id=${class_id}&subject_id=${subject_id}&semester_id=${semester_id}&year_id=${year_id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+                drawBarChart(data);
+            })
+            .catch(error => console.error("Lỗi khi lấy dữ liệu biểu đồ:", error));
+             let canvas = document.getElementById('pie-chart');
+             console.log(canvas.width, canvas.height);
+            console.log("classSize:", classSize, "passedCount:", passedCount);
+    });
+});
+</script>
+{% endblock %}

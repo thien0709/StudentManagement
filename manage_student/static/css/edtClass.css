@@ -1,0 +1,125 @@
+/* Overlay */
+#popupOverlay {
+    position: fixed; /* Phủ toàn màn hình */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* Ẩn đi ban đầu */
+    z-index: 9999; /* Cao hơn mọi thứ khác */
+}
+
+/* Popup form */
+#popupForm {
+    position: fixed; /* Không bị ảnh hưởng bởi phần tử cha */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    display: none; /* Ẩn đi ban đầu */
+    z-index: 10000; /* Cao hơn overlay */
+    width: 500px; /* Đặt chiều rộng cố định */
+    max-width: 90%; /* Responsive */
+}
+
+body.popup-active #left {
+    position: static; /* Đảm bảo sidebar không thay đổi */
+}
+body.popup-active #container {
+    display: none; /* Ẩn content khi popup mở */
+}
+/* Khi hiển thị popup */
+body.popup-active {
+    overflow: hidden; /* Vô hiệu hóa cuộn */
+    margin-right: 0;
+}
+/* Tiêu đề popup */
+#popupForm h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    text-align: center;
+    color: #333;
+}
+
+/* Nút trong popup */
+#popupForm button {
+    display: inline-block;
+    margin: 10px 5px 0 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#popupForm button:hover {
+    background-color: #0056b3;
+}
+
+#popupForm .close-btn {
+    background-color: #dc3545;
+}
+
+#popupForm .close-btn:hover {
+    background-color: #a71d2a;
+}
+
+/* Đảm bảo popup hiển thị đẹp trên màn hình nhỏ */
+@media (max-width: 768px) {
+    #popupForm {
+        width: 90%;
+        padding: 15px;
+body.popup-active {
+    overflow: hidden;
+    margin-right: 0;
+    width: 100vw;
+}
+#popupOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+#popupForm {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    width: 500px;
+    max-width: 90%;
+}
+-direction: column; /* Đảm bảo header và content không bị chia đôi */
+    }
+    #popupForm h2 {
+        font-size: 18px;
+    }
+    #popupForm button {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+}
+/* Đảm bảo rằng khi popup mở, nội dung trang chính được ẩn đi */
+body.popup-active #content {
+    display: none;
+}
+
+body.popup-active #popupOverlay, body.popup-active #popupForm {
+    z-index: 10000;
+}
+

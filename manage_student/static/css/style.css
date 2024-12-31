@@ -1,29 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
 :root {
     --darkBG: #292c35;
-    --lightBG : #F8FFDB;
-    --lightText : #EEEEEE;
-    --darkText : #373A40;
-    --lightNavbar : #D9EDBF;
-    --darkNavbar : #647D87;
-    --buttonColor : #D4F6FF
+    --lightBG: #FFFFFF;
+    --lightText: #EEEEEE;
+    --darkText: #373A40;
+    --lightNavbar: #CCCCCC;
+    --darkNavbar: #647D87;
+    --buttonColor: #D4F6FF;
 }
+
 body {
+    font-family: "Patrick Hand", cursive;
     width: 100vw;
     height: 100vh;
-    display: flex;
-    flex-direction: row;
+    scroll-behavior: smooth;
     background-color: var(--lightBG);
     color: var(--darkText);
+    padding: 0 3rem 3rem 3rem;
+    overflow-x: hidden;
 }
-#left{
-    width: 20%;
-    height: 100%;
+a{
+    text-decoration: none;
+    color: var(--darkText);
 }
-#container{
-    width: 80%;
-    height: 100%;
+/*#left{*/
+/*    position: fixed;*/
+/*    width: auto;*/
+/*    height: 100%;*/
+/*}*/
+/*#container{*/
+/*    width: 80%;*/
+/*    height: 100%;*/
+/*}*/
+#container {
+    padding: 0 20px 20px 20px;
+    transition: margin-left 0.3s ease;
+    box-sizing: border-box;
 }
-.navbar {
+#container.shifted {
+   padding: 0 20px 20px 20px;
+    margin-left: 250px;
+}
+/*#footer {*/
+/*    position: fixed; !* Cố định footer ở cuối màn hình *!*/
+/*    bottom: 0; !* Đảm bảo footer nằm sát cạnh dưới *!*/
+/*    width: 100%; !* Chiều rộng toàn màn hình *!*/
+/*    height: 50px; !* Chiều cao của footer *!*/
+/*    background-color: var(--lightNavbar); !* Giữ màu như hiện tại *!*/
+/*    text-align: center; !* Căn giữa nội dung *!*/
+/*    line-height: 50px; !* Đặt nội dung theo chiều cao *!*/
+/*    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); !* Tạo hiệu ứng chiều sâu *!*/
+/*    z-index: 100; !* Đảm bảo footer nằm trên các nội dung khác *!*/
+/*}*/
+
+/*.container-main{*/
+/*    height: 100%;*/
+/*}*/
+.sidebar {
     position: fixed;
     background: var(--lightNavbar);
     height: 100%;
@@ -32,12 +67,8 @@ body {
     flex-direction: column;
 }
 
-.navbar img {
-    width: 100px;
-    height: 10%;
-}
 
-.navbar ul {
+.sidebar ul {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -71,14 +102,36 @@ body {
     height: 40px;
 }
 
-
+.login{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 200px;
+    height: auto;
+}
 
 /*Dark theme*/
 body.dark {background-color: var(--darkBG);}
+body.dark h1, body.dark {color: var(--lightText);}
+body.dark .sidebar {
+    background-color: var(--darkNavbar);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.4);
+}
 
-body.dark h1, body.dark a {color: var(--lightText);}
-body.dark .navbar{
-    background: var(--darkNavbar);
+body.dark .sidebar-link {
+    color: #e0e0e0; /* Màu chữ sáng */
+}
+
+body.dark .sidebar-link:hover {
+    background-color: #333333; /* Màu nền khi hover ở theme tối */
+    color: #ffffff; /* Màu chữ khi hover ở theme tối */
+    border-radius: 20px;
+}
+body.dark .welcome-container {
+    background: linear-gradient(90deg, #1f1f1f, #2c2c2c);
+    color: #e0e0e0; /* Màu chữ sáng cho nền tối */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4);
 }
 .checkbox {
   opacity: 0;

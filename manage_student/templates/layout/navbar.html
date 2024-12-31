@@ -1,9 +1,242 @@
-<nav class="navbar">
-    <img src="./static/img/images.png" alt="Logo">
-    <ul>
-        <li>Tiep nhan hoc sinh</li>
-        <li>Nhap diem</li>
-        <li>Xuat diem</li>
-        <li>Thong ke bao cao</li>
+<nav id="sidebar" class="sidebar">
+    <a class="sidebar-brand" href="#">
+           <img class="navbar-logo" src="./static/img/logo_edu.png" alt="Logo">
+    </a>
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a class="sidebar-link active" href="/">
+                <i class="fa-solid fa-house"></i> <span>Trang chủ</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/assign">
+                <i class="fa-solid fa-chalkboard-user"></i> <span>Phân công giảng dạy</span>
+            </a>
+        </li>
+             <li class="sidebar-item">
+            <a class="sidebar-link" href="/list_class">
+                <i class="fa-solid fa-chalkboard-user"></i> <span>Danh sách lớp học</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/class">
+                <i class="fa-solid fa-users"></i> <span>Chỉnh sửa lớp học</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link" href="/input_scores">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Nhập điểm</span>
+            </a>
+        </li>
     </ul>
 </nav>
+
+<button class="toggle-btn" onclick="toggleSidebar()">
+    <i class="fa-solid fa-bars" id="toggle-icon"></i>
+</button>
+
+<style>
+.sidebar {
+    position: fixed;
+    padding-top: 65px;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 300px;
+    overflow-x: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    transform: translateX(-100%);
+    background: linear-gradient(135deg, #f8f9fa, #e4e9f2);
+    color: #292c35;
+}
+
+
+.sidebar.show {
+    transform: translateX(0);
+}
+
+/* Sidebar Item */
+.sidebar-item {
+    width: 100%;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: #292c35; /* Màu chữ */
+    font-weight: 500;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    margin: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.sidebar-link:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+.sidebar-link i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+    color: #4b5563;
+    transition: color 0.3s ease;
+}
+
+.sidebar-link:hover i {
+    color: #1d4ed8;
+}
+
+
+.toggle-btn {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    top: 15px;
+    left: 15px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px; /* Bo góc nhẹ */
+    cursor: pointer;
+    z-index: 1001;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+.toggle-btn:hover {
+    background-color: #2563eb;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+
+.toggle-btn.active {
+    background-color: #ef4444 !important;
+    color: white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+
+.toggle-btn i {
+    font-size: 20px;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+
+.toggle-btn.active i {
+    transform: rotate(180deg);
+    color: #ffffff;
+}
+
+
+
+.navbar-logo {
+    max-height: 70px;
+    width: auto;
+    border-radius: 12px;
+    margin-right: 20px;
+    padding: 8px;
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    border: 2px solid rgba(200, 200, 200, 0.8);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1), 0px 2px 4px rgba(255, 255, 255, 0.4) inset;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2), 0px 3px 6px rgba(255, 255, 255, 0.5) inset;
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #e0f2fe, #f0fdfa);
+}
+
+
+body.dark .sidebar {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: #f0f0f0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.7);
+}
+
+body.dark .sidebar-link {
+    color: #e5e7eb;
+    background-color: transparent;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: none;
+}
+
+body.dark .sidebar-link:hover {
+    background-color: #374151;
+    color: #60a5fa;
+}
+
+body.dark .sidebar-link i {
+    color: #9ca3af;
+}
+
+body.dark .sidebar-link:hover i {
+    color: #60a5fa;
+}
+
+body.dark .toggle-btn {
+    background-color: #4b5563;
+    color: #e5e7eb;
+}
+
+body.dark .toggle-btn.active {
+    background-color: #f87171;
+    color: #ffffff;
+}
+
+body.dark .navbar-logo {
+    background: linear-gradient(135deg, #374151, #4b5563);
+    border-color: #6b7280;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5), 0px 2px 4px rgba(255, 255, 255, 0.2) inset;
+}
+
+body.dark .navbar-logo:hover {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    border-color: #60a5fa;
+}
+
+</style>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("container");
+     const toggleBtn = document.querySelector(".toggle-btn");
+    const toggleIcon = document.getElementById("toggle-icon");
+
+    sidebar.classList.toggle("show");
+
+    mainContent.classList.toggle("shifted"); // Thêm/xóa class 'shifted' cho container
+
+  toggleIcon.classList.toggle("rotate");
+  toggleBtn.classList.toggle("active");
+
+    // Thay đổi icon khi sidebar mở hoặc đóng
+    setTimeout(() => {
+        if (sidebar.classList.contains("show")) {
+            toggleIcon.classList.remove("fa-bars");
+            toggleIcon.classList.add("fa-times");
+        } else {
+            toggleIcon.classList.remove("fa-times");
+            toggleIcon.classList.add("fa-bars");
+        }
+    }, 150); // Đặt timeout khớp 1 nửa thời gian hiệu ứng xoay (0.3s / 2)
+}
+</script>

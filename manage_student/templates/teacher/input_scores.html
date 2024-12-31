@@ -1,0 +1,522 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+   <style>
+    .form-row {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #34495e; /* Màu chữ trung tính */
+        margin-bottom: 5px;
+    }
+
+    .form-select, .form-control {
+       border-radius: 5px;
+        border: 1px solid #dce1e7;
+        padding: 10px;
+        font-size: 1rem;
+        background: #f9fbfd;
+        transition: all 0.2s ease-in-out;
+        appearance: auto; /* Hiển thị mũi tên dropdown mặc định */
+    }
+
+    .form-select:focus, .form-control:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    }
+
+    .btn {
+        font-weight: bold;
+        text-transform: uppercase;
+        border-radius: 5px;
+        padding: 10px 20px;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #2980b9;
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: #27ae60;
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #1e8449;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        color: #ffffff;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #c0392b;
+        transform: translateY(-2px);
+    }
+
+    .table {
+        margin-top: 30px;
+        border-radius: 10px;
+        overflow: hidden;
+        border-collapse: separate;
+        width: 100%;
+    }
+
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 15px;
+    }
+
+    .table th {
+        background-color: #f4f6f9;
+        color: #34495e;
+        font-weight: bold;
+    }
+
+    .table tbody tr {
+        background-color: #ffffff;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f9fbfd;
+    }
+
+    .score-container {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .score-container input {
+        max-width: 80px;
+        border-radius: 5px;
+        border: 1px solid #dce1e7;
+        padding: 5px;
+        font-size: 1rem;
+        text-align: center;
+        background: #ffffff;
+    }
+
+    .score-container input:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+    }
+
+    .average-score {
+        font-weight: bold;
+        color: #27ae60;
+        background-color: #eafaf1;
+        border-radius: 5px;
+        padding: 10px;
+        border: 1px solid #dce1e7;
+        text-align: center;
+    }
+
+    .add-button, .remove-button {
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #3498db;
+        background: none;
+        border: none;
+        transition: color 0.2s ease;
+    }
+
+    .add-button:hover, .remove-button:hover {
+        color: #2980b9;
+    }
+
+    .alert {
+        border-radius: 5px;
+        margin-top: 20px;
+        font-size: 1rem;
+    }
+
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px;
+        }
+
+        .header-title {
+            font-size: 2rem;
+        }
+
+        .form-row {
+            flex-direction: column;
+        }
+
+        .table th, .table td {
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="container-main">
+    <h2 class="text-center header-title">NHẬP ĐIỂM MÔN HỌC</h2>
+
+    <form method="GET" action="/input_scores" id="filterForm">
+        <div class="row form-row">
+            <div class="col-md-3">
+                <label for="class" class="form-label">Lớp:</label>
+                <select id="class" name="class_id" class="form-select">
+                    <option value="">Chọn lớp</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if class.id== class_id|int %} selected {% endif %}>
+                        {{ class.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="semester" class="form-label">Học kỳ:</label>
+                <select id="semester" name="semester_id" class="form-select">
+                    <option value="">Chọn học kỳ</option>
+                    {% for semester in semesters %}
+                    <option value="{{ semester.id }}" {% if semester.id== semester_id|int %} selected {% endif %}>
+                        {{ semester.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="subject" class="form-label">Môn học:</label>
+                <select id="subject" name="subject_id" class="form-select">
+                    <option value="">Chọn môn học</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if subject.id== subject_id|int %} selected {% endif %}>
+                        {{ subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="year" class="form-label">Năm học:</label>
+                <select id="year" name="year_id" class="form-select">
+                    <option value="">Chọn năm học</option>
+                    {% for year in years %}
+                    <option value="{{ year.id }}" {% if year.id== year_id|int %} selected {% endif %}>
+                        {{ year.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+
+        <div id="assignment-message" class="mt-3"></div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+        </div>
+    </form>
+</div>
+
+
+<div id="score-table">
+    {% if students and students|length > 0 %}
+    <form method="POST" action="/input_scores">
+        <input type="hidden" name="class_id" value="{{ class_id }}">
+        <input type="hidden" name="semester_id" value="{{ semester_id }}">
+        <input type="hidden" name="subject_id" value="{{ subject_id }}">
+        <input type="hidden" name="year_id" value="{{ year_id }}">
+
+        <table class="table mt-4">
+            <thead>
+            <tr>
+                <th scope="col">STT</th>
+                <th scope="col">Tên sinh viên</th>
+                <th scope="col">Điểm 15 phút</th>
+                <th scope="col">Điểm 1 tiết</th>
+                <th scope="col">Điểm thi cuối kỳ</th>
+                <th scope="col">Điểm trung bình</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ student.name() }}</td>
+
+                <td>
+                    <div class="score-container" id="score_15_min_{{ student.id }}">
+                        {% set scores_15_min = scores.get(student.id|string, {}).get('score_15_min', []) %}
+                        {% for score in scores_15_min %}
+                        <input type="text" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="{{ score }}" oninput="calculateAverage({{ student.id }})"
+                               pattern="[0-9]+([\.][0-9]+)?" step="0.1" min="0" max="10">
+                        {% endfor %}
+                        {% if not scores_15_min %}
+                        <input type="text" name="score_15_min_{{ student.id }}[]" class="form-control score_15_min"
+                               value="0" oninput="calculateAverage({{ student.id }})" pattern="[0-9]+([\.][0-9]+)?"
+                               step="0.1" min="0" max="10">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" class="add-button"
+                                onclick="addScoreColumn('15_min', {{ student.id }})">
+                            +
+                        </button>
+                        <button type="button" class="remove-button"
+                                onclick="removeScoreColumn('15_min', {{ student.id }})">-
+                        </button>
+                    </div>
+                </td>
+
+                <td>
+                    <div class="score-container" id="score_1_hour_{{ student.id }}">
+                        {% set scores_1_hour = scores.get(student.id|string, {}).get('score_1_hour', []) %}
+                        {% for score in scores_1_hour %}
+                        <input type="text" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="{{ score }}" oninput="calculateAverage({{ student.id }})"
+                               pattern="[0-9]+([\.][0-9]+)?" step="0.1" min="0" max="10">
+                        {% endfor %}
+                        {% if not scores_1_hour %}
+                        <input type="text" name="score_1_hour_{{ student.id }}[]" class="form-control score_1_hour"
+                               value="0" oninput="calculateAverage({{ student.id }})" pattern="[0-9]+([\.][0-9]+)?"
+                               step="0.1" min="0" max="10">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" class="add-button"
+                                onclick="addScoreColumn('1_hour', {{ student.id }})">
+                            +
+                        </button>
+                        <button type="button" class="remove-button"
+                                onclick="removeScoreColumn('1_hour', {{ student.id }})">-
+                        </button>
+                    </div>
+                </td>
+
+                <td>
+                    <input type="text" name="final_exam_{{ student.id }}" class="form-control final_exam"
+                           value="{{ scores.get(student.id|string, {}).get('final_exam', 0) }}"
+                           oninput="calculateAverage({{ student.id }})" pattern="[0-9]+([\.][0-9]+)?" step="0.1" min="0" max="10">
+                </td>
+
+                <td>
+                    <input type="text" id="average_score_{{ student.id }}" class="form-control average-score"
+                           value="{{ average_scores.get(student.id, 0) }}" readonly>
+                    <input type="hidden" name="average_score_{{ student.id }}" class="form-control">
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+        <div class="text-center">
+            <button type="submit" class="btn btn-success">Lưu điểm</button>
+        </div>
+    </form>
+
+    <div class="text-center mt-4">
+        <a href="/export_scores?class_id={{ class_id }}&semester_id={{ semester_id }}&subject_id={{ subject_id }}&year_id={{ year_id }}"
+           class="btn btn-success">Xuất điểm Excel</a>
+        <a href="/export_pdf?class_id={{ class_id }}&semester_id={{ semester_id }}&subject_id={{ subject_id }}&year_id={{ year_id }}"
+           class="btn btn-danger">Xuất điểm PDF</a>
+
+        <a href="/export?class_id={{ class_id }}&subject_id={{ subject_id }}&year_id={{ year_id }}"
+           class="btn btn-primary">
+            Chuyển đến xuất điểm tb
+        </a>
+
+    </div>
+
+
+    {% endif %}
+</div>
+<script>
+    const form = document.getElementById('filterForm');
+  const assignmentMessage = document.getElementById('assignment-message');
+
+  form.addEventListener('change', function () {
+    const classId = document.getElementById('class').value;
+    const semesterId = document.getElementById('semester').value;
+    const subjectId = document.getElementById('subject').value;
+    const yearId = document.getElementById('year').value;
+
+    if (classId && semesterId && subjectId && yearId) {
+      fetch(`/check_assignment?class_id=${classId}&semester_id=${semesterId}&subject_id=${subjectId}&year_id=${yearId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.assigned) {
+            fetch(`/get_notification?class_id=${classId}&semester_id=${semesterId}&subject_id=${subjectId}&year_id=${yearId}`)
+              .then(response => response.text())
+              .then(notification => {
+                // Cập nhật nội dung thông báo
+                assignmentMessage.innerHTML = `
+                  <div class="alert alert-info text-center">
+                    ${notification}
+                  </div>
+                `;
+              });
+            document.getElementById('score-table').style.display = 'block'; // Hiển thị bảng điểm
+          } else {
+            assignmentMessage.innerHTML = `
+              <div class="alert alert-danger text-center">
+                Bạn không được phân công giảng dạy lớp học này.
+                Bạn có muốn xem <a href="/assign">danh sách lớp học mà bạn được phân công</a>?
+              </div>
+            `;
+            document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
+          }
+        })
+        .catch(error => {
+          console.error('Error checking assignment:', error);
+          assignmentMessage.innerHTML = `
+            <div class="alert alert-danger text-center">
+              Đã xảy ra lỗi khi kiểm tra phân công. Vui lòng thử lại sau.
+            </div>
+          `;
+        });
+    } else {
+
+      assignmentMessage.innerHTML = `
+        <div class="alert alert-warning text-center">
+          Vui lòng chọn lớp, học kỳ, môn học và năm học để hiển thị danh sách sinh viên.
+        </div>
+      `;
+      document.getElementById('score-table').style.display = 'none'; // Ẩn bảng điểm
+    }
+  });
+
+
+
+  // Hiển thị thông báo từ server khi lỗi
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorMessage = urlParams.get('error');
+  const infoMessage = urlParams.get('info');
+
+  if (errorMessage) {
+    assignmentMessage.innerHTML = `
+          <div class="alert alert-danger">${errorMessage}</div>
+        `;
+  }
+
+  if (infoMessage) {
+    assignmentMessage.innerHTML += `
+          <div class="alert alert-info">${infoMessage}</div>
+        `;
+  }
+
+  // Thêm cột điểm
+  function addScoreColumn(scoreType, studentId) {
+    const container = document.getElementById(`score_${scoreType}_${studentId}`);
+    const inputs = container.querySelectorAll('input');
+
+    if (scoreType === '15_min' && inputs.length >= 5) {
+      alert("Tối đa 5 cột điểm 15 phút!");
+      return;
+    } else if (scoreType === '1_hour' && inputs.length >= 3) {
+      alert("Tối đa 3 cột điểm 1 tiết!");
+      return;
+    }
+
+    const newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.name = `score_${scoreType}_${studentId}[]`;
+    newInput.classList.add('form-control', `score_${scoreType}`);
+    newInput.pattern = "[0-9]+([\.][0-9]+)?";
+    newInput.step = "0.1";
+    newInput.oninput = function () {
+      calculateAverage(studentId);
+    };
+    newInput.value = 0;
+    container.appendChild(newInput);
+
+    calculateAverage(studentId);
+  }
+
+  // Xóa cột điểm
+  function removeScoreColumn(scoreType, studentId) {
+    const container = document.getElementById(`score_${scoreType}_${studentId}`);
+    const inputs = container.querySelectorAll('input');
+    if (inputs.length > 1) {
+      container.removeChild(inputs[inputs.length - 1]);
+      calculateAverage(studentId);
+    }
+  }
+
+  // Tính điểm trung bình
+  function calculateAverage(studentId) {
+  const row = document.getElementById(`score_15_min_${studentId}`).closest('tr');
+
+  let score15Min = 0;
+  row.querySelectorAll('.score_15_min').forEach(input => {
+    let value = parseFloat(input.value) || 0;
+    if (value < 0 || value > 10) {
+      alert("Điểm số phải nằm trong khoảng từ 0 đến 10.");
+      input.value = ''; // Xóa giá trị không hợp lệ
+      input.focus();
+    } else {
+      score15Min += value;
+    }
+  });
+
+  let score1Hour = 0;
+  row.querySelectorAll('.score_1_hour').forEach(input => {
+    let value = parseFloat(input.value) || 0;
+    if (value < 0 || value > 10) {
+      alert("Điểm số phải nằm trong khoảng từ 0 đến 10.");
+      input.value = ''; // Xóa giá trị không hợp lệ
+      input.focus();
+    } else {
+      score1Hour += value;
+    }
+  });
+
+  let finalExam = parseFloat(row.querySelector('.final_exam').value) || 0;
+  if (finalExam < 0 || finalExam > 10) {
+    alert("Điểm số phải nằm trong khoảng từ 0 đến 10.");
+    row.querySelector('.final_exam').value = ''; // Xóa giá trị không hợp lệ
+    row.querySelector('.final_exam').focus();
+    finalExam = 0;
+  }
+
+  const totalWeight = row.querySelectorAll('.score_15_min').length * 1 +
+    row.querySelectorAll('.score_1_hour').length * 2 + 3;
+  let averageScore = (score15Min + score1Hour * 2 + finalExam * 3) / totalWeight;
+  averageScore = averageScore.toFixed(2);
+
+  const averageScoreInput = document.getElementById(`average_score_${studentId}`);
+  averageScoreInput.value = averageScore;
+
+  const hiddenAverageInput = row.querySelector(`input[name="average_score_${studentId}"]`);
+  if (hiddenAverageInput) {
+    hiddenAverageInput.value = averageScore;
+  }
+}
+
+
+  // Xử lý khi tải lại trang
+  window.onload = function () {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const studentId = row.querySelector('.score_15_min').name.match(/_(\d+)_/)[1];
+      calculateAverage(studentId);
+    });
+  };
+
+</script>
+
+{% endblock %}
