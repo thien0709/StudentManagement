@@ -3,7 +3,6 @@ from urllib import request
 from flask import session, redirect, url_for, flash, jsonify
 from flask_login import current_user
 
-from manage_student.models import UserRole
 
 
 def require_role(roles):

@@ -113,7 +113,6 @@ a{
 
 /*Dark theme*/
 body.dark {background-color: var(--darkBG);}
-
 body.dark h1, body.dark {color: var(--lightText);}
 body.dark .sidebar {
     background-color: var(--darkNavbar);

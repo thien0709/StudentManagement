@@ -15,6 +15,8 @@ def api_get_grades():
         return jsonify({"error": f"Lỗi khi lấy khối: {str(e)}"}), 500
 
 
+
+
 def api_get_classes_by_grade(grade_name):
     try:
         # Kiểm tra xem grade_name có phải là một giá trị hợp lệ trong Enum không

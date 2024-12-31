@@ -136,7 +136,6 @@
         Không có học sinh trong danh sách.
     </div>
     {% endif %}
-
     <div id="newStudentContainer"></div>
     <div class="row mt-2">
         <div class="col-12">
@@ -250,6 +249,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const studentRow = `
                 <tr>
                     <td class="text-center align-middle">${student.id}</td>
+                    <td class="align-middle">
+                        <input type="text" name="grade" value="${student.grade}" class="form-control form-control-sm" required>
+                    </td>
                     <td class="align-middle">${student.fullName}</td>
                     <td class="align-middle">${student.gender === 1 ? 'Nam' : 'Nữ'}</td>
                     <td class="align-middle">${student.email}</td>

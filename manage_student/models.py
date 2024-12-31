@@ -134,7 +134,7 @@ class Student(db.Model):
     # 1-1, Student-Profile
     profile = relationship("Profile", backref="student", uselist=False, lazy=True)
 
-    # n-n Một Student có nhiều Class
+    # 1-n Một Student có nhiều Class
     classes = relationship("StudentClass", backref="student", lazy=True)
     # 1-n Một Student có nhiều điểm
     scores = relationship("Score", backref="student", lazy=True)
