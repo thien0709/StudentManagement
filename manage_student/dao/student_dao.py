@@ -156,15 +156,19 @@ def delete_student( student_id):
 
 def remove_student_from_class(student_id, class_id):
     try:
-        # Tìm bản ghi trong bảng StudentClass dựa trên student_id và class_id
         student_class_entry = db.session.query(StudentClass).filter_by(student_id=student_id, class_id=class_id).first()
 
         if not student_class_entry:
             print("Học sinh không có trong lớp.")
             return False
 
-        # Xóa bản ghi StudentClass
+        class_entry = db.session.query(Class).filter_by(id=class_id).first()
+        if class_entry:
+            class_entry.amount -= 1
+
         db.session.delete(student_class_entry)
+        db.session.commit()
+
         db.session.commit()
 
         print("Xóa học sinh khỏi lớp thành công.")
@@ -175,9 +179,9 @@ def remove_student_from_class(student_id, class_id):
         print(f"Lỗi khi xóa học sinh khỏi lớp: {str(e)}")
         return False
 
+
 def get_students_without_class():
     try:
-        # Truy vấn các học sinh không có lớp, sử dụng LEFT OUTER JOIN
         students_without_class = db.session.query(Student).outerjoin(StudentClass, Student.id == StudentClass.student_id) \
             .filter(StudentClass.student_id == None).all()
 
@@ -189,7 +193,6 @@ def get_students_without_class():
         print(f"Lỗi khi truy vấn học sinh chưa có lớp: {str(e)}")
         return []
 
-# Dao Layer
 def add_student_to_class(student_id, class_id):
     try:
         student = db.session.query(Student).filter_by(id=student_id).first()
@@ -210,8 +213,13 @@ def add_student_to_class(student_id, class_id):
         if existing_entry:
             return "Học sinh đã có trong lớp.", False
 
+        # Thêm học sinh vào bảng StudentClass
         new_student_class = StudentClass(student_id=student_id, class_id=class_id)
         db.session.add(new_student_class)
+
+        # Cập nhật số lượng học sinh trong bảng Class
+        class_instance.amount += 1  # Tăng số lượng học sinh lên 1
+
         db.session.commit()
 
         return "Thêm học sinh vào lớp thành công.", True
@@ -219,4 +227,3 @@ def add_student_to_class(student_id, class_id):
     except Exception as e:
         db.session.rollback()
         return f"Lỗi khi thêm học sinh vào lớp: {str(e)}", False
-
