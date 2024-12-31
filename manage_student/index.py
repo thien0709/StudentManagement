@@ -885,13 +885,12 @@ def edit_student(student_id):
     if request.method == 'POST':
         action = request.form.get('action')
         class_id = request.form.get('lop_hoc')
-        semester_id = request.form.get('hoc_ky')
         year_id = request.form.get('nam_hoc')
-        print("test", class_id, semester_id, year_id)
+        print("test", class_id, year_id)
 
         if action == 'edit':
-            print("edit")
             grade = request.form.get('grade')
+            print("grade", grade)
             name = request.form.get('ten_hoc_sinh')
             email = request.form.get('email')
             birthday = request.form.get('ngay_sinh')
@@ -900,12 +899,21 @@ def edit_student(student_id):
             address = request.form.get('dia_chi')
             phone = request.form.get('so_dien_thoai')
 
+            if grade not in ["10", "11", "12"]:
+                flash("Khối học không hợp lệ. Học sinh phải thuộc khối 10, 11 hoặc 12.", "error")
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
+
+            age = (datetime.today() - datetime.strptime(birthday, "%Y-%m-%d")).days//365
+            if not (regulation_dao.get_min_age() <= age <= regulation_dao.get_max_age()):
+                flash(f"Tuổi học sinh không hợp lệ. Tuổi phải nằm trong khoảng từ {regulation_dao.get_min_age()} đến {regulation_dao.get_max_age()}.", "error")
+                return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
+
             updated_student = student_dao.update_student(
                 student_id, name, email, birthday, gender, address, phone,grade
             )
 
             if updated_student:
-                students = student_dao.get_students_by_class(class_id, year_id)
+                # students = student_dao.get_students_by_class(class_id, year_id)
                 return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
             else:
                 return "Lỗi cập nhật học sinh", 400
@@ -915,26 +923,6 @@ def edit_student(student_id):
             student_dao.remove_student_from_class(student_id,class_id)
             students = student_dao.get_students_by_class(class_id, year_id)
             return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
-
-        elif action == 'add':
-            print("add")
-            # Thêm học sinh mới
-            name = request.form.get('ten_hoc_sinh')
-            email = request.form.get('email')
-            birthday = request.form.get('ngay_sinh')
-            gender_str = request.form.get('gioi_tinh')
-            gender = 1 if gender_str == 'Nam' else 0
-            address = request.form.get('dia_chi')
-            phone = request.form.get('so_dien_thoai')
-            class_id = request.form.get('lop_hoc')
-            grade = request.form.get('grade')
-
-            student_dao.add_student(name, email, birthday, gender, address, phone, class_id, grade)
-
-            # Lấy lại danh sách học sinh sau khi thêm
-            students = student_dao.get_students_by_class(class_id, year_id)
-            return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
-
         elif action == 'add_to_class':
             print("add_to_class")
             class_id = request.form.get('lop_hoc')
@@ -945,8 +933,7 @@ def edit_student(student_id):
                 flash(message, 'error')
             return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
-    students = student_dao.get_students_by_class(class_id, semester_id, year_id)
-    return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
+    return redirect(url_for('edit_class', lop_hoc_id=class_id, nam_hoc_id=year_id))
 
 @app.route('/list_class')
 @require_role([UserRole.STAFF])
