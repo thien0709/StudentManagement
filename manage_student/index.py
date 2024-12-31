@@ -23,7 +23,11 @@ from manage_student.dao.teaching_assignment_dao import check_assignment, get_all
 from manage_student.dao.year_dao import api_get_years
 from manage_student.decorator import require_role
 from manage_student.form import TeachingTaskForm
-from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole, Grade
+from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
+from flask import jsonify, render_template, redirect, url_for
+from datetime import datetime
+from dao.regulation_dao import get_min_age, get_max_age
+
 
 
 # from manage_student.decorator import require_employee_role
@@ -35,13 +39,9 @@ def index():
     return render_template("index.html")
 
 
-from flask import jsonify, render_template, redirect, url_for
-from datetime import datetime
-
 
 @app.route("/staff/studentForm", methods=["GET", "POST"])
 @require_role([UserRole.STAFF])
-
 def formStudent():
     if request.method == "POST":
         # Lấy dữ liệu từ form hoặc JSON
@@ -53,7 +53,7 @@ def formStudent():
             dob = data.get("dob")
             address = data.get("address")
             gender = data.get("gender")
-            grade = data.get("grade")  # Lấy giá trị grade từ form hoặc JSON
+            grade = data.get("grade")
         else:
             full_name = request.form.get("fullName")
             email = request.form.get("email")
@@ -61,38 +61,36 @@ def formStudent():
             dob = request.form.get("dob")
             address = request.form.get("address")
             gender = request.form.get("gender")
-            grade = request.form.get("grade")  # Lấy grade từ form
+            grade = request.form.get("grade")
 
-        # Kiểm tra nếu thiếu thông tin
-        if not all([full_name, email, phone, dob, address, gender, grade]):
-            return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
+        if session.get("role") != models.UserRole.STAFF.value:
+            return redirect(url_for("index"))
 
-        if session.get('role') != models.UserRole.STAFF.value:
-            return redirect(url_for('index'))
-
-        # Kiểm tra tính hợp lệ của email
-        import re
-        email_pattern = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-        if not re.match(email_pattern, email):
-            return jsonify({"status": "error", "message": "Email không hợp lệ!"})
-
-        # Kiểm tra giới tính
-        if gender not in ['male', 'female']:
-            return jsonify({"status": "error", "message": "Giới tính không hợp lệ!"})
-
-        # Chuyển đổi ngày sinh từ chuỗi
+        # Kiểm tra tuổi
         try:
-            dob = datetime.strptime(dob, "%Y-%m-%d")
-        except ValueError:
-            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
+            dob_date = datetime.strptime(dob, "%Y-%m-%d")  # Chuyển đổi chuỗi thành datetime
+            today = datetime.today()
+            age = today.year - dob_date.year - (
+                (today.month, today.day) < (dob_date.month, dob_date.day)
+            )
 
-        # Thêm hồ sơ vào cơ sở dữ liệu
-        try:
-            add_profile(full_name, email, dob, gender, address, phone, grade)  # Truyền grade vào hàm
-            # Trả về phản hồi thành công
+            min_age = get_min_age()
+            max_age = get_max_age()
+
+            if age < min_age or age > max_age:
+                return jsonify({
+                    "status": "warning",
+                    "message": f"Tuổi của học sinh không hợp lệ (Chỉ chấp nhận từ {min_age} đến {max_age} tuổi)."
+                })
+
+            # Thêm hồ sơ vào cơ sở dữ liệu
+            add_profile(full_name, email, dob, gender, address, phone, grade)
             return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
+        except ValueError:
+            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ."})
         except Exception as e:
             return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
+
     return render_template("/staff/student_form.html")
 
 

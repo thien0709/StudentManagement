@@ -76,25 +76,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             return;
         }
-
-        // Kiểm tra tuổi hợp lệ
-        const today = new Date();
-        const birthDate = new Date(dob);
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--; // Nếu chưa đến sinh nhật thì trừ đi 1 tuổi
-        }
-
-        if (age < 15 || age > 20) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Lỗi',
-                text: 'Tuổi của học sinh không hợp lệ',
-            });
-            return;
-        }
-
         // Gửi yêu cầu kiểm tra thông tin đã có trong database
         fetch('/check_duplicate', {
             method: 'POST',
