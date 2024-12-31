@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+import re
 
 from flask import render_template, request, redirect, flash, url_for, current_app, session, jsonify
 from reportlab.lib.styles import getSampleStyleSheet
@@ -10,7 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from io import BytesIO
 from manage_student.dao import auth_dao, score_dao, class_dao, subject_dao, semester_dao, year_dao, student_dao, \
-    teaching_assignment_dao
+    teaching_assignment_dao, regulation_dao
 from manage_student import app, login, models, admin
 from flask_login import login_user, logout_user, current_user , login_required
 
@@ -25,9 +25,8 @@ from manage_student.dao.year_dao import api_get_years
 from manage_student.decorator import require_role
 from manage_student.form import TeachingTaskForm
 from manage_student.models import ExamType, Subject, Teacher, Class, Semester, Year, TeachingAssignment, UserRole
-
-
-# from manage_student.decorator import require_employee_role
+from flask import jsonify, render_template, redirect, url_for
+from datetime import datetime
 
 @app.route("/")
 def index():
@@ -35,58 +34,57 @@ def index():
         return render_template("index.html", username=current_user.username)
     return render_template("index.html")
 
-
-from flask import jsonify, render_template, redirect, url_for
-from datetime import datetime
-
-
 @app.route("/studentForm", methods=["GET", "POST"])
 def formStudent():
     if request.method == "POST":
         # Lấy dữ liệu từ form hoặc JSON
-        if request.is_json:
-            data = request.get_json()
-            full_name = data.get("fullName")
-            email = data.get("email")
-            phone = data.get("phone")
-            dob = data.get("dob")
-            address = data.get("address")
-            gender = data.get("gender")
-        else:
-            full_name = request.form.get("fullName")
-            email = request.form.get("email")
-            phone = request.form.get("phone")
-            dob = request.form.get("dob")
-            address = request.form.get("address")
-            gender = request.form.get("gender")
+        data = request.get_json() if request.is_json else request.form
+        full_name = data.get("fullName")
+        email = data.get("email")
+        phone = data.get("phone")
+        dob = data.get("dob")
+        address = data.get("address")
+        gender = data.get("gender")
+        grade = data.get("grade")
 
+
+        print(full_name, email, phone, dob, address, gender, grade)
         # Kiểm tra nếu thiếu thông tin
-        if not all([full_name, email, phone, dob, address, gender]):
-            return jsonify({"status": "error", "message": "Chưa đủ thông tin!"})
+        if not all([full_name, email, phone, dob, address, gender, grade]):
+            return jsonify({"status": "error", "message": "Chưa đủ thông tin!"}), 400
 
         # Kiểm tra tính hợp lệ của email
-        import re
         email_pattern = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
         if not re.match(email_pattern, email):
-            return jsonify({"status": "error", "message": "Email không hợp lệ!"})
+            return jsonify({"status": "error", "message": "Email không hợp lệ!"}), 400
 
-        # Kiểm tra giới tính
+        # Kiểm tra giới tính hợp lệ
         if gender not in ['male', 'female']:
-            return jsonify({"status": "error", "message": "Giới tính không hợp lệ!"})
+            return jsonify({"status": "error", "message": "Giới tính không hợp lệ!"}), 400
 
         # Chuyển đổi ngày sinh từ chuỗi
         try:
             dob = datetime.strptime(dob, "%Y-%m-%d")
         except ValueError:
-            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"})
+            return jsonify({"status": "error", "message": "Ngày sinh không hợp lệ!"}), 400
+
+        # Kiểm tra tuổi
+        today = datetime.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < regulation_dao.get_min_age() or age > regulation_dao.get_max_age():
+            return jsonify({"status": "error", "message": "Tuổi học sinh không hợp lệ, phải từ 15 đến 20 tuổi!"}), 400
+
+        # Kiểm tra số điện thoại (không dài quá 10 số)
+        if len(phone) > 10:
+            return jsonify({"status": "error", "message": "Số điện thoại không hợp lệ! Không dài quá 10 chữ số."}), 400
 
         # Thêm hồ sơ vào cơ sở dữ liệu
         try:
-            add_profile(full_name, email, dob, gender, address, phone)
-            # Trả về phản hồi thành công
-            return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"})
+            student_dao.add_student(full_name, email, dob, gender, address, phone, grade)
+            return jsonify({"status": "success", "message": "Hồ sơ đã được thêm thành công!"}), 200
         except Exception as e:
-            return jsonify({"status": "error", "message": f"Đã xảy ra lỗi: {str(e)}"})
+            return jsonify({"status": "error", "message": f"Đã xảy ra lỗi khi thêm hồ sơ: {str(e)}"}), 500
+
     return render_template("/staff/student_form.html")
 
 @app.route('/check_duplicate', methods=['POST'])
@@ -950,6 +948,27 @@ def edit_student(student_id):
     students = student_dao.get_students_by_class(class_id, semester_id, year_id)
     return redirect(url_for('edit_class', lop_hoc_id=class_id, hoc_ky_id=semester_id, nam_hoc_id=year_id))
 
+@app.route('/list_class')
+@require_role([UserRole.STAFF])
+def list_class():
+    classes = Class.query.all()
+    return render_template('/staff/list_class.html', classes=classes)
+
+@app.route('/delete_class/<int:class_id>', methods=['DELETE'])
+@require_role([UserRole.STAFF])
+def delete_class(class_id):
+    try:
+        # Gọi DAO để thực hiện xóa lớp
+        success = class_dao.delete_class(class_id)
+        if success:
+            return jsonify({"message": "Class đã được xóa thành công!"}), 200
+        else:
+            # Trả về lỗi nếu khối chỉ còn một lớp
+            return jsonify({"error": "Không thể xóa lớp này vì mỗi khối phải có tối thiểu 1 lớp!"}), 400
+    except Exception as e:
+        # Xử lý các lỗi khác
+        return jsonify({"error": f"Đã xảy ra lỗi: {str(e)}"}), 500
+
 @app.route('/assign', methods=['GET', 'POST'])
 @require_role([UserRole.STAFF, UserRole.TEACHER])
 def assign_task():
@@ -1081,12 +1100,12 @@ def register_process():
 
         # 1. Xác minh mật khẩu
         if password != confirm_password:
-            return render_template('register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
+            return render_template('admin/register.html', error='Mật khẩu và xác nhận mật khẩu không khớp',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 2. Xác minh vai trò
         if role not in ['staff', 'teacher']:
-            return render_template('register.html', error='Vai trò không hợp lệ',
+            return render_template('admin/register.html', error='Vai trò không hợp lệ',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 3. Chuyển đổi dữ liệu `role` thành enum
@@ -1098,7 +1117,7 @@ def register_process():
             try:
                 birthday_date = datetime.strptime(birthday, '%Y-%m-%d')  # Chuyển chuỗi thành kiểu datetime
             except ValueError:
-                return render_template('register.html', error='Ngày sinh không hợp lệ',
+                return render_template('admin/register.html', error='Ngày sinh không hợp lệ',
                                        username=username, email=email, name=name, address=address, phone=phone)
 
         # 5. Chuyển đổi giới tính thành boolean
@@ -1107,7 +1126,7 @@ def register_process():
         # 6. Kiểm tra username đã tồn tại hay chưa
         existing_user = auth_dao.get_user_by_username(username)
         if existing_user:
-            return render_template('register.html', error='Tên người dùng đã tồn tại',
+            return render_template('admin/register.html', error='Tên người dùng đã tồn tại',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
         # 7. Thêm người dùng mới qua DAO
@@ -1134,9 +1153,9 @@ def register_process():
             else:
                 return redirect('/')
         else:
-            return render_template('register.html', error='Đã có lỗi xảy ra khi đăng ký.',
+            return render_template('admin/register.html', error='Đã có lỗi xảy ra khi đăng ký.',
                                    username=username, email=email, name=name, address=address, phone=phone)
 
-    return render_template('register.html')
+    return render_template('admin/register.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

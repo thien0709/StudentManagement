@@ -28,9 +28,6 @@ def get_class_name(class_id):
     except Exception as e:
         print(f"Lỗi khi truy vấn tên lớp học: {str(e)}")
         return None
-def assign_students_to_classes():
-    # Lấy danh sách học sinh chưa được phân lớp
-    unassigned_students = Student.query.filter(~Student.classes.any()).all()
 
 def get_classes_by_grade(grade):
     if grade:
@@ -71,3 +68,30 @@ def assign_students_to_classes():
             db.session.add(student_class)
             classes.append(new_class)
     db.session.commit()  # Lưu các thay đổi vào cơ sở dữ liệu
+
+
+def delete_class(class_id):
+    cls = Class.query.get(class_id)
+    if cls:
+        grade_count = Class.query.filter_by(grade=cls.grade).count()
+        if grade_count <= regulation_dao.get_min_class_in_grade():
+            raise ValueError("Không thể xóa lớp này vì khối phải có tối thiểu 1 lớp!")
+
+        # Xóa các liên kết với StudentClass
+        student_classes = StudentClass.query.filter_by(class_id=class_id).all()
+        for student_class in student_classes:
+            db.session.delete(student_class)
+        db.session.commit()
+
+        # Xóa tất cả các TeachingAssignment liên quan
+        assignments = TeachingAssignment.query.filter_by(class_id=class_id).all()
+        for assignment in assignments:
+            db.session.delete(assignment)
+        db.session.commit()
+
+        # Xóa lớp
+        db.session.delete(cls)
+        db.session.commit()
+        return True
+    else:
+        raise ValueError("Class không tồn tại!")
