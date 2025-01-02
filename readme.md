@@ -90,5 +90,5 @@ Mọi đóng góp cho dự án đều được chào đón. Vui lòng tạo **Pu
 
 Vui lòng liên hệ với nhóm phát triển để biết thêm thông tin:
 
-- **Email**: [thien070904@example.com](mailto:thien070904@gmail.com)
+- **Email**: [thien070904@gmail.com](mailto:thien070904@gmail.com)
 - **GitHub**: [Repository](https://github.com/thien070904/StudentManagement)
